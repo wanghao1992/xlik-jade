@@ -89,6 +89,25 @@ function _index:next(nextStageName)
             n._prev = self
             n:start()
         end
+    else
+        -- dump(game.flow)
+        local nextIndex = 1
+        for index, value in ipairs(game.flow) do
+            if value == self._key then
+                nextIndex = index + 1
+                break
+            else
+                print(value)
+            end
+        end
+        
+        if nextIndex <= #game.flow then
+            local n = Process(game.flow[nextIndex])
+            if (n) then
+                n._prev = self
+                n:start()
+            end
+        end
     end
 end
 
