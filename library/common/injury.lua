@@ -14,6 +14,8 @@ local m_dt = Mapping("damageType")
 ---@type {common:MappingValue,physics:MappingValue,magic:MappingValue,fire:MappingValue,rock:MappingValue,water:MappingValue,ice:MappingValue,wind:MappingValue,light:MappingValue,dark:MappingValue,grass:MappingValue,thunder:MappingValue,poison:MappingValue,steel:MappingValue}
 injury.damageType = injury.damageType or {
     common = m_dt:set("common", "常规"),
+    physics = m_dt:set("physics", "物理"),
+    magic = m_dt:set("magic", "魔法"),
 }
 --- 伤害来源
 local m_ds = Mapping("damageSrc")

@@ -110,7 +110,7 @@ function Enchant(key, name, strengthen, resistance)
         sync.must()
         cache[key] = oMeta({ _key = key, _name = name or key, _strengthen = strengthen or 0, _resistance = resistance or 0 }, _index)
         local m = Mapping("damageType") -- 引用伤害类型mapping
-        injury.damageType[key] = m:set(key, name) -- 关联injury.damageType并写入mapping数据
+        injury.damageType[key] = m:set(key, name or key) -- 关联injury.damageType并写入mapping数据
     end
     return cache[key]
 end
