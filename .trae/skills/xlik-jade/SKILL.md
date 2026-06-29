@@ -84,7 +84,7 @@ function Unit(force, tpl, x, y, facing)
 end
 
 -- 关键方法
-_index:set(name, variety, duration, domain)    -- 设置属性（带持续时间/Buff支持）
+_index:set(name, variety, duration, domain)    -- 设置属性（duration带Buff创建，自动关联属性图标和名称）
 _index:get(name, domain)                       -- 获取属性
 _index:modify(name, variety, ...)              -- 双向（get/set）属性访问
 _index:raise(name, variety, duration)          -- 设置过程增幅（百分比）
@@ -201,8 +201,8 @@ end)
 -- @param key string 键值
 -- @param label string 显示名称
 -- @param form string 单位范式（可选 "%"）
--- @param icon string buff图标
-attribute.conf(false, "attack", "攻击力")
+-- @param icon string buff图标（可选，未传时Buff使用默认问号图标）
+attribute.conf(false, "attack", "攻击力", nil, "icon/ability/CrystalSlash")
 attribute.conf(true, "cd", "冷却缩减", "%")
 
 -- 获取属性信息
@@ -216,13 +216,13 @@ attribute.isPercent(key) -- 是否百分比属性
 ### 属性修改
 
 ```lua
--- 设置属性（支持 +=\d、-=\d、*=\d 等运算表达式）
+-- 基本修改（支持 +=、-=、*=、/= 等运算表达式）
 unit:set("attack", "+=50")         -- 攻击力增加50
-unit:set("attack", "+=50;10")      -- 攻击力增加50，持续10秒（分号后的数字为持续时间）
 unit:set("hpCur", "-=100")         -- 扣减当前生命值
+unit:attack("+=50")                -- 标准方法修改（推荐）
+unit:defend("*=2")                 -- 防御翻倍
 
--- 进阶修改
-unit:set("attack", "+=50", 10)     -- 攻击增加50，持续10秒（带自动Buff）
+-- 属性增益修正（Vast 基类方法）
 unit:raise("attack", 20)           -- 过程增幅20%：后续对attack的所有改变量增加20%
 unit:ampl("attack", 15)            -- 终结增幅15%：在获取attack最终值时额外增加15%
 
@@ -522,18 +522,14 @@ japi.Z(x, y)  -- 获取地面高度
 
 ## Buff/Debuff 系统
 
-框架的 `set` 方法在指定 `duration > 0` 时会自动创建 Buff：
-
 ```lua
--- 自动创建 Buff
-unit:set("attack", "+=50", 10)  -- 攻击+50，持续10秒，带视觉效果
-
--- 手动创建 Buff
+-- 手动创建 Buff（推荐）
 Buff({
     key = "myBuff",
     object = unit,
     signal = buffSignal.up,        -- 上箭头（增益）
     duration = 10,
+    icon = "icon/ability/CrystalSlash",  -- 图标（可选，未传时自动从 attribute.icon(key) 兜底）
     description = {"效果描述", "持续时间"},
     purpose = function(o)          -- 应用效果
         o:modifier(true, "_attack", 50)

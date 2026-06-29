@@ -171,9 +171,7 @@ function Buff(params)
     if (type(params.visible) == "boolean") then
         p._visible = params.visible
     end
-    if (type(params.icon) == "string") then
-        p. _icon = japi.AssetsImage(params.icon or attribute.icon(key))
-    end
+    p._icon = japi.AssetsImage(params.icon or attribute.icon(key))
     if (type(params.text) == "string") then
         p._text = params.text
     end

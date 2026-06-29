@@ -38,7 +38,7 @@ function _index:modifier(isDyn, key, changeVal)
     local oldVal, newVal
     if (isDyn) then
         if (type(self[key]) == "number" and type(changeVal) == "number") then
-            oldVal = self[key] + self[dynKey] or 0
+            oldVal = (self[key] or 0) + (self[dynKey] or 0)
             newVal = self[key] + changeVal
         else
             oldVal = self[key]
@@ -203,6 +203,8 @@ function _index:set(name, variety, duration, domain)
             signal = signal,
             duration = duration,
             description = desc,
+            name = attribute.label(name),
+            icon = attribute.icon(name),
             ---@param o Vast
             purpose = function(o)
                 o:modifier(true, key, dynVal)
@@ -210,7 +212,7 @@ function _index:set(name, variety, duration, domain)
             ---@param o Vast
             rollback = function(o)
                 local val = o[dynKey]
-                if (type(val) == "number") then
+                if (type(val) == "number" and type(diff) == "number") then
                     o:modifier(true, key, val - diff)
                 else
                     local cs = BuffCatch(o, {
