@@ -601,6 +601,193 @@ async.setInterval(10, function(curTimer)
 end)
 ```
 
+## 三层层级架构
+
+xlik-jade 框架分为三个层级：
+
+| 层级 | 路径 | 语言 | 职责 |
+|------|------|------|------|
+| **构建工具层** | `exe/` | Go + Lua | 资源打包、SLK 生成、脚本加密、地图构建 |
+| **运行时核心层** | `library/` | Lua | 类系统、事件、属性、伤害流程等游戏逻辑 |
+| **项目业务层** | `projects/*/` | Lua | 地图业务代码、TPL 定义、流程控制 |
+
+### 构建流水线（Build Pipeline）
+
+`xlik.exe run demo -l` 的执行流程：
+
+```
+1. Lua Assets 处理 → assets_model, assets_speech, assets_image 等注册资源
+2. SLK 数据生成 → slk_unit 创建物编数据
+3. Go 工具后处理：
+   a. 模型别名解析：asModelAlias["Footman"] → "units\\human\\Footman\\Footman.mdl"
+   b. 资源去重检测、未使用检测
+   c. 自动复制 Portrait 文件（xxx_Portrait.mdx）
+   d. 写入 SLK/INI 文件 → map/table/unit.ini
+4. Script 合并与加密
+5. 打包为 w3x 并启动 War3
+```
+
+## Assets 资源系统
+
+资源在 `assets/` 目录下通过 Lua 函数声明引入，由 Go 工具处理。
+
+### 模型 Model
+
+```lua
+-- war3mapModel 目录下的相对路径
+assets_model("buff/Echo")
+-- 带别称（推荐）
+assets_model("buff/Echo", "echo")
+```
+
+模型处理细节（`luaAssets.go:515-555`）：
+- 自动检测 `xxx_Portrait.mdx` 并复制到地图资源目录
+- 解析模型内引用的 `.blp` 贴图，自动从 `war3mapTextures` 引入
+- 别名注册到 `asModelAlias`，供 SLK 处理时 `model` → `file` 别名解析
+
+### 语音 Speech（SLK 单位定义）
+
+语音模版是**内置魔兽语音**的单位定义，也是框架中**创建 SLK 单位的核心方式**。
+
+```lua
+-- 基础引用（无模型）
+assets_speech("Footman")
+
+-- 在 tpl 中使用
+UnitTpl("Footman")
+```
+
+#### SpeechExtra 变体系统
+
+`assets_speech` 的第二个参数是 `extra` 表，可以为语音模版创建变体：
+
+```lua
+-- 为语音模版创建 "avatar" 变体
+assets_speech("Footman", {
+    avatar = assets_speech_extra({ model = "Footman" }), -- 模型头像模组
+})
+
+-- 在 tpl 中使用变体
+UnitTpl("Footman", "avatar")
+```
+
+**工作原理**：
+
+1. `assets_speech("Footman")` 创建基础 SLK 单位，`Name = "Footman|D"`，`file = ".mdl"`
+2. 传入 `extra` 表时，为每个 key 创建变体 SLK 单位，`Name = "Footman|EX|avatar"`
+3. 变体继承基础单位的所有字段，然后用 extra 中的字段覆盖
+4. **Go 工具处理**（`luaDev.go:263-271`）：
+   - 跳过自定义 `model` 字段（不直接写入 SLK INI）
+   - 在处理 `file` 字段时检查 `_slk["model"]`，如果存在则通过 `asModelAlias` 解析为完整路径
+   - 最终写入 INI 的是 `file = "units\\human\\Footman\\Footman.mdl"`
+5. 运行时 `UnitTpl("Footman", "avatar")` → `slk.n2i("Footman|EX|avatar")` 找到变体 → 单位创建时就有正确模型
+
+**不传 speechExtra 时**：`slk.n2i("Footman|D")` 回退到 `.mdl` 模型，需要 `:model("Footman")` 运行 `DZ_SetUnitModel` 换模型（不更新肖像）。
+
+### 肖像 Portrait 系统
+
+肖像显示需要单位 SLK 定义中有真实的模型路径（`file` 字段），机制如下：
+
+| 方式 | 模型来源 | 肖像 | 说明 |
+|------|----------|------|------|
+| `assets_speech("Footman")` + `:model("Footman")` | `DZ_SetUnitModel` 运行时换 | ❌ 不更新 | 原始 `.mdl` 无肖像 |
+| `assets_speech("Footman", { avatar = { model = "Footman" } })` | SLK `file` 直接指定 | ✅ 自动显示 | Go 工具解析别名到路径 |
+| `assets_speech("Footman", { avatar = { file = "full\\path.mdl" } })` | SLK `file` 直接指定 | ✅ 自动显示 | 直接写路径也行 |
+
+`model` vs `file` 字段的选择：
+- `model = "Footman"`（推荐）：Go 工具通过 `asModelAlias` 将别名解析为完整路径后写入 SLK 的 `file` 字段
+- `file = "units\\human\\Footman\\Footman.mdl"`：直接写完整路径，Go 工具原样写入
+
+标准魔兽模型会自动加载 `_Portrait.mdx`（如 `Footman_Portrait.mdx`），Go 工具构建时也自动复制自定义模型的肖像文件。
+
+## 对象构造系统
+
+### oVast（Vast 对象构造）
+
+```lua
+-- oVast(params, index, ...)
+-- params: 初始数据
+-- index: 类元表（Vast返回的_index）
+-- ...: 额外的原型链（如 Tpl）
+function oVast(params, ...)
+    local indexes = { ... }
+    local o = params
+    if (#indexes == 1) then
+        setmetatable(o, { __index = indexes[1], __reality = true })
+    else
+        -- 多原型链：先查找 Tpl，再查找类
+        setmetatable(o, {
+            __reality = true,
+            __indexes = indexes,
+            __index = function(_, key)
+                for _, es in ipairs(indexes) do
+                    local v = es[key]
+                    if (nil ~= v) then return v end
+                end
+            end
+        })
+    end
+    class.id(o, true)     -- 分配唯一ID
+    -- 沿原型链自底向上调用 construct 回调
+    -- 触发 classConstruct 事件
+end
+```
+
+### VastModifierAct
+
+`VastModifierAct(o)` 在 `oVast` 之后调用，遍历 Unit 实例的所有属性，触发注册在 `_vastModifier.lua` 中的属性修改回调（如 `_model` → `DZ_SetUnitModel`）。
+
+## Flow 流系统
+
+Flow 用于组织业务片段的顺序执行，常用于伤害流程（`damage` flow）：
+
+```lua
+local damageFlow = Flow("damage")
+
+-- 中止条件：伤害 <= 0 时中止后续流程
+damageFlow:abort(function(data)
+    return data.damage <= 0
+end)
+
+-- 注册流程片段
+damageFlow:flux("prop", function(data)
+    -- 处理暴击、护甲穿透等
+end)
+
+damageFlow:flux("breakArmor", function(data)
+    -- 处理破防
+end)
+
+damageFlow:flux("enchant", function(data)
+    -- 处理附魔加成
+end)
+
+-- 触发流程
+Flow("damage"):run(options)
+```
+
+## Process 流程管理系统
+
+流程以 `start` 为入口，可以在流程间跳转、重置：
+
+```lua
+local process = Process("start")
+function process:onStart()
+    -- 初始化
+    self:next("test")  -- 跳转到 test 流程
+end
+
+function process:onOver()
+    -- 流程结束时的清理
+end
+
+-- 泡影数据（流程结束时自动清理对象）
+function process:onStart()
+    local bubble = self:bubble()
+    bubble.boss = Unit(Player(12), TPL_UNIT.BOSS, 0, 0, 0)
+end
+```
+
 ## 开发注意事项
 
 1. **同步环境**：所有修改游戏状态的操作必须在同步环境（`sync.must()`）中执行
@@ -610,3 +797,6 @@ end)
 5. **事件生命周期**：对象销毁时会自动触发 `classDestruct` 事件
 6. **文件加载**：框架自动按文件名顺序加载，**不需要**也不应该使用 `require`
 7. **混淆支持**：`library.yaml` 中配置的混淆规则会自动处理变量名替换
+8. **模型别名**：所有模型路径建议通过 `assets_model` 注册别名，构建工具会自动解析
+9. **SLK 变体**：使用 `speechExtra` 可以创建 SLK 单位变体，提供不同模型/属性
+10. **流量检测**：Go 工具会自动检测未使用的资源（中文字符串、路径引用）并警告
