@@ -134,6 +134,13 @@ function _index:targetFilter(variety)
     return self:modify("targetFilter", variety)
 end
 
+--- 提示显示施法距离（不影响实际施法距离）
+---@param variety number|nil
+---@return self|number
+function _index:castDistanceDisplay(variety)
+    return self:modify("castDistanceDisplay", variety)
+end
+
 --- 施法通用动作
 ---@param variety string|nil
 ---@return self|string
