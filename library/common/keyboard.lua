@@ -231,9 +231,26 @@ function keyboard.abilityHotkey(param)
                     return
                 end
                 ---@type Ability
-                local ab = abilitySlot:storage()[idx]
+                local cols = 4
+                local i = idx - 1
+                local ab = abilitySlot:storage()[((#param // cols) - 1 - i // cols) * cols + i % cols + 1]
                 if (class.isObject(ab, AbilityClass)) then
-                    cursor.quote(ab:targetType(), { ability = ab, keyboard = keycode })
+                    local sc = ab:get("smartCast")
+                    if (sc) then
+                        local tt = ab:targetType()
+                        if (tt == ability.targetType.loc) then
+                            sync.send("lk_sync_g", { "ability_effective_xyz", ab:id(), japi.DZ_GetMouseTerrainX(), japi.DZ_GetMouseTerrainY(), japi.DZ_GetMouseTerrainZ() })
+                        elseif (tt == ability.targetType.unit) then
+                            local targetUnit = class.h2u(japi.DZ_GetUnitUnderMouse())
+                            if (class.isObject(targetUnit, UnitClass) and ab:isCastTarget(targetUnit)) then
+                                sync.send("lk_sync_g", { "ability_effective_u", ab:id(), targetUnit:id() })
+                            end
+                        elseif (tt == ability.targetType.circle or tt == ability.targetType.square) then
+                            sync.send("lk_sync_g", { "ability_effective_xyz", ab:id(), japi.DZ_GetMouseTerrainX(), japi.DZ_GetMouseTerrainY(), japi.DZ_GetMouseTerrainZ() })
+                        end
+                    else
+                        cursor.quote(ab:targetType(), { ability = ab, keyboard = keycode })
+                    end
                 end
             end
             keyboard.onRelease(keycode, key, nil)
@@ -241,7 +258,12 @@ function keyboard.abilityHotkey(param)
         end
         keyboard._abilityHotkey = param
     elseif (type(param) == "number") then
-        return keyboard._abilityHotkey[param]
+        local hk = keyboard._abilityHotkey
+        if (hk) then
+            local cols = 4
+            local i = param - 1
+            return hk[((#hk // cols) - 1 - i // cols) * cols + i % cols + 1]
+        end
     end
     return keyboard._abilityHotkey
 end

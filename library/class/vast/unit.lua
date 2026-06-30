@@ -710,8 +710,17 @@ function Unit(force, tpl, x, y, facing)
     if (true ~= tpl._preNoAbilitySlot) then
         o._abilitySlot = AbilitySlot(o)
         if (tpl._preAbility) then
-            for _, v in ipairs(tpl._preAbility) do
-                o._abilitySlot:insert(Ability(v))
+            local maxIdx = 0
+            for k in pairs(tpl._preAbility) do
+                if (type(k) == "number" and k > maxIdx) then
+                    maxIdx = k
+                end
+            end
+            for i = 1, maxIdx do
+                local v = tpl._preAbility[i]
+                if (class.isObject(v, AbilityTplClass)) then
+                    o._abilitySlot:insert(Ability(v), i)
+                end
             end
         end
     end

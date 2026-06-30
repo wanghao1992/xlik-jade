@@ -35,6 +35,8 @@ local _index = Vast(AbilityTplClass, {
     _levelUpNeedPoint = 0,
     ---@type number 指针规划距离
     _cursorPlanDistance = 64,
+    ---@type boolean 智能施法
+    _smartCast = false,
 }):extend(TplClass)
 
 --- 预设事件数据数组
@@ -103,6 +105,14 @@ end
 ---@return self|number
 function _index:levelUpNeedPoint(variety)
     return self:modify("levelUpNeedPoint", variety)
+end
+
+--- 智能施法
+--- 按下快捷键时直接对鼠标位置/目标施法，无需左键确认
+---@param variety boolean|nil
+---@return self|boolean
+function _index:smartCast(variety)
+    return self:modify("smartCast", variety)
 end
 
 --- 技能类型（目标类型）
