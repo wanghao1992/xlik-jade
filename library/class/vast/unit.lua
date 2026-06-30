@@ -719,7 +719,16 @@ function Unit(force, tpl, x, y, facing)
             for i = 1, maxIdx do
                 local v = tpl._preAbility[i]
                 if (class.isObject(v, AbilityTplClass)) then
-                    o._abilitySlot:insert(Ability(v), i)
+                    local cols = 4
+                    local slotIdx = i
+                    local volume = o._abilitySlot:volume()
+                    if (volume >= cols) then
+                        local totalRows = volume // cols
+                        local row = (i - 1) // cols
+                        local col = (i - 1) % cols
+                        slotIdx = (totalRows - 1 - row) * cols + col + 1
+                    end
+                    o._abilitySlot:insert(Ability(v), slotIdx)
                 end
             end
         end
