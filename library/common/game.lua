@@ -84,13 +84,13 @@ game.skin = game.skin or RACE_HUMAN_NAME
 --- 经验计算参数集
 game.expParams = game.expParams or {
     ability = {
-        maxLv = 99, -- [技能]最大等级数
+        maxLv = 100, -- [技能]最大等级数
         fixed = 100, -- [技能]每级需要经验固定值
         ratio = 0.00, -- [技能]每级需要经验对锚定固定值的增长比率
         limit = 10000, -- [技能]每级经验增长上限，当fixed、ratio计算超过这个值的时候进行约束
     },
     item = {
-        maxLv = 99, -- [物品]最大等级数
+        maxLv = 100, -- [物品]最大等级数
         fixed = 100, -- [物品]每级需要经验固定值
         ratio = 0.00, -- [物品]每级需要经验对锚定固定值的增长比率
         limit = 10000, -- [物品]每级经验增长上限，当fixed、ratio计算超过这个值的时候进行约束

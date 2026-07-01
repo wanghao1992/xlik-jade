@@ -133,6 +133,19 @@ game.onPhase("process", function()
             if (class.isObject(u, UnitClass) and class.isObject(ab, AbilityClass)) then
                 u:abilitySlot():insert(ab, i)
             end
+        elseif (command == "item_use_direct") then
+            local itId = syncData.transferData[2]
+            local uId = syncData.transferData[3]
+            ---@type Item
+            local it = class.i2o(itId)
+            ---@type Unit
+            local triggerUnit = class.i2o(uId)
+            if (class.isObject(it, ItemClass) and class.isObject(triggerUnit, UnitClass)) then
+                 local slot = triggerUnit:itemSlot()
+                 if (class.isObject(slot, ItemSlotClass) and slot:storage()[it:itemSlotIndex()] == it) then
+                     event.syncTrigger(it, eventKind.itemUsed, { triggerItem = it, triggerUnit = triggerUnit })
+                 end
+            end
         elseif (command == "ability_effective") then
             local abId = syncData.transferData[2]
             ---@type Ability
