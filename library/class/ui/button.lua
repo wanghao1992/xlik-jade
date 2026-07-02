@@ -303,6 +303,16 @@ function _index:hotkeyRelation(point, upperPoint, x, y)
     return self
 end
 
+--- 设置热键是否显示
+---@param show boolean
+---@return self
+function _index:hotkeyShow(show)
+    if show == true or show == false then
+        self._hotkey:show(show)
+    end
+    return self
+end
+
 --- 构造UI按钮对象
 --- 支持 constructs 为初始化可选参数（只会在创建时有效，不会在创建后使用此方法以key获取时生效）
 --- [constructs._fdfName][默认 'LK_BACKDROP'] 改用某个fdf模版（按钮）
