@@ -372,8 +372,7 @@ function PlayerLocal()
 end
 
 --- 玩家对象遍历
----@param call fun(enumPlayer:Player)
----@return void
+---@param call fun(enumPlayer:Player, index:number)
 function PlayersForeach(call)
     local cache = class.cache(PlayerClass)
     for i = 1, BJ_MAX_PLAYERS do
