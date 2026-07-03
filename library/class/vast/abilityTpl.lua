@@ -115,6 +115,13 @@ function _index:smartCast(variety)
     return self:modify("smartCast", variety)
 end
 
+--- 仅房主可用
+---@param variety boolean|nil
+---@return self|boolean
+function _index:hostOnly(variety)
+    return self:modify("hostOnly", variety)
+end
+
 --- 技能类型（目标类型）
 ---@param variety string|nil 看 ability.target
 ---@return self|string
