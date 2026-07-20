@@ -37,6 +37,8 @@ local _index = Vast(AbilityTplClass, {
     _cursorPlanDistance = 64,
     ---@type boolean 智能施法
     _smartCast = false,
+    ---@type string 角标
+    _badge = "",
 }):extend(TplClass)
 
 --- 预设事件数据数组
@@ -120,6 +122,13 @@ end
 ---@return self|boolean
 function _index:hostOnly(variety)
     return self:modify("hostOnly", variety)
+end
+
+--- 角标
+---@param variety string|nil
+---@return self|string
+function _index:badge(variety)
+    return self:modify("badge", variety)
 end
 
 --- 技能类型（目标类型）
