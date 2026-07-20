@@ -151,13 +151,16 @@ game.onPhase("process", function()
             ---@type Ability
             local ab = class.i2o(abId)
             if (class.isObject(ab, AbilityClass)) then
-                local amassRatio = syncData.transferData[3]
-                if (nil ~= amassRatio) then
-                    local increaseRatio = 1 + ab:amassIncreaseRatio(tonumber(amassRatio))
-                    ab:spell({ increaseRatio = increaseRatio })
-                else
-                    ab:spell()
+                local playerIndex = tonumber(syncData.transferData[3])
+                local spellData = {}
+                if (type(playerIndex) == "number") then
+                    spellData.triggerPlayer = Player(playerIndex)
                 end
+                local amassRatio = syncData.transferData[4]
+                if (nil ~= amassRatio) then
+                    spellData.increaseRatio = 1 + ab:amassIncreaseRatio(tonumber(amassRatio))
+                end
+                ab:spell(spellData)
             end
         elseif (command == "ability_effective_u") then
             local abId = syncData.transferData[2]
