@@ -273,6 +273,8 @@ end
 ---@return void
 function _index:spellStart(evtData)
     sync.must()
+    -- 临时存储触发玩家，供成本条件/消耗使用
+    self._triggerPlayer = evtData.triggerPlayer
     local costAdv = self:get("costAdv")
     local check = true
     if (isArray(costAdv)) then
@@ -284,6 +286,7 @@ function _index:spellStart(evtData)
         end)
     end
     if (false == check) then
+        self._triggerPlayer = nil
         return
     end
     --- 预执行
@@ -292,6 +295,7 @@ function _index:spellStart(evtData)
             v.deplete(self)
         end)
     end
+    self._triggerPlayer = nil
     local triggerUnit = evtData.triggerUnit
     --- 有目标坐标时，改一下面向角度
     if (evtData.targetX and evtData.targetY) then

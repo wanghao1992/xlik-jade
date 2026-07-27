@@ -75,30 +75,120 @@ function _index:content(options)
     local th = 0
     local hasIcons = false
     local hasTips = false
+    local iconsPos = options.iconsPosition
     
     ---@type table<number,{bg:UIBackdrop,txt:UIText}>
     local uiIcons = self._icons
-    local cw = 0
-    for i = 1, #uiIcons, 1 do
-        if (type(icons) ~= "table" or nil == icons[i]) then
-            uiIcons[i].bg:show(false)
-        else
-            if (i == 1) then
-                hasIcons = true
-                uiIcons[i].bg:relation(UI_ALIGN_LEFT_TOP, self, UI_ALIGN_LEFT_TOP, padLeft, -padTop)
-            else
-                uiIcons[i].bg:relation(UI_ALIGN_LEFT, uiIcons[i - 1].txt, UI_ALIGN_RIGHT, 0.008, 0)
-                cw = cw + 0.008
-            end
-            uiIcons[i].txt:text(icons[i].text):fontSize(fontSize - 1)
-            uiIcons[i].bg:texture(icons[i].texture)
-            uiIcons[i].bg:show(true)
-            cw = cw + 0.013 + 0.002 + vistring.width(icons[i].text, fontSize)
+    local uiText = self._text
+    
+    -- 渲染文本行
+    local renderTips = function(tipsList, parent, rel, ox, oy)
+        if (type(tipsList) ~= "table" or #tipsList == 0) then
+            return 0, 0
         end
+        local txw = 0
+        local txts = {}
+        local ns = 0
+        for _, s in ipairs(tipsList) do
+            txw = math.max(txw, vistring.width(s .. ' ', fontSize))
+            txts[#txts + 1] = s
+            ns = ns + string.subCount(s, "|n")
+        end
+        local txh = vistring.height(#txts + ns, fontSize)
+        uiText:size(txw, txh):text(table.concat(txts, "|n"))
+        uiText:relation(UI_ALIGN_LEFT_TOP, parent, rel, ox, oy)
+        return txw, txh
     end
-    tw = math.max(tw, cw)
-    if (hasIcons) then
-        th = th + 0.013
+    
+    -- 渲染图标行
+    local renderIcons = function(parent, rel, ox, oy)
+        local cw = 0
+        for i = 1, #uiIcons, 1 do
+            if (type(icons) ~= "table" or nil == icons[i]) then
+                uiIcons[i].bg:show(false)
+            else
+                if (i == 1) then
+                    hasIcons = true
+                    uiIcons[i].bg:relation(UI_ALIGN_LEFT_TOP, parent, rel, ox, oy)
+                else
+                    uiIcons[i].bg:relation(UI_ALIGN_LEFT, uiIcons[i - 1].txt, UI_ALIGN_RIGHT, 0.008, 0)
+                    cw = cw + 0.008
+                end
+                uiIcons[i].txt:text(icons[i].text):fontSize(fontSize - 1)
+                uiIcons[i].bg:texture(icons[i].texture)
+                uiIcons[i].bg:show(true)
+                cw = cw + 0.013 + 0.002 + vistring.width(icons[i].text, fontSize)
+            end
+        end
+        return cw
+    end
+    
+    if (iconsPos == "between" and type(options.tipsPre) == "table" and type(options.tipsPost) == "table") then
+        -- 中间图标模式：文本 → 图标 → 文本
+        -- 合并前后文本，在中间插入空行给图标留空间
+        local allTips = {}
+        for _, s in ipairs(options.tipsPre) do
+            allTips[#allTips + 1] = s
+        end
+        -- 有图标时插入空行，避免图标与描述重叠
+        if (#options.tipsPost > 0) then
+            allTips[#allTips + 1] = ""
+        end
+        for _, s in ipairs(options.tipsPost) do
+            allTips[#allTips + 1] = s
+        end
+        hasTips = true
+        local txw = 0
+        local txs = {}
+        local ns = 0
+        for _, s in ipairs(allTips) do
+            txw = math.max(txw, vistring.width(s .. ' ', fontSize))
+            txs[#txs + 1] = s
+            ns = ns + string.subCount(s, "|n")
+        end
+        local txh = vistring.height(#txs + ns, fontSize)
+        uiText:size(txw, txh):text(table.concat(txs, "|n"))
+        uiText:relation(UI_ALIGN_LEFT_TOP, self, UI_ALIGN_LEFT_TOP, padLeft, -padTop)
+        tw = math.max(tw, txw)
+        th = th + txh
+        -- 计算前段文本高度，图标放在前段文本下方
+        local preTxh = vistring.height(#options.tipsPre, fontSize)
+        -- 图标相对于 uiText 偏移，位于前段文本之后
+        local cw = renderIcons(uiText, UI_ALIGN_LEFT_TOP, 0, -preTxh - padTop / 3)
+        th = th + padTop / 3
+        tw = math.max(tw, cw)
+        if (hasIcons) then
+            th = th + 0.013
+        end
+    elseif (iconsPos == "bottom") then
+        -- 底部图标模式：先渲染文本，再渲染图标
+        if (type(tips) == "table" and #tips > 0) then
+            hasTips = true
+            local txw, txh = renderTips(tips, self, UI_ALIGN_LEFT_TOP, padLeft, -padTop)
+            tw = math.max(tw, txw)
+            th = th + txh
+        end
+        
+        local cw = renderIcons(
+            hasTips and uiText or self,
+            hasTips and UI_ALIGN_LEFT_BOTTOM or UI_ALIGN_LEFT_TOP,
+            0,
+            hasTips and -padTop / 3 or -padTop
+        )
+        tw = math.max(tw, cw)
+        if (hasIcons) then
+            if (hasTips) then
+                th = th + padTop / 3
+            end
+            th = th + 0.013
+        end
+    else
+        -- 顶部图标模式：先渲染图标，再渲染文本（原有逻辑）
+        local cw = renderIcons(self, UI_ALIGN_LEFT_TOP, padLeft, -padTop)
+        tw = math.max(tw, cw)
+        if (hasIcons) then
+            th = th + 0.013
+        end
     end
     
     ---@type table<number,UIBar>
@@ -113,6 +203,9 @@ function _index:content(options)
                 tw = math.max(tw, bars[i].width)
                 if (hasIcons) then
                     uiBars[i]:relation(UI_ALIGN_LEFT_TOP, uiIcons[1].bg, UI_ALIGN_LEFT_BOTTOM, 0, -bh - padTop / 2)
+                    th = th + padTop / 2
+                elseif (hasTips) then
+                    uiBars[i]:relation(UI_ALIGN_LEFT_TOP, uiText, UI_ALIGN_LEFT_BOTTOM, 0, -bh - padTop / 2)
                     th = th + padTop / 2
                 else
                     uiBars[i]:relation(UI_ALIGN_LEFT_TOP, self, UI_ALIGN_LEFT_TOP, padLeft, -bh - padTop)
@@ -129,29 +222,32 @@ function _index:content(options)
             th = th + bars[i].height + bh
         end
     end
-    if (type(tips) == "table" and #tips > 0) then
-        hasTips = true
-        if (lastBarIdx > 0) then
-            uiText:relation(UI_ALIGN_LEFT_TOP, uiBars[lastBarIdx], UI_ALIGN_LEFT_BOTTOM, 0, -padTop / 3)
-            th = th + padTop / 3
-        elseif (hasIcons) then
-            uiText:relation(UI_ALIGN_LEFT_TOP, uiIcons[1].bg, UI_ALIGN_LEFT_BOTTOM, 0, -padTop / 3)
-            th = th + padTop / 3
-        else
-            uiText:relation(UI_ALIGN_LEFT_TOP, self, UI_ALIGN_LEFT_TOP, padLeft, -padTop)
+    -- 顶部图标模式：在图标/进度条之后渲染文本
+    if (iconsPos ~= "bottom" and iconsPos ~= "between") then
+        if (type(tips) == "table" and #tips > 0) then
+            hasTips = true
+            if (lastBarIdx > 0) then
+                uiText:relation(UI_ALIGN_LEFT_TOP, uiBars[lastBarIdx], UI_ALIGN_LEFT_BOTTOM, 0, -padTop / 3)
+                th = th + padTop / 3
+            elseif (hasIcons) then
+                uiText:relation(UI_ALIGN_LEFT_TOP, uiIcons[1].bg, UI_ALIGN_LEFT_BOTTOM, 0, -padTop / 3)
+                th = th + padTop / 3
+            else
+                uiText:relation(UI_ALIGN_LEFT_TOP, self, UI_ALIGN_LEFT_TOP, padLeft, -padTop)
+            end
+            local txw = 0
+            local txts = {}
+            local ns = 0
+            for _, s in ipairs(tips) do
+                txw = math.max(txw, vistring.width(s .. ' ', fontSize))
+                txts[#txts + 1] = s
+                ns = ns + string.subCount(s, "|n")
+            end
+            local txh = vistring.height(#txts + ns, fontSize)
+            uiText:size(txw, txh):text(table.concat(txts, "|n"))
+            tw = math.max(tw, txw)
+            th = th + txh
         end
-        local txw = 0
-        local txts = {}
-        local ns = 0
-        for _, s in ipairs(tips) do
-            txw = math.max(txw, vistring.width(s .. ' ', fontSize))
-            txts[#txts + 1] = s
-            ns = ns + string.subCount(s, "|n")
-        end
-        local txh = vistring.height(#txts + ns, fontSize)
-        uiText:size(txw, txh):text(table.concat(txts, "|n"))
-        tw = math.max(tw, txw)
-        th = th + txh
     end
     --
     tw = tw + padLeft + padRight

@@ -216,7 +216,8 @@ end
 ---@return boolean
 function ability.worthCostCond(obj)
     local val = ability.worthCostValue(obj)
-    return not (nil ~= val and worth.greater(val, obj:bindUnit():owner():worth()))
+    local owner = obj._triggerPlayer or PlayerLocal() or obj:bindUnit():owner()
+    return not (nil ~= val and worth.greater(val, owner:worth()))
 end
 
 --- [实消]资源型
@@ -226,5 +227,6 @@ end
 function ability.worthCostDeplete(obj)
     sync.must()
     local val = ability.worthCostValue(obj)
-    obj:bindUnit():owner():worth("-", val)
+    local owner = obj._triggerPlayer or obj:bindUnit():owner()
+    owner:worth("-", val)
 end
