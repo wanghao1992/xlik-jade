@@ -566,25 +566,17 @@ function _index:cooling()
             else
                 -- 当没有剩余次数时
                 if (tp == 1) then
-                    -- 施法匣类型 1 以最短冷却时间瞬间切回主冷却计时，后续再开启内部计时
+                    -- 施法匣类型 1 主冷却时长切为距下一次内部回复的剩余时间
+                    -- 内部计时器继续运行负责回复次数，冷却结束不再额外回复，避免重复回复
                     if (nil ~= self._castPotTimer) then
-                        local cdShort = self._castPotTimer:remain()
-                        class.destroy(self._castPotTimer)
-                        self._castPotTimer = time.setInterval(cd, function(curTimer)
+                        cd = math.max(0.1, self._castPotTimer:remain())
+                    else
+                        revert = function()
                             self._castPotRemain = self._castPotRemain + 1
                             if (self._castPotRemain >= pot) then
-                                class.destroy(curTimer)
+                                class.destroy(self._castPotTimer)
                                 self._castPotTimer = nil
                             end
-                            self:triggerChange(evtData)
-                        end)
-                        cd = cdShort
-                    end
-                    revert = function()
-                        self._castPotRemain = self._castPotRemain + 1
-                        if (self._castPotRemain >= pot) then
-                            class.destroy(curTimer)
-                            self._castPotTimer = nil
                         end
                     end
                 else

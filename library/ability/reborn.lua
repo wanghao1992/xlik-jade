@@ -28,6 +28,8 @@ function ability.rebornRevive(whichUnit, invulnerable, x, y, eff)
     end
     --- 触发复活事件
     event.syncTrigger(whichUnit, eventKind.unitReborn)
+    --- 句柄已被替换，为拥有者重新选中单位（恢复技能栏/UI的选中绑定）
+    whichUnit:owner():select(whichUnit)
 end
 
 --- 底层技能 复活重生
@@ -42,6 +44,10 @@ end
 function ability.reborn(whichUnit, delay, invulnerable, x, y)
     sync.must()
     if (false == class.isObject(whichUnit, UnitClass)) then
+        return
+    end
+    --- 已不在死亡状态（可能已被其他方式立即复活），不再排程复活
+    if (false == superposition.is(whichUnit, "dead")) then
         return
     end
     local rebornTimer = nil
