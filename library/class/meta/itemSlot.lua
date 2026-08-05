@@ -127,7 +127,7 @@ end
 --- 插入一个物品
 ---@param whichItem ItemTpl|Item
 ---@param index number|nil 对应的物品栏位置[如1-6]
----@return void
+---@return boolean 是否插入成功
 function _index:insert(whichItem, index)
     ---@type Item
     local it = nil
@@ -144,7 +144,7 @@ function _index:insert(whichItem, index)
     
     if (nil == index) then
         if (it:bindUnit() == bu) then
-            return
+            return false
         end
         for i = 1, self._volume, 1 do
             if (nil == s[i]) then
@@ -160,11 +160,11 @@ function _index:insert(whichItem, index)
             elseif (p:pickMode() == player.pickMode.itemOnly) then
                 alerter.message(p, "物品栏已满", nil, false)
             end
-            return
+            return false
         end
     end
     if (type(index) ~= "number") then
-        return
+        return false
     end
     if (true == it:instance()) then
         it:instance(false)
@@ -225,6 +225,7 @@ function _index:insert(whichItem, index)
         end
     end
     self:triggerChange()
+    return true
 end
 
 --- 移除一个物品
