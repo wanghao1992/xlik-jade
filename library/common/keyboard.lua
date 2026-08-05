@@ -110,6 +110,7 @@ keyboard.code = {
     ["Shift"] = 16,
     ["Control"] = 17,
     ["Alt"] = 18,
+    ["Space"] = 32,
 }
 ---@type table<number,string>
 keyboard.codeKV = {}

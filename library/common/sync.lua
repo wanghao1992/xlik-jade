@@ -156,9 +156,10 @@ game.onPhase("process", function()
                 if (type(playerIndex) == "number") then
                     spellData.triggerPlayer = Player(playerIndex)
                 end
-                local amassRatio = syncData.transferData[4]
-                if (nil ~= amassRatio) then
-                    spellData.increaseRatio = 1 + ab:amassIncreaseRatio(tonumber(amassRatio))
+                --- 施放时空格键是否按下（0/1，由异步侧cursor附带）
+                --- 供技能事件实现批量生效，如按住空格出怪加速/减速执行10次
+                if (syncData.transferData[4] == 1) then
+                    spellData.spaceHeld = true
                 end
                 ab:spell(spellData)
             end
