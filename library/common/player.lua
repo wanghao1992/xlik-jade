@@ -256,14 +256,14 @@ end)
 ---@param whichStatus table player.status.*
 ---@return boolean
 function player.isValidStatus(whichStatus)
-    return type(whichStatus) == "table" and whichStatus._type == _ps._type
+    return isMapping(whichStatus, m_ps._kind)
 end
 
 --- 检测是否属于有效的玩家拾取模式
 ---@param whichMode table player.pickMode.*
 ---@return boolean
 function player.isValidPickMode(whichMode)
-    return type(whichMode) == "table" and whichMode._type == _pm._type
+    return isMapping(whichMode, m_pm._kind)
 end
 
 --- 单位距离过程
