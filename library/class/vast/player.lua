@@ -269,7 +269,7 @@ function _index:quit(reason)
     reason = reason or "已被系统判定出局"
     echo(self:name() .. reason .. "，退出了游戏", nil, 30)
     if (self:isUser()) then
-        Dialog(reason, { { value = "Q", label = J.GetLocalizedString("GAMEOVER_QUIT_MISSION") } }, function(evtData)
+        Dialog(reason, { { value = "Q", label = J.GetLocalizedString("GAMEOVER_QUIT_MISSION") } }, nil, function(evtData)
             async.call(evtData.triggerPlayer, function()
                 J.EndGame(true)
             end)
