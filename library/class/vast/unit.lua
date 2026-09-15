@@ -18,7 +18,9 @@ function _index:destruct()
     effector.clearAttach(self)
     local ag = self._attackTimers
     if (type(ag) == "table") then
-        for _, v in ipairs(ag) do
+        --- 该表以定时器id为键(稀疏表), 必须用pairs遍历; 用ipairs会导致挂起的攻击结算定时器不销毁,
+        --- 其回调稍后访问 attacker._attackTimers 时报 attempt to index a nil value
+        for _, v in pairs(ag) do
             class.destroy(v)
         end
         self._attackTimers = nil

@@ -10,10 +10,17 @@ function oVast(params, ...)
     if (#indexes == 1) then
         setmetatable(o, { __index = indexes[1], __reality = true })
     else
+        --- 环形链路保护: __index 查找期间若又回到本对象(对象互相引用成环),
+        --- 直接返回nil, 避免无限递归导致 C stack overflow
+        local busy = false
         setmetatable(o, {
             __reality = true,
             __indexes = indexes,
             __index = function(_, key)
+                if (true == busy) then
+                    return nil
+                end
+                busy = true
                 local v = nil
                 for _, es in ipairs(indexes) do
                     v = es[key]
@@ -21,6 +28,7 @@ function oVast(params, ...)
                         break
                     end
                 end
+                busy = false
                 return v
             end
         })

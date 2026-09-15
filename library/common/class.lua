@@ -153,6 +153,11 @@ end
 ---@param name string 对象类型名，如 UnitClass
 ---@return boolean
 function class.isObject(obj, name)
+    --- 非实例化对象(原始数据表、被替换了元表的伪对象)直接判否:
+    --- 否则读取 obj._type 会走 __index 链, 链路成环时会 C stack overflow
+    if (false == class.isReality(obj)) then
+        return false
+    end
     if (class.isDestroy(obj)) then
         return false
     end
@@ -281,7 +286,9 @@ end
 ---@param obj Meta|Vast|UI
 ---@return boolean
 function class.isDestroy(obj)
-    if (type(obj) ~= "table") then
+    --- 非实例化对象一律视为已销毁(与原先 type(obj)~="table" 的结果一致),
+    --- 同时避免读取 obj._type 时走进环形 __index 链
+    if (false == class.isReality(obj)) then
         return true
     end
     return type(obj._type) ~= "string"
