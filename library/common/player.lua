@@ -153,7 +153,9 @@ player._evtAttacked = J.Condition(function()
     local t = time.setTimeout(delay, function(curTimer)
         local id = curTimer._id
         class.destroy(curTimer)
-        if (nil ~= attacker._attackTimers[id]) then
+        --- 注意: 单位若在本帧被销毁(destruct 会把 _attackTimers 置 nil), 已入队的本回调仍会执行,
+        --- 直接索引会报 attempt to index a nil value -> 这里判空后直接放弃本次攻击结算
+        if (nil ~= attacker._attackTimers and nil ~= attacker._attackTimers[id]) then
             attacker._attackTimers[id] = nil
             if (attacker:weaponSoundMode() == 2) then
                 sound.vwp(attacker, target)

@@ -145,6 +145,19 @@ function ability.caleValueWorth(obj, whichLevel)
     return val
 end
 
+--- 取消耗结算用的绑定单位
+--- 技能在"已被移除/正在重绑"时 bindUnit() 会返回 nil(例如转职重置技能栏、宝物/装备临时给技能),
+--- 此时若直接 obj:bindUnit():xxx() 会报 attempt to index a nil value, 这里统一兜底。
+---@param obj Ability
+---@return Unit|nil
+local function costUnit(obj)
+    local u = obj:bindUnit()
+    if (false == class.isObject(u, UnitClass)) then
+        return nil
+    end
+    return u
+end
+
 --- [实际]HP
 --- 用于获取HP实际消耗的计算方法
 ---@param obj Ability
@@ -160,7 +173,15 @@ end
 ---@return boolean
 function ability.hpCostCond(obj)
     local val = ability.hpCostValue(obj)
-    return not (val > 0 and val >= obj:bindUnit():hpCur())
+    if (val <= 0) then
+        return true
+    end
+    local u = costUnit(obj)
+    if (nil == u) then
+        --- 未绑定单位(技能已被移除/重绑中): 视为不可施放, 避免空引用
+        return false
+    end
+    return val < u:hpCur()
 end
 
 --- [实消]HP
@@ -169,8 +190,12 @@ end
 ---@return void
 function ability.hpCostDeplete(obj)
     sync.must()
+    local u = costUnit(obj)
+    if (nil == u) then
+        return
+    end
     local val = ability.hpCostValue(obj)
-    obj:bindUnit():hpCur("-=" .. val)
+    u:hpCur("-=" .. val)
 end
 
 --- [实际]MP
@@ -188,7 +213,15 @@ end
 ---@return boolean
 function ability.mpCostCond(obj)
     local val = ability.mpCostValue(obj)
-    return not (val > 0 and val > obj:bindUnit():mpCur())
+    if (val <= 0) then
+        return true
+    end
+    local u = costUnit(obj)
+    if (nil == u) then
+        --- 未绑定单位(技能已被移除/重绑中): 视为不可施放, 避免空引用
+        return false
+    end
+    return val <= u:mpCur()
 end
 
 --- [实消]MP
@@ -197,8 +230,12 @@ end
 ---@return void
 function ability.mpCostDeplete(obj)
     sync.must()
+    local u = costUnit(obj)
+    if (nil == u) then
+        return
+    end
     local val = ability.mpCostValue(obj)
-    obj:bindUnit():mpCur("-=" .. val)
+    u:mpCur("-=" .. val)
 end
 
 --- [实际]资源型
@@ -216,7 +253,12 @@ end
 ---@return boolean
 function ability.worthCostCond(obj)
     local val = ability.worthCostValue(obj)
-    local owner = obj._triggerPlayer or PlayerLocal() or obj:bindUnit():owner()
+    local u = costUnit(obj)
+    local owner = obj._triggerPlayer or PlayerLocal() or (nil ~= u and u:owner()) or nil
+    if (false == class.isObject(owner, PlayerClass)) then
+        --- 无法定位所属玩家(技能已被移除/重绑中): 视为不可施放
+        return false
+    end
     return not (nil ~= val and worth.greater(val, owner:worth()))
 end
 
@@ -227,6 +269,10 @@ end
 function ability.worthCostDeplete(obj)
     sync.must()
     local val = ability.worthCostValue(obj)
-    local owner = obj._triggerPlayer or obj:bindUnit():owner()
+    local u = costUnit(obj)
+    local owner = obj._triggerPlayer or (nil ~= u and u:owner()) or nil
+    if (false == class.isObject(owner, PlayerClass)) then
+        return
+    end
     owner:worth("-", val)
 end
