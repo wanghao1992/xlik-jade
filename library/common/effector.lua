@@ -20,13 +20,18 @@ function effector.destroy(whichEffect, setVisible)
         end
         J.DestroyEffect(whichEffect._handle)
         J.HandleUnRef(whichEffect._handle)
-        effector._agile[whichEffect] = nil
+        --- 表以 handle 为键(见 effector.agile), 这里必须用同一个键删除;
+        --- 原实现用 table 自身当键, 等于不删, _agile 会随每次灵动特效永久增长
+        effector._agile[whichEffect._handle] = nil
     elseif (type(whichEffect) == "number") then
         if (true == setVisible) then
             japi.DZ_SetEffectVisible(whichEffect, false)
         end
         J.DestroyEffect(whichEffect)
         J.HandleUnRef(whichEffect)
+        --- 该 handle 也可能来自灵动特效的重建路径(effector.position 远距重建走的是数字分支),
+        --- 一并按 handle 回收, 否则旧 handle 的记录会残留
+        effector._agile[whichEffect] = nil
     end
 end
 

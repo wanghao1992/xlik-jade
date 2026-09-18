@@ -69,7 +69,14 @@ function mtg.word(options)
         if (nil == mtg._site[site][str]) then
             mtg._site[site][str] = true
             time.setTimeout(0.2, function()
-                mtg._site[site][str] = nil
+                local siteTbl = mtg._site[site]
+                if (nil ~= siteTbl) then
+                    siteTbl[str] = nil
+                    --- 内层已空则回收外层坐标表, 否则 _site 会按出现过的坐标永久累积
+                    if (next(siteTbl) == nil) then
+                        mtg._site[site] = nil
+                    end
+                end
             end)
             mtg._count = mtg._count + 1
             local xs = {}
@@ -168,7 +175,14 @@ function mtg.model(options)
     if (nil == mtg._site[site][model]) then
         mtg._site[site][model] = true
         time.setTimeout(duration, function()
-            mtg._site[site][model] = nil
+            local siteTbl = mtg._site[site]
+            if (nil ~= siteTbl) then
+                siteTbl[model] = nil
+                --- 内层已空则回收外层坐标表, 否则 _site 会按出现过的坐标永久累积
+                if (next(siteTbl) == nil) then
+                    mtg._site[site] = nil
+                end
+            end
         end)
         mtg._count = mtg._count + 1
         local spd = height / (duration / frequency)
