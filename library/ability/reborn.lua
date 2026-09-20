@@ -54,6 +54,10 @@ function ability.reborn(whichUnit, delay, invulnerable, x, y)
     if (delay < 1) then
         delay = math.max(0.2, delay)
         time.setTimeout(delay, function()
+            --- 排程期间可能已被其他方式复活: 不再重复换句柄复活
+            if (false == superposition.is(whichUnit, "dead")) then
+                return
+            end
             ability.rebornRevive(whichUnit, invulnerable, x, y, "DispelMagicTarget")
         end)
     else
@@ -84,6 +88,10 @@ function ability.reborn(whichUnit, delay, invulnerable, x, y)
             J.HandleUnRef(deathToken)
             J.RemoveUnit(unitGhost)
             J.HandleUnRef(unitGhost)
+            --- 排程期间可能已被其他方式复活: 不再重复换句柄复活
+            if (false == superposition.is(whichUnit, "dead")) then
+                return
+            end
             ability.rebornRevive(whichUnit, invulnerable, x, y, "ResurrectTarget")
         end)
     end

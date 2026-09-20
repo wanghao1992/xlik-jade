@@ -214,6 +214,14 @@ function injury.kill(deadUnit)
     if (false == class.isObject(deadUnit, UnitClass)) then
         return
     end
+    --- 去重: 原生"单位死亡事件"对同一具尸体可能被重复派发(hpCur 每次被写成<=0都会再 KillUnit,
+    --- 同帧嵌套伤害也会再次写入), 若不去重则会重复叠加"dead"状态并重复排程复活(ability.reborn)。
+    --- 重复排程会让单位被反复重建, 且一旦某次排程时复活延迟已被业务层改成超大值(如用完复活次数),
+    --- 该次复活永不触发, "dead"状态便再无对应削减 -> 表现为"复活后仍被判死/复活后又死亡"。
+    --- 同一次死亡只结算一次; 单位真正复活时会削减"dead"状态(见 ability.rebornRevive)。
+    if (superposition.is(deadUnit, "dead")) then
+        return
+    end
     --- tyre切换，timer终止
     local tyre = deadUnit._moveTyre
     if (class.isObject(tyre.timer, TimerClass)) then
