@@ -117,6 +117,9 @@ function _index:border(path, frames)
         self._borderTimer = nil
         if (type(path) == "string") then
             self._border:texture(path)
+            --- 切回静态贴图时清掉序列帧回调, 否则按钮再次显示会重启旧的贴图组
+            self:onEvent(eventKind.uiHide, "lk_border", nil)
+            self:onEvent(eventKind.uiShow, "lk_border", nil)
         elseif (type(path) == "table" and #path > 0) then
             self._border:texture(path[1])
             self._borderIdx = 1

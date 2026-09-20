@@ -131,6 +131,15 @@ function _index:badge(variety)
     return self:modify("badge", variety)
 end
 
+--- 技能栏按钮的序列帧动画
+--- 声明后由技能栏UI(xlik_plate)在按钮边框上按序循环播放贴图组, 用于"可学习/可用"等提示
+---@param variety {textures:string[], interval:number, condition:fun(ability:Ability):boolean}|nil
+--- textures 按序循环的贴图组, interval 每张持续多少个UI帧(透传给 UIButton:border 的 frames)
+---@return self|{textures:string[], interval:number, condition:fun(ability:Ability):boolean}|nil
+function _index:buttonAnime(variety)
+    return self:modify("buttonAnime", variety)
+end
+
 --- 技能类型（目标类型）
 ---@param variety string|nil 看 ability.target
 ---@return self|string
