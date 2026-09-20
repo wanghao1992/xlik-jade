@@ -857,15 +857,18 @@ function japi.Roulette(func, whichPlayer, key, value)
             func(whichPlayer, key, value)
         end
     end
+    --- 合并标识必须带上玩家: 同一 key 会被不同玩家各写一次(如各玩家的通关派生存档),
+    --- 只用 key 作标识会让后写入的玩家覆盖前者, 导致只有最后一个玩家的数据落盘
+    local rid = tostring(whichPlayer) .. '#' .. key
     if (isArray(japi._roulette)) then
         japi._rouletteWait = false
         class.destroy(japi._rouletteWaitTimer)
         japi._rouletteWaitTimer = nil
-        japi._roulette:set(key, rf)
+        japi._roulette:set(rid, rf)
         return
     end
     japi._roulette = Array()
-    japi._roulette:set(key, rf)
+    japi._roulette:set(rid, rf)
     time.setInterval(0, function(curTimer)
         curTimer:period(5)
         local ks = japi._roulette:keys()
