@@ -6,6 +6,66 @@ DialogClass = "Dialog"
 ---@class Dialog:Meta
 local _index = Meta(DialogClass)
 
+--- 对话框(原生)状态
+--- 用途: 原生对话框弹出时(单人会暂停游戏)框架记录的鼠标坐标可能停留在弹窗之前的旧位置,
+---   于是"点击对话框按钮"的那一次点击会被自定义UI当成"点在弹窗前的UI上"再触发一次
+---   (典型: 转生成功的宝物三选一 + 是否继续转职弹窗同时出现时, 三选一被误选/误关)
+---   故由UI层(library/japi/lk.lua)在对话期间屏蔽自定义UI的鼠标点击
+---@class dialog
+dialog = dialog or {}
+
+---@protected 玩家索引 -> 正在向其显示的对话框数量
+dialog._shown = dialog._shown or {}
+
+--- 某玩家当前是否有对话框正在显示
+---@param player Player
+---@return boolean
+function dialog.showing(player)
+    if (false == class.isObject(player, PlayerClass)) then
+        return false
+    end
+    return (dialog._shown[player:index()] or 0) > 0
+end
+
+---@private 记录"本对话框已向该玩家显示"
+---@param whichPlayer Player
+---@return void
+local _markShown = function(self, whichPlayer)
+    self._shownTo = self._shownTo or {}
+    local index = whichPlayer:index()
+    if (nil == self._shownTo[index]) then
+        self._shownTo[index] = true
+        dialog._shown[index] = (dialog._shown[index] or 0) + 1
+    end
+end
+
+---@private 注销"本对话框已向该玩家显示"
+--- 延迟一个时钟刻度再解除: "点掉对话框按钮"的这一次点击可能同时还在往自定义UI派发,
+--- 若在同一瞬间解除, 对话框关闭的那一次点击又会漏到UI上(参见 library/japi/lk.lua 的屏蔽)
+---@return void
+local _unmarkShown = function(self)
+    if (nil == self._shownTo) then
+        return
+    end
+    local shownTo = self._shownTo
+    self._shownTo = nil
+    local clear = function()
+        for index, _ in pairs(shownTo) do
+            local left = (dialog._shown[index] or 0) - 1
+            if (left > 0) then
+                dialog._shown[index] = left
+            else
+                dialog._shown[index] = nil
+            end
+        end
+    end
+    if (sync.is()) then
+        time.setTimeout(0, clear)
+    else
+        clear()
+    end
+end
+
 local _evt = J.Condition(function()
     ---@type Dialog
     local triggerDialog = class.h2o(J.GetClickedDialog())
@@ -29,6 +89,7 @@ end)
 
 ---@protected
 function _index:destruct()
+    _unmarkShown(self)
     ---@type Array
     local buttons = self._buttons
     local keys = buttons:keys()
@@ -56,11 +117,13 @@ end
 ---@param whichPlayer Player|nil
 ---@return void
 function _index:display(whichPlayer)
-    if (class.isObject(whichPlayer, PlayerClass)) then
-        J.DialogDisplay(whichPlayer:handle(), self._handle, true)
-    else
-        J.DialogDisplay(Player1st():handle(), self._handle, true)
+    local pla = whichPlayer
+    if (false == class.isObject(pla, PlayerClass)) then
+        pla = Player1st()
     end
+    J.DialogDisplay(pla:handle(), self._handle, true)
+    --- 进入"对话中"状态(该对话框销毁时解除)
+    _markShown(self, pla)
 end
 
 --- 渲染指定页面的按钮

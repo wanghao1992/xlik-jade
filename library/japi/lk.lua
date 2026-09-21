@@ -364,6 +364,13 @@ function japi.UIEvent2Mouse(whichUI, evt, ban)
                     if (cursor.isQuoting() and false == cursor.isDragging()) then
                         return
                     end
+                    --- 原生对话框显示期间屏蔽自定义UI的鼠标点击:
+                    --- 对话框(单人)会暂停游戏, 框架记录的鼠标坐标可能还停在弹窗之前的UI上,
+                    --- 点对话框按钮的这一次点击会被当成"点在弹窗前的UI上"再触发一次
+                    --- (参见 library/class/meta/dialog.lua 的 dialog.showing)
+                    if (dialog.showing(evtData.triggerPlayer)) then
+                        return
+                    end
                     -- 检测是否UI之内，是否有弹层遮挡
                     local rx, ry = evtData.rx, evtData.ry
                     if (whichUI:isInside(rx, ry) and _checkSafety(rx, ry)) then
