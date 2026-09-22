@@ -181,6 +181,43 @@ function keyboard.onRelease(keyboardCode, key, callFunc)
     event.asyncRegister("keyboard" .. keyboardCode, eventKind.keyboardRelease, key, callFunc)
 end
 
+--- [异步]当组合键按下
+--- 主键按下事件触发时，检测修饰键是否同时按下，全部满足才回调
+--- 每次物理按下仅回调一次（内部自动防连发），主键释放后自动备好下一次
+--- 主键由按下事件本身确定，修饰键中无需重复传入主键
+---@param keyboardCode number 主键键值，如keyboard.code["1"]
+---@param modifierKeyNumbers number[] 修饰键键值数组，如{keyboard.code["Alt"]}
+---@param key string 索引
+---@param callFunc fun(evtData:eventOnKeyboardPress)|nil 回调，设为nil或false强制取消
+---@return void
+function keyboard.onComboPress(keyboardCode, modifierKeyNumbers, key, callFunc)
+    if (type(keyboardCode) ~= "number" or type(modifierKeyNumbers) ~= "table") then
+        return
+    end
+    local symbol = "keyboard" .. keyboardCode
+    event.asyncUnregister(symbol, eventKind.keyboardPress, key)
+    event.asyncUnregister(symbol, eventKind.keyboardRelease, key)
+    if (type(callFunc) ~= "function") then
+        return
+    end
+    local press = nil
+    press = function(evtData)
+        -- 先卸下按下事件，待主键释放后重新备好，避免长按期间连发
+        event.asyncUnregister(symbol, eventKind.keyboardPress, key)
+        event.asyncRegister(symbol, eventKind.keyboardRelease, key, function()
+            event.asyncUnregister(symbol, eventKind.keyboardRelease, key)
+            event.asyncRegister(symbol, eventKind.keyboardPress, key, press)
+        end)
+        for _, modifierKeyNumber in ipairs(modifierKeyNumbers) do
+            if (true ~= keyboard.isPressing(modifierKeyNumber)) then
+                return
+            end
+        end
+        callFunc(evtData)
+    end
+    event.asyncRegister(symbol, eventKind.keyboardPress, key, press)
+end
+
 --- [异步]当键盘长按
 --- 必须包含：可能打断->顺利开始->结束，完整3种流程设定才生效，任一流程缺失都取消注册
 ---@param keyboardCode number
