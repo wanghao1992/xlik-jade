@@ -82,8 +82,13 @@ local _evt = J.Condition(function()
     elseif (type(evtData) == "table" and type(action) == "function") then
         evtData.triggerDialog = triggerDialog
         evtData.triggerPlayer = Player(1 + J.GetPlayerId(J.GetTriggerPlayer()))
-        action(evtData)
+        --- 回调抛错也必须先销毁对话框: 否则它会留在玩家屏幕上, 且"对话中"的UI点击屏蔽
+        --- (见 library/japi/lk.lua)会一直生效, 表现为"鼠标点击不生效"
+        local ok, err = pcall(action, evtData)
         class.destroy(triggerDialog)
+        if (false == ok) then
+            error(err)
+        end
     end
 end)
 
