@@ -252,31 +252,64 @@ function _index:fontSize(size)
 end
 
 --- 设置热键键值和回调
+--- 组合键用法：第二个参数传入修饰键键值数组，如 :hotkey(keyboard.code["1"], { keyboard.code["Alt"] }, call)
+--- 热键文本会自动显示为「Alt+1」形式
 ---@param keycode number 如 keyboard.code["G"]
----@param call function 可设为false强制取消回调
+---@param call function|number[]|false 回调；或修饰键键值数组（此时回调由第三参数传入）；可设为false强制取消回调
+---@param callFunc function|false|nil 组合键的回调，可设为false强制取消回调
 ---@return self
-function _index:hotkey(keycode, call)
+function _index:hotkey(keycode, call, callFunc)
     if (type(keycode) == "number") then
+        local modifierKeyNumbers = nil
+        if (type(call) == "table") then
+            modifierKeyNumbers = call
+            call = callFunc
+        end
         local keyName = keyboard.i2s(keycode)
+        local keyValid = keyName ~= ''
+        if (nil ~= modifierKeyNumbers) then
+            local names = {}
+            for _, modifierKeyNumber in ipairs(modifierKeyNumbers) do
+                local modifierName = keyboard.i2s(modifierKeyNumber)
+                keyValid = keyValid and modifierName ~= ''
+                names[#names + 1] = modifierName
+            end
+            names[#names + 1] = keyName
+            keyName = table.concat(names, '+')
+        end
         self._hotkey:text(keyName)
         local key = "lk_bhk_" .. self._id
         if (false == call) then
-            keyboard.onPress(keycode, key, nil)
-            keyboard.onRelease(keycode, key, nil)
-        elseif (keyName ~= '' and type(call) == "function") then
-            local f = nil
-            f = function()
+            if (nil == modifierKeyNumbers) then
                 keyboard.onPress(keycode, key, nil)
-                keyboard.onRelease(keycode, key, function()
-                    keyboard.onPress(keycode, key, f)
-                end)
-                if (japi.IsLongPressing("keyboard")) then
-                    return
-                end
-                call()
+                keyboard.onRelease(keycode, key, nil)
+            else
+                keyboard.onComboPress(keycode, modifierKeyNumbers, key, nil)
             end
-            keyboard.onRelease(keycode, key, nil)
-            keyboard.onPress(keycode, key, f)
+        elseif (keyValid and type(call) == "function") then
+            if (nil == modifierKeyNumbers) then
+                local f = nil
+                f = function()
+                    keyboard.onPress(keycode, key, nil)
+                    keyboard.onRelease(keycode, key, function()
+                        keyboard.onPress(keycode, key, f)
+                    end)
+                    if (japi.IsLongPressing("keyboard")) then
+                        return
+                    end
+                    call()
+                end
+                keyboard.onRelease(keycode, key, nil)
+                keyboard.onPress(keycode, key, f)
+            else
+                -- 组合键的防连发由 keyboard.onComboPress 内部处理
+                keyboard.onComboPress(keycode, modifierKeyNumbers, key, function()
+                    if (japi.IsLongPressing("keyboard")) then
+                        return
+                    end
+                    call()
+                end)
+            end
         end
     end
     return self
