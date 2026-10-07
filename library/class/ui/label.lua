@@ -5,6 +5,8 @@ UILabelClass = "UILabel"
 ---@class UILabel:UI
 local _index = UI(UILabelClass, {
     _autoSize = false,
+    ---@type number 图标与文本的间距(默认0.002)
+    _gap = 0.002,
 })
 
 ---@protected
@@ -62,28 +64,31 @@ end
 --- 图标只有左和右两种，默认左[LAYOUT_ALIGN_LEFT]
 --- 可以设置文本的align改变文本的对齐从而改变icon的偏移，它们总是同侧的
 ---@param align number LAYOUT_ALIGN_LEFT|LAYOUT_ALIGN_RIGHT|LAYOUT_ALIGN_LEFT_TOP|LAYOUT_ALIGN_RIGHT_TOP|LAYOUT_ALIGN_LEFT_BOTTOM|LAYOUT_ALIGN_RIGHT_BOTTOM 文本的align
+---@param gap number|nil 图标与文本的间距，默认0.002
 ---@return self
-function _index:side(align)
-    if (type(align) == "number" and align ~= self._side) then
+function _index:side(align, gap)
+    gap = gap or 0.002
+    if (type(align) == "number" and (align ~= self._side or gap ~= self._gap)) then
+        self._gap = gap
         local ct = self._icon
         if (align == LAYOUT_ALIGN_LEFT) then
             ct:relation(UI_ALIGN_LEFT, self, UI_ALIGN_LEFT, 0, 0)
-            self._label:relation(UI_ALIGN_LEFT, ct, UI_ALIGN_RIGHT, 0.002, 0)
+            self._label:relation(UI_ALIGN_LEFT, ct, UI_ALIGN_RIGHT, gap, 0)
         elseif (align == LAYOUT_ALIGN_RIGHT) then
             ct:relation(UI_ALIGN_RIGHT, self, UI_ALIGN_RIGHT, 0, 0)
-            self._label:relation(UI_ALIGN_RIGHT, ct, UI_ALIGN_LEFT, -0.002, 0)
+            self._label:relation(UI_ALIGN_RIGHT, ct, UI_ALIGN_LEFT, -gap, 0)
         elseif (align == LAYOUT_ALIGN_LEFT_TOP) then
             ct:relation(UI_ALIGN_LEFT, self, UI_ALIGN_LEFT, 0, 0)
-            self._label:relation(UI_ALIGN_LEFT_TOP, ct, UI_ALIGN_RIGHT_TOP, 0.002, -0.001)
+            self._label:relation(UI_ALIGN_LEFT_TOP, ct, UI_ALIGN_RIGHT_TOP, gap, -0.001)
         elseif (align == LAYOUT_ALIGN_RIGHT_TOP) then
             ct:relation(UI_ALIGN_RIGHT, self, UI_ALIGN_RIGHT, 0, 0)
-            self._label:relation(UI_ALIGN_RIGHT_TOP, ct, UI_ALIGN_LEFT_TOP, -0.002, -0.001)
+            self._label:relation(UI_ALIGN_RIGHT_TOP, ct, UI_ALIGN_LEFT_TOP, -gap, -0.001)
         elseif (align == LAYOUT_ALIGN_LEFT_BOTTOM) then
             ct:relation(UI_ALIGN_LEFT, self, UI_ALIGN_LEFT, 0, 0)
-            self._label:relation(UI_ALIGN_LEFT_BOTTOM, ct, UI_ALIGN_RIGHT_BOTTOM, 0.002, 0.001)
+            self._label:relation(UI_ALIGN_LEFT_BOTTOM, ct, UI_ALIGN_RIGHT_BOTTOM, gap, 0.001)
         elseif (align == LAYOUT_ALIGN_RIGHT_BOTTOM) then
             ct:relation(UI_ALIGN_RIGHT, self, UI_ALIGN_RIGHT, 0, 0)
-            self._label:relation(UI_ALIGN_RIGHT_BOTTOM, ct, UI_ALIGN_LEFT_BOTTOM, -0.002, 0.001)
+            self._label:relation(UI_ALIGN_RIGHT_BOTTOM, ct, UI_ALIGN_LEFT_BOTTOM, -gap, 0.001)
         end
         self._side = align
     end
