@@ -180,6 +180,11 @@ function assets_pset(kind, ...)
                 local h = J.CreateSound(v[1], false, true, true, 10, 10, "CombatSoundsEAX")
                 J.HandleRef(h)
                 J.SetSoundDuration(h, v[2])
+                --- 3D武器打击音必须显式配置音量与可听距离, 否则无声
+                --- (CreateSound 默认参数不保证可听; 与 vcm/v3d 分支保持一致的音量设置)
+                J.SetSoundVolume(h, 127)
+                J.SetSoundDistances(h, 600.0, 10000.0)
+                J.SetSoundDistanceCutoff(h, 2100.0)
                 table.insert(data[k].h, h)
             end
         end
