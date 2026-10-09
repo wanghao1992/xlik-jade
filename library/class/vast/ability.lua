@@ -589,6 +589,15 @@ function _index:cooling()
                 end
             end
         end
+        --- 单位冷却缩减(图鉴羁绊等): 按百分比缩短本次冷却(默认0)
+        local cdUnit = self:bindUnit()
+        if (class.isObject(cdUnit, UnitClass)) then
+            local cdr = cdUnit:coolDownPercent() or 0
+            if (cdr ~= 0) then
+                cdr = math.max(0, math.min(90, cdr))
+                cd = math.max(0.1, cd * (1 - cdr * 0.01))
+            end
+        end
         self:capture("cool", evtData, cd, revert)
     end
 end
