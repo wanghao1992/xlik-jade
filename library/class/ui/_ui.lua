@@ -372,6 +372,20 @@ function _index:show(status)
     if (type(status) == "boolean" and self._show ~= status) then
         self._show = status
         japi.DZ_FrameShow(self._handle, status)
+        --- 隐藏时: 若指针焦点正落在本对象或其子孙上, 强制释放焦点
+        --- 否则焦点会卡在已隐藏的控件上(其 enter 引用计数因 show 的递归注册而减不到0),
+        --- 导致后续所有依赖 uiEnter 的控件(按钮/页签等)都无法进入 -> 点击失效
+        if (false == status) then
+            local f = japi._cursor.focusUI
+            while (nil ~= f and f ~= UIGame) do
+                if (f == self) then
+                    japi._cursor.focusUI = nil
+                    japi._cursor.focusTo = nil
+                    break
+                end
+                f = f:parent()
+            end
+        end
         if (true == status) then
             event.asyncTrigger(self, eventKind.uiShow)
         else
