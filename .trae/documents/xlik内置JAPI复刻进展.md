@@ -18,6 +18,9 @@
 | **FrameSetSize**（设尺寸） | `FrameSetSize (IRR)V` | ✅ 视觉闭环 |
 | **FrameSetPoint**（设锚点） | `FrameSetPoint (IIIIRR)V` | ✅ 视觉闭环（见第十节） |
 | **FrameSetAlpha**（设透明度） | `FrameSetAlpha (II)V` | ✅ 视觉闭环（见第十节） |
+| **FrameSetText**（设文本） | `FrameSetText (IS)V` | ✅ 写入已实测（`+0x98/0x9C`）；必须先设字体，否则 `call 0` |
+| **FrameSetTextFont**（设字体） | `FrameSetTextFont (ISR)V` | ✅ 已实测（`+0x8C` 得字体对象；`this`=控件本体，`ret 0xC` 需压满 3 栈参） |
+| **「挂接」**（创建后写 `+0x74/+0x78` 父链接） | （内部步骤） | ✅ 已实现（一切「通知型」setter 的前提） |
 
 ---
 
@@ -145,7 +148,24 @@ CreateFrameByTagName: type="LK_TEXT"     name="JKApiText"  parent=0x00000000 -> 
 | `FrameSetAlpha` | ✅ **已打通**（视觉闭环，见第十节） | `this` 必须是**控件本体**（不是 core），见第十节 |
 | `CreateFrameByTagName` 完整实现 | 只做了"建出对象" | ⚠️ 见下方「关于 `FUN_102492e0` 的重要修正」——它很可能**不是**框架 `CreateFrameByTagName` 的真正实现 |
 
-### ⚠️ 已知问题：关窗口时崩溃（退出期链表摘除收到空节点）
+### ✅ 已修复：崩溃家族的统一根因（2026-10-13）
+
+**根因**：`帧+0x74 / +0x78 / +0x7C` 是**帧内嵌的一个链表节点**（`+0x78` = next 指针、`+0x7C` = 编码后的 prev）。
+早期"挂接"实现把 `+0x78` 当成"父/索引"写成 **2**，从而**写坏了这个节点**：
+帧的析构函数 `RVA 0x97B80`（开头把 vtable 换成基类 `0x6F95A5C0`，随后逐个摘链）
+在摘 `+0x74/+0x78/+0x7C` 这条链时执行 `mov [ecx+4],eax`（`ecx = [edi+0x78] = 2`）
+→ **AV: RVA 0x97BCC 访问 0x6**。同理可解释其它表现（点/文本/退出期的各种空指针）。
+
+**修法**（[natives.cpp](../../vendor/japi-replica/src/natives.cpp) `CreateFrameByTagName`）：
+- **只写 `帧+0x74 = parent`**（通知路径 `0xBF960 → 0xB9900` 需要它）；
+- **`+0x78`/`+0x7C` 保持 0**（析构 `test edx,edx / je` 会跳过摘链）；
+- **不再调用 `0xBF9A0`（完整 SetParent）**——它会写 `+0x78 = idx`，同样破坏该节点。
+
+**实测**：只建 `LK_TEXT` + 关窗口 → **无 AV、`DLL_PROCESS_DETACH` 正常出现、不再弹 `FATAL ERROR`** ✓
+
+> 以下为历史存档（修复前的现象与分析），保留以记录定位过程。
+
+
 
 **只发生在关闭游戏窗口时**，游戏内功能不受影响（本局能正常跑完）。
 
@@ -187,7 +207,162 @@ The instruction at '0xXXXXXXXX' referenced memory at '0x00000008'.
 收益仅为「关窗口不弹框」。等框架实际用起来后，若同类问题在**运行期**暴露，再带着真实用法回来收尾
 （那时更容易知道要注册哪个名字）。
 
-**复现与取证**：把 `FrameSetSize` + `FrameSetPoint` 作用到同一个控件，然后关窗口即稳定复现。
+**另一处同源崩溃（`EIP = 0x00000000`）**：给 `TEXT` 控件设了文本、但**没有设字体**时，
+文本对象里的渲染回调保持空指针，之后某次渲染/销毁路径会 `call 0` 崩
+（表现为 `Exception: 0xC0000005 at 0023:00000000`）。
+→ 要安全使用文本，必须把 `FrameSetTextFont` 也做出来（或保证模板自带 `Font`）。
+> 备注：`FrameSetText` 本身的写入是对的（实测 `控件本体+0x98` 写长度、`+0x9C` 写字符串指针），
+> 崩的是「设了文本却没有字体」之后的那条回调路径。
+
+#### 创建链逆向成果与残留问题（2026-10-13）
+
+**① 「挂接」= `child->SetParent(parent, 2, 0)`（已实现）**
+
+`RVA 0xBF9A0`（`ToolTipCost -0x27E - 0x90` → `0xBFA30 - 0x90`）：
+```
+mov [child+0x74], parent      ; 父指针
+mov [child+0x78], idx         ; = 2（游戏自身调用形态，RVA 0xBB906）
+if (parent) parent->登记(child)   ; RVA 0xB9CA0：把 child 插进 [parent+0xD4] 子链表
+```
+- **通知路径只读 `+0x74`/`+0x78`**：`0xBF960` → `test [this+0x7C],1` → `0xB9900([this+0x74], [this+0x78])`。
+- 实测：不挂接时 `+0x74 = 0`，任何走通知的 setter（`SetFont` / `SetTextColor`）→ `0xB9900(0,…)` 读 `[0x68]` → 崩；
+  补上 `+0x74/+0x78` 后 **`FrameSetTextFont` 与 `FrameSetText` 双双通过**（`+0x8C` 得字体对象、`+0x98/0x9C` 得文本）。
+- ⚠️ 父侧登记 `0xB9CA0` 会 `mov ecx,[parent+0xD4]; mov eax,[ecx+4]`，而
+  `GetGameUI()` 返回的对象 **`+0xD4 = 0`** → 硬调崩（`AV: RVA 0xB9D10 访问 0x4`）。
+  故当前实现：**只写 `+0x74/+0x78`**，`[parent+0xD4]==0` 时跳过父侧登记。
+
+**② 创建链（全部离线读出，`tools/gl_disasm.py`）**
+
+```
+CreateFrameByTagName
+ → ctor 0x909C0(ecx=fdf条目名, edx=owner, 栈=(a1,a2,a3))；先查 frame 类型注册表(RVA 0x6FBB9CFC, 查表 0x6AEF0)
+   查不到 / (entry->0x48 & 2)==0 → 返回 0
+ → 0x90750(ecx=entry, edx=owner)：eax=[entry+0x100] 为「类型创建函数」
+     调用形态：push a2; edx=[entry+0x28]; ecx=owner; call eax
+     → 之后 0x95A50(ecx=entry, edx=owner, 栈=(edi, 新控件, a?))
+         · eax = 函数表[ 0x6F95A4A0 + [entry+0x2C]*4 ]   ← ★ 按类型索引的函数表
+         · if ([entry+0x38]==0) → 0xA1380(ecx=新控件, 栈=(…))   ← ★ 疑似「实例化子对象」
+         · 末尾 call 函数表项，参数含 (entry, 新控件, owner)
+     → 0x91430(栈上临时对象)、虚调用 [新控件+0xDC]
+```
+**a2 = template**（fdf 条目名）已实测传入，但**未改变** `+0x18`。
+
+**③ 残留崩溃（启动期，`AV#1: ip=0`）——与清理函数 `RVA 0xBD280`**
+
+```
+0xBD280(this)：先把自己从全局链表（全局 RVA 0x6FB66418/0x6FB6641C）摘除
+  edi = this + 8 ; 循环 9 次（esi=0..8）:
+     ecx = [edi]                 ; 槽值
+     if (!ecx) next
+     eax = [ecx]                 ; 期望「对象的 vtable」
+     call [eax+0xC]              ; ← 崩在 esi=4
+     if (!eax) next
+     if ([eax+0x34]) 0xBD280(eax)     ; 递归清理子对象
+  jmp [[this]+4]                ; 尾调用虚析构
+调用者：RVA 0xBD6BA（由全局计数 [0x6FB66420] 驱动的一次「全局清理 pass」）
+```
+我们控件的现场（`tf = 0x30B89760`）：
+```
+tf+00: 50 B0 30 53 | 01 00 00 00 | 00 00 00 00 | 00 00 00 00
+tf+10: 00 00 00 00 | 00 00 00 00 | 78 97 B8 30 | 87 68 47 CF   ← +18 = tf+18(自引用哨兵!), +1C = cookie
+tf+20: 88 00 F7 26 | ...                                      ← +20 = parent
+```
+⇒ `esi=4` 时 `ecx = [tf+0x18] = tf+0x18`（自引用），`eax = [ecx] = tf+0x18`，
+`call [eax+0xC] = [tf+0x24] = 0` → **`call 0`** ⇒ 与"关窗口崩溃"同源。
+
+**④ 已排除**：`FrameSetPoint` 不是触发条件（不调它仍崩）；把 template 作为 ctor 的第 2 栈参传入也未改变 `+0x18`。
+
+**⑤ 下一步（建议）**：读 `0xA1380` 与函数表 `0x6F95A4A0[…]` —— **已完成（2026-10-13）**，结果见下：
+
+- **`0xA1380(frame, str, val)`**（`ret 8`，由 `[entry+0x38]==0` 守卫）：若 `str` 非空，则用 `0x120688(str, "…", 0x265, 0)`
+  新建一个类型专属对象存进 **`frame+0x160`**，再 `0x9EE70(ecx=str, edx=frame, val)`、`[frame+0x164]=val`。
+  ⇒ 它管的是 `+0x160`，**不是** `+0x18`。
+- **类型函数表 `0x6F95A4A0[16]`**（全部 `.text`）：`0x92A80 / 0x92A90 / 0x92C50 / 0x92E60 / 0x92E70 / 0x92F70 / 0x92FD0 / 0x932B0 /
+  0x93690 / 0x93730 / 0x937D0 / 0x93A60 / 0x93C10 / 0x93CA0 / 0x93E40 / 0x93EF0`。
+  `0x95A50` 里 `idx = [entry+0x2C]; fn = Table[idx]`，末尾 `call fn(edx=新控件, 栈=(…, owner, …))` —— 类型专属初始化。
+- **下一步**：确定本局 `LK_TEXT` 的 `entry+0x2C` 实际取值 → 读表中命中项的**函数体**，看它对 `帧+0x18`（及 `+8..+0x28` 那 9 个槽）
+  做了什么、以及是否因为我们 fdf 缺某条指令而没执行到；也就是说：**`+0x18` 应当由谁写**。
+  （工具已支持读表：`python gl_disasm.py dw 0x95A4A0 16`）
+- **2026-10-13 续查**：「谁写 `帧+0x18`」用新加的 `whowrites` 模式扫过：
+  - 16 个类型函数（`0x92A80–0x93EF0`）范围内 **0 处** ⇒ 与 `+0x18` 无关；
+  - 创建链 `0x90000–0x96000` 有 8 处，逐个反汇编后**都不是「帧的 +0x18 自初始化」**
+    （例如 `0x90C69` 是「把 12 字节表项 {obj,a,b} 拷进 `esi+0x14/+0x18/+0x1C`」的数据拷贝循环）。
+  ⇒ 结论：`+0x18 = 自己` 不是这些路径写的，**更可能本来就该是「内嵌空链表哨兵」**；
+    于是问题重新指向「**这个控件为什么会被 `0xBD280` 那次全局清理扫到**」（它的 `+8..+0x28` 是 9 个指针槽，
+    而我们的控件在那里放的是 {0,0,0,0,self,cookie,parent,0,0}）。
+    下一步：查全局清理队列（全局 RVA `0x6FB66418/0x6FB6641C`，计数 `0x6FB66420`）的**插入方**，
+    弄清入队条件——正常控件何时入队、我们为何提前入队。（工具新支持：`whowrites <偏移> [lo] [hi]`）
+- **2026-10-13 队列链路（已查明）**：
+  ```
+  入队 0xBD630(this, arg1 /*ret 4*/)
+      if (arg1) { call [[this]+4](); 非 0 则返回 }          ; 虚函数可否决入队
+      edx = (this ? [0x6FB66418] + this : 0x6FB6641C)      ; 按对象地址算 bucket
+      摘旧节点 → [edx]=旧头; [edx+4]=…; [ecx+4]=this; [0x6FB6641C]=edx
+  排空 0xBD6B0()
+      while ([0x6FB66420] != 0) 0xBD280([0x6FB66420]);     ; ← 崩的就是这里
+  ```
+  ⇒ **`0xBD280` 不是析构，而是「对已入队对象的一次处理」**；而**入队者是 `SetSize`**
+  （第十节早先记录的「setW/setH 结尾 `jmp 0xBD630`」就是它，当时误标为"通知/重排"）。
+  这解释了「只建控件 → 干净；一 `SetSize` → 崩」的老观察。
+  工具新增：`ref <绝对地址>`（找某个全局量的引用点，据此定位读写方）。
+- **2026-10-13 队列的性质（决定性）**：`0xBD630` 的 95 个调用点形态一致 ——
+  `lea ecx,[reg+0xB4]` / `add ecx,0xB4` 后 `call 0xBD630`：
+  ```
+  lea ecx,[edi+0xb4]; call 0xBD630    (0x94082)
+  add ecx,0xb4;       call 0xBD630    (0xA3758)
+  lea ecx,[esi+0xb4]; call 0xBD630    (0xA93C2 / 0xA9D26 / 0xA9D4E / 0xA9E5B)
+  ```
+  且 `FrameSetSize` 宽/高（`0xBD960`/`0xBD7C0`）尾部就是 `jmp 0xBD630`、**`ecx` 原样传递**（即 SetSize 的 `this`）。
+  ⇒ **这是「core 专用队列」**：入队对象应为 **`帧+0xB4`**，`0xBD280` 按 **core 布局**解引用 `+8..+0x28`。
+  ⇒ 而崩溃现场被处理的是**帧本体**（`0x30B89760` = ctor 返回的帧指针）
+  ⇒ **我们的 `FrameSetSize` 用「帧本体」当 `this`**（`frame_this()` 走了 fallback：`[帧+0xB4]` 不可读
+  ⇒ 我们这类 `LK_TEXT` 帧**没有 core**），于是**把帧误入 core 专用队列** → `0xBD280` 按 core 布局
+  `call [[+0x18]+0xC]` → `call 0`。
+  ⇒ 这解释了全部老观察：只建控件（不入队）→ 干净；一 `SetSize` → 入队 → 崩；
+  `LK_BACKDROP_*` 那批 `self = 帧+0xB4`（有 core）而 `LK_TEXT` 没有。
+  **下一步**：核实 `[帧+0xB4]`（本类帧是否真无 core）；若有 core 差别，则统一走「core 取用」并保证
+  `FrameSetSize/Point/Alpha` 的 `this` 与入队对象一致。
+- **2026-10-13 节点编码规则（已推演）**：该"队列"是**带哨兵的循环双向链表**，哨兵 = 全局两连 dword：
+  ```
+  S.next = [0x6FB6641C]        S.prev = [0x6FB66420]
+  [0x6FB66418] = 0（BSS）      ⇒ 节点地址 = 对象地址（edx = 0 + this）
+  prev 字段编码：v<=0 → prev = ~v ； v>0 → prev = v + (node - next->prev)   ; 见 0xBD65F–0xBD66F
+  空表：S.next = S（自指）; S.prev = ~S（取反编码，正好让排空循环的 jle 判定为空）
+  入队 0xBD630(obj)：arg1≠0 时先问 [obj]->vtbl[1]()；随后插到哨兵之后（表头）
+  处理 0xBD280(obj)：按同一编码摘除 → 遍历 obj+8..+0x28 的 9 槽 → call [[槽]+0xC]（[[槽]+8]≠0 时递归）
+                    → 末尾 jmp [[obj]+4]；并把 [S.next]/[S.prev] 清零
+  ```
+  ⇒ **`[S.prev]` 就是"最后入队的对象地址"**。崩溃现场 `[S.prev] = 0x30B89760`（= 帧地址）
+  ⇒ 那一轮的 `SetSize` 是**以"帧本体"入队**的（而非 `帧+0xB4`）——与"两类型 `[帧+0xB4]` 均可读、
+  `frame_this` 应返回 `帧+0xB4`"矛盾。
+  **待验证**：用「全局量快照探针」（`start.lua`：在 未建控件 / 建控件后 / SetSize 后 三点 dump
+  `base+0x6FB66418` 起 0x10 字节）直接看入队身份与时机。
+- **2026-10-13 快照实测（已做，`LK_BACKDROP_NIL`）**：
+  ```
+  1) 初始        [0x6FB66418]=0x30  S.next=0x311595FC  S.prev=0x31155A7C
+  2) 建控件后    [0x6FB66418]=0x30  S.next=0x311595FC  S.prev=0x31155A7C   ← 与 1) 相同
+  3) SetSize 后  [0x6FB66418]=0x30  S.next=0x31054F3C  S.prev=0x31155A7C
+  ```
+  ⇒ ① **`[0x6FB66418] = 0x30`**（不是 0）⇒ **节点地址 = 对象地址 + 0x30**；
+  ⇒ ② 对 `LK_BACKDROP_NIL`：**创建不入队**（1)=2)），入队发生在 `SetSize`；
+  ⇒ ③ 入队对象 = `self` = **`帧+0xB4`**（`S.next` 变成 `self+0x30`，日志 `frame=0x31054E58 self=0x31054F0C`）
+  —— **入队身份正确**，此前"SetSize 把帧本体入队"的怀疑不成立（至少对 `LK_BACKDROP_NIL`）。
+  ⇒ 列表在启动时**已含 war3 自己的节点**（`S.next/S.prev` 指向堆对象），故 `S.prev` 不随插入表头而变。
+  **继续收窄**：换 `LK_TEXT`（崩溃现场用的就是它）复做同三点快照，看 `self` 是否仍为 `帧+0xB4`。
+- **2026-10-13 快照实测（`LK_TEXT`，决定性）**：
+  ```
+  1) 初始        [0x6FB66418]=0x30  S.next=0x30E695FC  S.prev=0x30E65A7C
+  2) 建控件后    [0x6FB66418]=0x30  S.next=0x30E69844  S.prev=0x30E65A7C     ← ★ 变了
+  3) SetSize 后  [0x6FB66418]=0x30  S.next=0x30E69844  S.prev=0x30E65A7C     ← 不再变
+  日志：created ok 0x30E69760；[帧+0xB4]=0x606EB164；SetSize self=0x30E69814 = 帧+0xB4
+  ```
+  ⇒ `S.next = 0x30E69844 = (帧+0xB4) + 0x30` ⇒ **`LK_TEXT` 在「创建」这一步就把 `帧+0xB4` 入了队**
+  （`LK_BACKDROP_NIL` 创建时**不入队**）——**类型相关**，差别在**创建路径**，不在 setter。
+  ⇒ `SetSize` 只是把同一节点再插到表头（已在表头 ⇒ 快照 3) 不变）。
+  ⇒ 结论方向：**修法应落在 `CreateFrameByTagName`（创建路径）**；下一步做最小复现：
+  只建 `LK_TEXT`、不调任何 setter，然后关窗口，看是否仍崩。
+
+
 插件里已备好只读取证工具：`JKDumpSetters` / `JKDumpFrame` / `JKDumpMem` / `JKDumpCode` /
 `JKDumpCallers` / `JKTrialSetPoint` / `JKTrialSetAlpha` / `JKProbeExitCrash`（VEH，转储崩溃现场）。
 
@@ -266,6 +441,32 @@ for (i = 0; i < 0x20; i++) { *FUN_10254460(&DAT_106e6158, name[i]) = i; }   // m
 
 即：此前假设的 `CreateFrameByTagName = FUN_10249740` **是正确**的。
 
+#### 反向重建出的「锚点 → 内部函数」候选表（补齐其余 setter 的施工图）
+
+插件那套「锚点 + 偏移」表无法直接读（没有插件二进制），但可以用 `JKScanAnchorOps` 扫
+`ToolTipCost` / `RealmListContainer` 两个锚点引用点附近的 `E8`，把同族的内部函数全部列出来 ——
+**已知的三项完全对上**（`-0x256→0xBD960` SetSizeW、`-0x276→0xBD7C0` SetSizeH、`-0x49→0xBD8A0` SetPoint），
+说明这张清单与插件的表同源。再用 `JKDumpCode` 看函数体 + `JKDumpCallers` 看游戏自身调用点的实参，得到：
+
+| 候选 RVA | 函数体要点 | 调用点实参 | 判断 |
+|---|---|---|---|
+| `0xBFA30` | `arg1` 指向的 4 字节依次写 `this+0x68/6B/6A/69`，再 `call [vtbl+0x24]` 通知 | `lea eax,[esi+0x4C]; push eax`（4 字节指针） | **FrameSetTextColor**（⚠️ 实测调用抛异常 → notify 依赖「挂接」，**暂未启用**） |
+| `0xC1020` | 清 `[this+0x9C]` 首字节；`arg1` 非空则调「拷贝字符串」 | 句柄→`char*` 后压栈 | **FrameSetText ✅ 已实现**（`ToolTipCost -0x23D`；实测 `this`=控件本体、`+0x98` 写长度、`+0x9C` 写指针） |
+| `0x51310` | `this+8 = arg1`，带**引用计数**替换并释放旧对象 | — | 资源 setter → **FrameSetTexture** 系 |
+| `0xC1170` | 取 `arg1` 首 dword → 建对象存 `this+0x8C`，类型(1/2)存 `+0x90` | 有 3 参调用点 `(esi, 0, 1)` | Texture / Model |
+| `0xC0C20` | 按 `arg1` 的 bit0/1/2 改 `this+0xC0`，变了就尾调通知 | `[esi+0x5C]` | Show / Enable 类 |
+| `0xA93E0` | `arg1` 或进 `[this+0x1F0]` 的 64 位标志，并置 4 个 dirty | `[esi+0x1EC]` | 标志类 |
+| `0xA9FE0`（=`0xA9FC0`+0x20） | 两个 float 存 `this+0x208/0x20C` 并置脏 | 压 `[esi+0x1E0]`,`[esi+0x1E4]`（x,y） | 坐标 setter |
+| `0xC0B40` | 一个 float 存 `this+0x90`，并释放 `+0xA0/+0x8C` 的旧对象 | `(arg1, float([esi+0x34]))` | 尺寸 / 缩放 |
+| `0xAA130` | 字符串写进 `[this+0x1E8]` 的内部缓冲（容量在 `+0x1E4`） | 调用点前有 sprintf 风格序列（格式串 RVA `0x6E2FB0`） | 名字 / 文本缓冲 |
+| `0xB9E10` | `this+0xCC = arg1`（先做一次处理） | — | 指针 setter |
+| `0xBFB10` | `mov dword [esi],0x606ECE00`（设 vtable） | — | **是构造函数**，非 setter |
+| `0x324AD0` / `0x2A2F0` | 走全局表查找 / 复杂流程 | — | 通用辅助，非 setter |
+
+> `this` 规律：`0xBFA30` / `0xC1020` / `0xC1170` / `0xC0B40` 操作的字段都落在 `+0x8C..0xB4`，
+> 与 `FrameSetAlpha`（写 `this+0xAC`）同族 → 这几个的 `this` 是**控件本体**（不是 core）。
+> 另外 `0xBFB10` 这个 ctor 把 `+0xAC/+0xB0/+0xB4` 清 0 并设 vtable `0x606ECE00`，可作该类对象的识别特征。
+
 #### `DAT_106e6158` 的 32 个基类型名（实测读出）
 
 ```
@@ -310,10 +511,13 @@ SIMPLEBUTTON, SIMPLECHECKBOX, SIMPLESTATUSBAR
 
 ## 八、当前实验开关（`projects/demo/scripts/process/start.lua`）
 
-- **已启用**：`JKWar3Version`、`GetGameUI`、`CreateFrameByTagName`、`LoadToc`、`JKFrameTypeLookup`、
-  `FrameSetSize`、`FrameSetPoint`、`FrameSetAlpha`
+- **已启用（连通性/能力自检）**：`JKTest`、`GetMouseX`、`JKWar3Version`、`GetKeyState`、`UnlockFps`、
+  `UnlockBlpSize`、`JKFrameCtorAddr`、`JKGetGameUI`、`LoadToc`、`GetGameUI`
+- **已停用（复刻期取证脚手架，需要时逐段取消注释）**：建控件 / `FrameSetSize` / `FrameSetPoint` /
+  `FrameSetAlpha` / `JKFrameTypeLookup` 查表 / `JKFrameCreateRaw` / `JKProbeExitCrash`(VEH)
+  —— 停用原因见第七节「已知问题：关窗口时崩溃」
 
-插件共注册 **25 个 native**（`japi_replica.log` 可见）。
+插件共注册 **28 个 native**（`japi_replica.log` 可见）。
 
 ---
 
@@ -330,6 +534,30 @@ Copy-Item build/Release/japi_replica.dll vendor/WE.v4/plugin/warcraft3/japi_repl
 
 - 插件日志：`vendor/WE.v4/plugin/warcraft3/japi_replica.log`
 - Lua 打印落盘：`vendor/WE.v4/plugin/warcraft3/xlik_lua.log`
+
+### 🔧 离线逆向工具（**首选**，别再靠游戏内日志猜）
+
+`vendor/japi-replica/tools/gl_disasm.py` —— 用 **Python 3.11 + Capstone** 直接反汇编本机
+`D:\War3\war3 1.27\Warcraft III Frozen Throne\Game.dll`，把"抄十六进制手推 x86"换成"读汇编"：
+
+```powershell
+cd vendor/japi-replica/tools
+python gl_disasm.py info                          # PE 节区 / ImageBase(0x6F000000)
+python gl_disasm.py func 0xC0B40 0x120            # 反汇编某个 RVA（call/jmp 自动标注目标 RVA）
+python gl_disasm.py calls 0xC0B40 3               # 列出所有调用点 + 各自前 0x30 字节反汇编
+python gl_disasm.py anchor ToolTipCost -0x400 0x100   # 锚点引用点附近的 E8 → 候选函数 + 前 0x40 反汇编
+python gl_disasm.py dw 0x95A4A0 16                  # 按 dword 读表（函数指针表等），镜像内的值自动换算 RVA + 标注节
+python gl_disasm.py whowrites 0x18 0x90000 0x96000  # 找「谁写 [reg+0x18]」（定位某结构偏移的写入方；可限定区间）
+python gl_disasm.py ref 0x6FB6641C                  # 找某全局量在 .text 里的引用点（定位它的读写方）
+```
+
+**正确的工作方式（已改为这个）**：
+① 离线 `gl_disasm.py` 读清签名/语义 → ② 照着写 native → ③ **一次**游戏内验证。
+不再出现"传错参数硬试"的来回。
+
+首个战果：`0xC0B40` 读出是 `SetFont(this, char* file, float height, int flag)` 且 **`ret 0xC`**，
+而初版只压了 2 个栈参（`flag` 会读到栈上垃圾）→ 已修。另外 `0xC1170` 读出是「按句柄设置资源对象
+（存 `this+0x8C`、类型存 `this+0x90`）」→ 是 `FrameSetTexture` / `FrameSetModel` 的候选。
 
 ---
 
@@ -464,8 +692,9 @@ Exception: 0xC0000005 (ACCESS_VIOLATION) at 0x52D9D2D8
    setter 三件套已全通，接线后 `class/ui` 即可在内置 JAPI 上跑起来。
 2. **【已搁置】关窗口崩溃**：见第七节「已知问题：关窗口时崩溃」。只影响退出，不影响游戏内；
    等框架实际用起来、在运行期暴露同类线索时再回来收尾（那时更容易知道要注册哪个名字）。
-3. **其余 setter / 能力**：`FrameShow` / `FrameSetTexture` / `FrameSetText` / `FrameSetModel` /
-   `FrameClearAllPoints` / `FrameFindByName` / `DestroyFrame` 等（native 注册表已定位，逐个照「锚点+偏移」解析；
-   注意 `this` 需逐个用 `JKDumpFrame` 取证，不要假设都是 core）。
+3. **其余 setter / 能力**：`FrameSetText` ✅ / `FrameSetTextFont` ✅ 已落地；剩下 `FrameShow` / `FrameSetTexture` /
+   `FrameSetModel` / `FrameClearAllPoints` / `FrameFindByName` / `DestroyFrame`。
+   施工图见第七节「反向重建出的候选表」——**每个都先用 `tools/gl_disasm.py` 离线读出签名与 `this` 形态再写实现**，
+   不要靠游戏内试错。带 notify 的 setter 已因「挂接」可用（见第七节①）。
 4. **`CreateFrameByTagName` 完整实现**（可选）：见第七节「关于 `FUN_102492e0` 的重要修正」——
    当前走 Game.dll 的 fdf 构造器已能满足框架用法。
