@@ -1,4 +1,4 @@
-# xlik 内置 JAPI 复刻进展：LoadToc / GetGameUI 已打通
+# xlik 内置 JAPI 复刻进展：setter 家族全通 + 6 个缺失 native 已补齐
 
 > 复刻产物：`vendor/japi-replica/`（YDWE 插件形态，链接 `ydwar3.lib`）
 > 目标环境：魔兽争霸 III **1.27a**（ydwar3 版本号 `7000`；PE 版本 `52240 = 0xcc10`）
@@ -20,6 +20,12 @@
 | **FrameSetAlpha**（设透明度） | `FrameSetAlpha (II)V` | ✅ 视觉闭环（见第十节） |
 | **FrameSetText**（设文本） | `FrameSetText (IS)V` | ✅ 写入已实测（`+0x98/0x9C`）；必须先设字体，否则 `call 0` |
 | **FrameSetTextFont**（设字体） | `FrameSetTextFont (ISR)V` | ✅ 已实测（`+0x8C` 得字体对象；`this`=控件本体，`ret 0xC` 需压满 3 栈参） |
+| **FrameShow**（显示/隐藏） | `FrameShow (IB)V` | ✅ 已实现（RVA 0xC0CC0，this=帧本体，见第七节） |
+| **FrameSetTexture**（设背景纹理） | `FrameSetTexture (ISI)V` | ⚠️ 已实现但**实测崩溃未闭环**（RVA 0xC11E0，见第十二节） |
+| **FrameSetModel**（设背景模型） | `FrameSetModel (ISI)V` | ⚠️ 与 Texture 共用 0xC11E0，**同受第十二节问题影响** |
+| **FrameClearAllPoints**（清空锚点） | `FrameClearAllPoints (I)V` | ✅ 已实现（RVA 0xBCCA0，this=core，见第七节） |
+| **FrameFindByName**（按名查帧） | `FrameFindByName (SI)I` | ✅ 已实现（0x9EF40 全局注册表 + 0xA01D0 内层表，id>0 链遍历） |
+| **DestroyFrame**（销毁帧） | `DestroyFrame (I)V` | ✅ 已实现（RVA 0xA48B0 deleting destructor，含按名注销） |
 | **「挂接」**（创建后写 `+0x74/+0x78` 父链接） | （内部步骤） | ✅ 已实现（一切「通知型」setter 的前提） |
 
 ---
@@ -441,6 +447,9 @@ for (i = 0; i < 0x20; i++) { *FUN_10254460(&DAT_106e6158, name[i]) = i; }   // m
 
 即：此前假设的 `CreateFrameByTagName = FUN_10249740` **是正确**的。
 
+> **2026-10-13：表中 6 个缺失 native（`DestroyFrame` / `FrameShow` / `FrameSetTexture` / `FrameSetModel` /
+> `FrameClearAllPoints` / `FrameFindByName`）已全部实现并注册**（见 [natives.cpp](../../vendor/japi-replica/src/natives.cpp) 与 [dllmain.cpp](../../vendor/japi-replica/src/dllmain.cpp)）。
+
 #### 反向重建出的「锚点 → 内部函数」候选表（补齐其余 setter 的施工图）
 
 插件那套「锚点 + 偏移」表无法直接读（没有插件二进制），但可以用 `JKScanAnchorOps` 扫
@@ -453,8 +462,8 @@ for (i = 0; i < 0x20; i++) { *FUN_10254460(&DAT_106e6158, name[i]) = i; }   // m
 | `0xBFA30` | `arg1` 指向的 4 字节依次写 `this+0x68/6B/6A/69`，再 `call [vtbl+0x24]` 通知 | `lea eax,[esi+0x4C]; push eax`（4 字节指针） | **FrameSetTextColor**（⚠️ 实测调用抛异常 → notify 依赖「挂接」，**暂未启用**） |
 | `0xC1020` | 清 `[this+0x9C]` 首字节；`arg1` 非空则调「拷贝字符串」 | 句柄→`char*` 后压栈 | **FrameSetText ✅ 已实现**（`ToolTipCost -0x23D`；实测 `this`=控件本体、`+0x98` 写长度、`+0x9C` 写指针） |
 | `0x51310` | `this+8 = arg1`，带**引用计数**替换并释放旧对象 | — | 资源 setter → **FrameSetTexture** 系 |
-| `0xC1170` | 取 `arg1` 首 dword → 建对象存 `this+0x8C`，类型(1/2)存 `+0x90` | 有 3 参调用点 `(esi, 0, 1)` | Texture / Model |
-| `0xC0C20` | 按 `arg1` 的 bit0/1/2 改 `this+0xC0`，变了就尾调通知 | `[esi+0x5C]` | Show / Enable 类 |
+| `0xC1170` | 取 `arg1` 首 dword → 建对象存 `this+0x8C`，类型(1/2)存 `+0x90` | 有 3 参调用点 `(esi, 0, 1)` | 背景色 setter（**已排除**）→ **Texture/Model 实为 `0xC11E0`** |
+| `0xC0C20` | 按 `arg1` 的 bit0/1/2 改 `this+0xC0`，变了就尾调通知 | `[esi+0x5C]` | mode 选择器（**已排除**）→ **Show 实为 `0xC0CC0`** |
 | `0xA93E0` | `arg1` 或进 `[this+0x1F0]` 的 64 位标志，并置 4 个 dirty | `[esi+0x1EC]` | 标志类 |
 | `0xA9FE0`（=`0xA9FC0`+0x20） | 两个 float 存 `this+0x208/0x20C` 并置脏 | 压 `[esi+0x1E0]`,`[esi+0x1E4]`（x,y） | 坐标 setter |
 | `0xC0B40` | 一个 float 存 `this+0x90`，并释放 `+0xA0/+0x8C` 的旧对象 | `(arg1, float([esi+0x34]))` | 尺寸 / 缩放 |
@@ -466,6 +475,25 @@ for (i = 0; i < 0x20; i++) { *FUN_10254460(&DAT_106e6158, name[i]) = i; }   // m
 > `this` 规律：`0xBFA30` / `0xC1020` / `0xC1170` / `0xC0B40` 操作的字段都落在 `+0x8C..0xB4`，
 > 与 `FrameSetAlpha`（写 `this+0xAC`）同族 → 这几个的 `this` 是**控件本体**（不是 core）。
 > 另外 `0xBFB10` 这个 ctor 把 `+0xAC/+0xB0/+0xB4` 清 0 并设 vtable `0x606ECE00`，可作该类对象的识别特征。
+
+#### 6 个缺失 native 的最终定位（2026-10-13，离线反汇编确认）
+
+用 `gl_disasm.py` 在两个锚点引用点（`ToolTipCost` ref=0x384BBB、`RealmListContainer` ref=0x2BE62A）附近
+批量扫 `E8` 家族 + 逐函数反汇编，得出**决定性结论**（已全部写入 [natives.cpp](../../vendor/japi-replica/src/natives.cpp)）：
+
+| native | 内部函数 RVA | 调用形态 | this 形态 |
+|---|---|---|---|
+| `FrameShow` | `0xC0CC0` | `show(ecx, 栈=show)`；改 `+0xC0` bit 0x8000，变了尾调 `0xC1500` 重排；ret 4 | **帧本体**（flags@+0xC0；调用点 `lea ecx,[edi+8]` 取证） |
+| `FrameSetTexture` / `FrameSetModel` | `0xC11E0` | `setTex(ecx, 栈=(path, flag))`；释放 `+0x8C` 旧对象→建资源对象存 `+0x8C`、类型存 `+0x90`→`0xBF960` 通知；ret 8 | **core（帧+B4）**（与 SetTextFont 共用 `+0x8C` 对象槽） |
+| `FrameClearAllPoints` | `0xBCCA0` | `clear(ecx)`；循环 `[core+4]` 次摘除/释放 `[core+8..]` 锚点槽 | **core**（`[core+4]`=计数、`[core+8]`=槽数组） |
+| `FrameFindByName` | `0x9EF40` + `0xA01D0` | `0x120694(name)`→hash；`0x9EF40(ecx=name, edx=hash)`→全局注册表节点 `+0x18`（内层表）；`0xA01D0(ecx=inner, 栈=name)`→帧节点；id>0 手写 bucket 链步进 | 返回**帧节点**（vtable `0x95AC3C`=帧 vtable） |
+| `DestroyFrame` | `0xA48B0`（+`0xA0F00` 内部析构） | `destroy(ecx, 栈=deleting)`；`[+0x168]` 引用计数、`+0xA0F00` 内调 `0x9EF60` 按名注销注册表、`deleting&1` 释放内存 | **帧本体**（`[+0x168]/[+0x170]` 引用计数字段） |
+
+> 注意：`0xC0CC0` / `0xC11E0` / `0xBCCA0` / `0xA48B0` 均**无可直接复用的「ref-偏移 E8」调用点**
+> （或 E8 位置与现有插件偏移表未逐一匹配），故全部用 **`g.base + RVA` 常量直寻址**（1.27a 专属），
+> 每次调用前在日志打印序言字节供校验。`0xC11E0` 末尾 `call 0xBF960` → 调用前必须 `clear_dirty_bit`。
+> `FrameFindByName` 的 id>0 链遍历按 `0xA01D0` 内部模式手写（`next = *(*(bucket+idx*12) + node + 4)`，
+> `node>0` 有效，逐个校验「同 hash + 同名」）。
 
 #### `DAT_106e6158` 的 32 个基类型名（实测读出）
 
@@ -692,9 +720,64 @@ Exception: 0xC0000005 (ACCESS_VIOLATION) at 0x52D9D2D8
    setter 三件套已全通，接线后 `class/ui` 即可在内置 JAPI 上跑起来。
 2. **【已搁置】关窗口崩溃**：见第七节「已知问题：关窗口时崩溃」。只影响退出，不影响游戏内；
    等框架实际用起来、在运行期暴露同类线索时再回来收尾（那时更容易知道要注册哪个名字）。
-3. **其余 setter / 能力**：`FrameSetText` ✅ / `FrameSetTextFont` ✅ 已落地；剩下 `FrameShow` / `FrameSetTexture` /
-   `FrameSetModel` / `FrameClearAllPoints` / `FrameFindByName` / `DestroyFrame`。
-   施工图见第七节「反向重建出的候选表」——**每个都先用 `tools/gl_disasm.py` 离线读出签名与 `this` 形态再写实现**，
-   不要靠游戏内试错。带 notify 的 setter 已因「挂接」可用（见第七节①）。
+3. **【2026-10-13 实现、2026-10-14 实测崩溃后暂停】其余 setter / 能力**：`FrameShow` / `FrameSetTexture` / `FrameSetModel` /
+   `FrameClearAllPoints` / `FrameFindByName` / `DestroyFrame` **6 个 native 已全部实现并注册**
+   （实现见 [natives.cpp](../../vendor/japi-replica/src/natives.cpp)，注册见 [dllmain.cpp](../../vendor/japi-replica/src/dllmain.cpp)）。
+   6 个 native 直接调用均无异常；**但 `FrameSetTexture` 创建真实纹理对象后渲染遍历崩溃，排障未收敛已暂停**
+   （详见第十二节），实验性改动已全部回退。不调用 `FrameSetTexture`/`FrameSetModel` 时项目稳定可用。
 4. **`CreateFrameByTagName` 完整实现**（可选）：见第七节「关于 `FUN_102492e0` 的重要修正」——
    当前走 Game.dll 的 fdf 构造器已能满足框架用法。
+
+---
+
+## 十二、FrameSetTexture 实测崩溃：未闭环，已暂停并回退（2026-10-14）
+
+**结论**：直调 `0xC11E0` 创建纹理对象后，渲染遍历崩溃；多轮取证无法在现有调用形态下收敛，
+**已暂停**并回退全部实验改动。框架 UI 不调用 `FrameSetTexture`/`FrameSetModel` 时项目稳定可用。
+
+### 崩溃链（离线反汇编 + VEH 现场双重确认）
+
+```
+渲染遍历 0xA2780: mov eax,[ecx+0x140]; test eax,eax; je 跳过 → call 0x190160
+  → 0x190160 → 0x18F030（节点遍历）: mov esi,[edi+0x1C]       → AV 0x18F040 读 0x4D
+  → 0x190160 → 0x18E700（run 遍历）: mov eax,[ecx+0x10]
+                                     mov esi,[eax+edx*4]      → AV 0x18E707 读 0x1D
+```
+
+`SetTexture` 创建并存入 `[core+0x8C]`（= `frame+0x140`）的纹理对象（vtable RVA 0x964BA0，
+分配 size = 路径长 + 0x25，路径字符串存 +0x24）：
+
+| 偏移 | 值 | 语义 |
+|---|---|---|
+| `+0x10` | `1`（垃圾） | `0x18E700` 当 run 数组基址 |
+| `+0x14` | `0` | — |
+| `+0x18` | `0x40`（垃圾） | — |
+| `+0x1C` | `0x40`（垃圾） | `0x18F030` 当节点指针 |
+| `+0x20` | 路径串指针 | — |
+
+创建路径（`0xC11E0` 开头无条件释放 `+0x8C` 旧对象 → `0x197450` 建对象 → `0x197880` 只读
+`[ecx+0x10]&1` 标志）**不初始化 run 容器**。
+
+### 实验与结论
+
+1. `+0x14/+0x1C` 补零 → 崩点从 `0x18F040` 前进到 `0x18E707`（证明方向对；但 `+0x10` 不能清零——
+   `0x18E700` 无条件解引用，清零会在更早处崩）。
+2. SetTexture 第 3 参 `flag=1`（0xC1298 的 `and eax,1` 分支）→ 对象结构不变（`+0x10` 仍 1），
+   该 flag 分支**不构建 run 容器**。
+3. **JKRef 对照**（LK_BACKDROP_NIL 完整模板、引擎自建帧）：`frame+0x140` = **0** →
+   `0xA2780` 的 `je` 直接跳过 → 引擎的 BACKDROP 帧平时**不挂纹理对象**。故对照帧无法提供
+   "引擎正确构建的纹理对象"金标准。
+
+### 判断与后续方向
+
+`0xC11E0` 的直调路径可能本身缺"run 容器构建"环节（DZ 官方实现或另走完整函数，或该对象
+需先经帧渲染注册）。继续定位需研究 `0x18E700`/`0x18F030` 的 run 语义与 `0xC11E0` 全部 33 个
+调用点的参数形态。**暂不推进**。
+
+### 已回退的实验改动
+
+- `vendor/japi-replica/src/natives.cpp`：删除 SetTexture 成功后对对象的 `+0x14/+0x1C` 补零块；
+  VEH 寄存器转储恢复"仅 ip==0"触发。
+- `projects/demo/scripts/process/start.lua`：删除 JKProbeAv / JKTexAuto / JKRef / JKDumpMem 取证脚手架（git 还原到 `1b8777e`）。
+- 模板树 `exe/lib/embeds/new/scripts/globals/setup/command.lua` 死代码、`xlik.fdf` 还原 HEAD。
+- 保留：6 个 native 的注册与实现、`library/japi/_japi.lua` 的 `_nativeOrder` 注释说明。
