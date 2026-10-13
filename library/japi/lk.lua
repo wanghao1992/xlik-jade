@@ -518,7 +518,7 @@ function japi.LoadToc(tocFilePath)
         return true
     end
     japi._loadToc[tocFilePath] = true
-    japi.DZ_LoadToc(tocFilePath)
+    japi.FrameLoadToc(tocFilePath)
 end
 
 --- 获取某个坐标的Z轴高度

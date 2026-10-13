@@ -14,7 +14,7 @@ function _index:model(path)
     if (nil ~= path and self._model ~= path) then
         self._model = path
         path = japi.AssetsModel(path)
-        japi.DZ_FrameSetModel(self._handle, path, 0, 0)
+        japi.FrameSetModel(self._handle, path, 0, 0)
     end
     return self
 end
@@ -27,7 +27,7 @@ function _index:animate(animateId, autoCast)
     if (type(animateId) == "string" and type(autoCast) == "boolean") then
         self._animateId = animateId
         self._autoCast = autoCast
-        japi.DZ_FrameSetAnimate(self._handle, animateId, autoCast)
+        japi.FrameSetAnimate(self._handle, animateId, autoCast)
     end
     return self
 end
