@@ -236,7 +236,7 @@ end
 --- 当单位有地面纹理或指定为建筑时，会被认为是建筑
 ---@return boolean
 function _index:isBuilding()
-    return nil ~= self._building
+    return true == self._building
 end
 
 --- 是否设定为不动单位
@@ -339,6 +339,18 @@ end
 ---@return boolean
 function _index:isUnArming()
     return superposition.is(self, "unArm")
+end
+
+--- 是否被击飞中(供 ability.crackFly 判定)
+---@return boolean
+function _index:isCrackFlying()
+    return superposition.is(self, "crackFly")
+end
+
+--- 是否冲锋中(供 ability.leap 判定)
+---@return boolean
+function _index:isLeaping()
+    return superposition.is(self, "leap")
 end
 
 --- 判断单位是否处于施法中止态
