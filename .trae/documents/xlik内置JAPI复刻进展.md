@@ -21,8 +21,8 @@
 | **FrameSetText**（设文本） | `FrameSetText (IS)V` | ✅ 写入已实测（`+0x98/0x9C`）；必须先设字体，否则 `call 0` |
 | **FrameSetTextFont**（设字体） | `FrameSetTextFont (ISR)V` | ✅ 已实测（`+0x8C` 得字体对象；`this`=控件本体，`ret 0xC` 需压满 3 栈参） |
 | **FrameShow**（显示/隐藏） | `FrameShow (IB)V` | ✅ 已实现（RVA 0xC0CC0，this=帧本体，见第七节） |
-| **FrameSetTexture**（设背景纹理） | `FrameSetTexture (ISI)V` | ⚠️ 已实现但**实测崩溃未闭环**（RVA 0xC11E0，见第十二节） |
-| **FrameSetModel**（设背景模型） | `FrameSetModel (ISI)V` | ⚠️ 与 Texture 共用 0xC11E0，**同受第十二节问题影响** |
+| **FrameSetTexture**（设背景纹理） | `FrameSetTexture (ISI)V` | ✅ 视觉闭环（官方路径：`frame+0x44` 子对象 → 0xA62A0 挂 `+0x178`，见第十二节） |
+| **FrameSetModel**（设背景模型） | `FrameSetModel (ISI)V` | ✅ 与 Texture 共用官方路径实现（blp/tga 已实测；mdx 模型待单独实测） |
 | **FrameClearAllPoints**（清空锚点） | `FrameClearAllPoints (I)V` | ✅ 已实现（RVA 0xBCCA0，this=core，见第七节） |
 | **FrameFindByName**（按名查帧） | `FrameFindByName (SI)I` | ✅ 已实现（0x9EF40 全局注册表 + 0xA01D0 内层表，id>0 链遍历） |
 | **DestroyFrame**（销毁帧） | `DestroyFrame (I)V` | ✅ 已实现（RVA 0xA48B0 deleting destructor，含按名注销） |
@@ -720,64 +720,77 @@ Exception: 0xC0000005 (ACCESS_VIOLATION) at 0x52D9D2D8
    setter 三件套已全通，接线后 `class/ui` 即可在内置 JAPI 上跑起来。
 2. **【已搁置】关窗口崩溃**：见第七节「已知问题：关窗口时崩溃」。只影响退出，不影响游戏内；
    等框架实际用起来、在运行期暴露同类线索时再回来收尾（那时更容易知道要注册哪个名字）。
-3. **【2026-10-13 实现、2026-10-14 实测崩溃后暂停】其余 setter / 能力**：`FrameShow` / `FrameSetTexture` / `FrameSetModel` /
+3. **【2026-10-13 实现、2026-10-16 官方路径打通】其余 setter / 能力**：`FrameShow` / `FrameSetTexture` / `FrameSetModel` /
    `FrameClearAllPoints` / `FrameFindByName` / `DestroyFrame` **6 个 native 已全部实现并注册**
    （实现见 [natives.cpp](../../vendor/japi-replica/src/natives.cpp)，注册见 [dllmain.cpp](../../vendor/japi-replica/src/dllmain.cpp)）。
-   6 个 native 直接调用均无异常；**但 `FrameSetTexture` 创建真实纹理对象后渲染遍历崩溃，排障未收敛已暂停**
-   （详见第十二节），实验性改动已全部回退。不调用 `FrameSetTexture`/`FrameSetModel` 时项目稳定可用。
+   `FrameSetTexture` 原直调 `0xC11E0` 崩溃，已改为复刻官方 BACKDROP 分派路径（`frame+0x44` 子对象 →
+   `0xA62A0`，详见第十二节），实测 4 个探针帧全部可见、无崩溃；`FrameSetModel` 共用该路径（模型未单独实测）。
 4. **`CreateFrameByTagName` 完整实现**（可选）：见第七节「关于 `FUN_102492e0` 的重要修正」——
    当前走 Game.dll 的 fdf 构造器已能满足框架用法。
+5. **【2026-10-16 待验证】清理收敛后复测**：探针帧（JKTexAuto/JKTpl/JKWhite/JKTex1）已移除、`LK_BACKDROP`
+   已补 `BackdropBackground`、`JKReadPluginFns` 诊断 native 已删除并重建 DLL 部署，待重新打包进图确认：
+   无探针方块、无绿底、`FrameSetTexture` 正常。
 
 ---
 
-## 十二、FrameSetTexture 实测崩溃：未闭环，已暂停并回退（2026-10-14）
+## 十二、FrameSetTexture 官方路径打通（2026-10-16）
 
-**结论**：直调 `0xC11E0` 创建纹理对象后，渲染遍历崩溃；多轮取证无法在现有调用形态下收敛，
-**已暂停**并回退全部实验改动。框架 UI 不调用 `FrameSetTexture`/`FrameSetModel` 时项目稳定可用。
+**结论**：不再直调 `0xC11E0`（该路径创建的是"小纹理对象"，挂到 `frame+0x140` 会被
+run 容器路径越界读而崩溃/绿块）。改为复刻官方 jass.dll 的 **BACKDROP 分派路径**：
+纹理挂到 `frame->[0x44]` 子对象的 `+0x178`，帧本体 `+0x140` 保持 0（引擎兜底走
+`+0x108`），渲染正常、无崩溃。实测 4 个探针帧全部有可见结果。
 
-### 崩溃链（离线反汇编 + VEH 现场双重确认）
+### 官方分派链（离线反汇编 jass.dll @0x199210）
 
 ```
-渲染遍历 0xA2780: mov eax,[ecx+0x140]; test eax,eax; je 跳过 → call 0x190160
-  → 0x190160 → 0x18F030（节点遍历）: mov esi,[edi+0x1C]       → AV 0x18F040 读 0x4D
-  → 0x190160 → 0x18E700（run 遍历）: mov eax,[ecx+0x10]
-                                     mov esi,[eax+edx*4]      → AV 0x18E707 读 0x1D
+jass.dll FrameSetTexture(path, frame, flag):
+  帧名 = "BACKDROP"（8 字符）
+    → 懒初始化 fn 槽 [jass.dll+0x5F4200]
+    → __fastcall fn(ecx = frame->[0x44] || frame->[0x68], edx=0,
+                    栈: path, 0, flag, 0, 1)          // 7 参
+  帧名 = "SimpleTexture"（13 字符）
+    → fn2 槽 [jass.dll+0x5F40DC] = 0xC11E0 形态       // 4 参
+  两者皆空 → no-op
 ```
 
-`SetTexture` 创建并存入 `[core+0x8C]`（= `frame+0x140`）的纹理对象（vtable RVA 0x964BA0，
-分配 size = 路径长 + 0x25，路径字符串存 +0x24）：
+fn 懒初始化：`0x10206f90(game_base, 锚点串, 0x2d)` → 锚点 =
+`UI\Widgets\BattleNet\chaticons\tier1-orc.blp`（Game.dll .rdata RVA **0x9779C8**；
+0x9779E7 只是内部子串位置，是坑）→ .text **0x29352A** `push 0x6f9779c8` →
+紧随 E8 call **0xA62A0**。
 
-| 偏移 | 值 | 语义 |
-|---|---|---|
-| `+0x10` | `1`（垃圾） | `0x18E700` 当 run 数组基址 |
-| `+0x14` | `0` | — |
-| `+0x18` | `0x40`（垃圾） | — |
-| `+0x1C` | `0x40`（垃圾） | `0x18F030` 当节点指针 |
-| `+0x20` | 路径串指针 | — |
+### fn = Game.dll 0xA62A0（ret 0x14 = 5 栈参）
 
-创建路径（`0xC11E0` 开头无条件释放 `+0x8C` 旧对象 → `0x197450` 建对象 → `0x197880` 只读
-`[ecx+0x10]&1` 标志）**不初始化 run 容器**。
+```
+edi = 0xA4AE0(path, flag)         // 内部 0x197450 建真实纹理对象
+0xA6200(this, edi, 0, flag, 0, 1) // 纹理挂到 this+0x178（完整对象结构）
+```
 
-### 实验与结论
+- 0xA4AE0：对 flag 做位运算（`and ecx,1` 等）→ 0x197450(path, info, flags, 0, 1)。
+  **flag 语义**：0 = 单张缩放；1 = 平铺重复（实测 BTN 图标 64×64 平铺成一片小图）。
+- BACKDROP 帧结构：`frame->[0x44]` = 纹理节点（运行时 vt=0x6108AC3C），节点 `+0x178`
+  = 主纹理对象；帧本体 `+0x140` 保持 0。
+- 渲染链：0xA44A0（BACKDROP 绘制）→ 0xA2300 可见性 → 0xA2780（读 `frame+0x140`；
+  =0 时 0xA27A0 兜底读 `+0x108/+0xFC/+0xF8/+0x13C` → 0x190000）。
+- 绿色兜底：`0xFF00FF00` 对象（0x1974F0 创建）——**BACKDROP 帧 FDF 缺
+  BackdropBackground 指令时，`+0x44` 节点默认挂它**（= JKTpl 左上绿块根因）。
 
-1. `+0x14/+0x1C` 补零 → 崩点从 `0x18F040` 前进到 `0x18E707`（证明方向对；但 `+0x10` 不能清零——
-   `0x18E700` 无条件解引用，清零会在更早处崩）。
-2. SetTexture 第 3 参 `flag=1`（0xC1298 的 `and eax,1` 分支）→ 对象结构不变（`+0x10` 仍 1），
-   该 flag 分支**不构建 run 容器**。
-3. **JKRef 对照**（LK_BACKDROP_NIL 完整模板、引擎自建帧）：`frame+0x140` = **0** →
-   `0xA2780` 的 `je` 直接跳过 → 引擎的 BACKDROP 帧平时**不挂纹理对象**。故对照帧无法提供
-   "引擎正确构建的纹理对象"金标准。
+### 实现与实测
 
-### 判断与后续方向
+- `set_texture_model` 新增「官方路径分支」：读 `frame+0x44`（空则 `+0x68`）→ 若存在
+  子对象，SEH 包裹调用 `g.base + 0xA62A0(sub, 0, path, 0, flag, 0, 1)`；无子对象时
+  回退旧 `0xC11E0` 路径（保底不崩基线）。
+- 实测（探针帧 JKTexAuto/JKTpl/JKWhite/JKTex1，日志 3 次官方调用全部 ok）：
+  - 居中 JKTexAuto（flag=0，BTNSelectHeroOn）→ 单张问号贴图 ✅
+  - 右上 JKWhite（flag=0，White.blp）→ 纯白 ✅
+  - 左下 JKTex1（flag=1，BTNSelectHeroOn）→ 平铺小问号（flag 语义验证）✅
+  - 左上 JKTpl（LK_BACKDROP 模板，无 BackdropBackground）→ 绿兜底 ✅（符合预期）
+- `sub+0x178` 调用前 = 0x1E697690（默认纹理）→ 调用后 = 真实纹理对象，`frame+0x140` 保持 0。
 
-`0xC11E0` 的直调路径可能本身缺"run 容器构建"环节（DZ 官方实现或另走完整函数，或该对象
-需先经帧渲染注册）。继续定位需研究 `0x18E700`/`0x18F030` 的 run 语义与 `0xC11E0` 全部 33 个
-调用点的参数形态。**暂不推进**。
+### 收尾（2026-10-16）
 
-### 已回退的实验改动
-
-- `vendor/japi-replica/src/natives.cpp`：删除 SetTexture 成功后对对象的 `+0x14/+0x1C` 补零块；
-  VEH 寄存器转储恢复"仅 ip==0"触发。
-- `projects/demo/scripts/process/start.lua`：删除 JKProbeAv / JKTexAuto / JKRef / JKDumpMem 取证脚手架（git 还原到 `1b8777e`）。
-- 模板树 `exe/lib/embeds/new/scripts/globals/setup/command.lua` 死代码、`xlik.fdf` 还原 HEAD。
-- 保留：6 个 native 的注册与实现、`library/japi/_japi.lua` 的 `_nativeOrder` 注释说明。
+- `xlik.fdf`：`LK_BACKDROP` 补 `BackdropBackground`（bnet-tooltip-background.blp）→
+  模板帧不再挂绿兜底。
+- 移除 `JKReadPluginFns` 诊断 native（natives.cpp/natives.h/dllmain.cpp）与
+  start.lua 的 4 个探针帧；官方路径实现保留在 `set_texture_model` 官方路径分支。
+- 旧结论（2026-10-14）：直调 0xC11E0 的小纹理对象（vt=0x964BA0、+0x18/+0x1C=像素尺寸）
+  挂 `frame+0x140`，被 run 容器/0x190210 当完整对象越界读 → 崩溃或绿块。该路径不再使用。
