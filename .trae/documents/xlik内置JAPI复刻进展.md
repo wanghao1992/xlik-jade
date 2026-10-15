@@ -727,9 +727,10 @@ Exception: 0xC0000005 (ACCESS_VIOLATION) at 0x52D9D2D8
    `0xA62A0`，详见第十二节），实测 4 个探针帧全部可见、无崩溃；`FrameSetModel` 共用该路径（模型未单独实测）。
 4. **`CreateFrameByTagName` 完整实现**（可选）：见第七节「关于 `FUN_102492e0` 的重要修正」——
    当前走 Game.dll 的 fdf 构造器已能满足框架用法。
-5. **【2026-10-16 待验证】清理收敛后复测**：探针帧（JKTexAuto/JKTpl/JKWhite/JKTex1）已移除、`LK_BACKDROP`
-   已补 `BackdropBackground`、`JKReadPluginFns` 诊断 native 已删除并重建 DLL 部署，待重新打包进图确认：
-   无探针方块、无绿底、`FrameSetTexture` 正常。
+5. **【2026-10-16 已验证】清理收敛后复测**：探针帧（JKTexAuto/JKTpl/JKWhite/JKTex1）已移除、`LK_BACKDROP`
+   已补 `BackdropBackground`、`JKReadPluginFns` 诊断 native 已删除并重建 DLL 部署。复测通过：
+   屏幕无探针方块、无绿底、无崩溃；日志 41 个 native 注册、无 JKReadPluginFns、自检全绿。
+   `FrameSetTexture` 渲染再验证待框架侧 UI 接入后自然覆盖。
 
 ---
 
