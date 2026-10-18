@@ -1,6 +1,6 @@
 --- UI 套件显示优先级管理(项目侧实现, 保证在 UI 套件加载前就绪)
 --- 规则(数字越大越靠前/越优先):
----   xlik_job > xlik_ultimate > xlik_treasure > xlik_learn > 其他
+---   xlik_job > xlik_ultimate > xlik_treasure > xlik_affix > xlik_learn > 其他
 --- 职责:
 ---   1) 给每个套件的 UI 树设置原生帧优先级(DzFrameSetPriority);
 ---   2) 同一时间只保留一个"模态"套件: 高优先级打开时把低优先级排队并关闭,
@@ -210,6 +210,7 @@ end
 uiPriority.register("xlik_job", 500)       -- 进化/转职面板(最高)
 uiPriority.register("xlik_ultimate", 400)  -- 奥义五选一
 uiPriority.register("xlik_treasure", 300)  -- 宝物选择
+uiPriority.register("xlik_affix", 250)     -- 专属装备词条四选一
 uiPriority.register("xlik_learn", 200)     -- 天赋三选一
 uiPriority.register("xlik_alerter", 9000)  -- 飘字/提示
 
