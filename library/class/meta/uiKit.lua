@@ -33,30 +33,10 @@ end
 ---@return void
 function _index:setup()
     self:onSetup()
-    --- 应用 UI 显示优先级(项目侧 uiPriority.register 定义; 越大越靠前)
-    --- 递归设置整个 UI 树: 原生优先级不一定继承给子控件, 逐个设置才能保证
-    --- 面板内容/按钮不会被低优先级套件盖住
-    if (uiPriority and uiPriority.apply) then
-        local function applyTree(node, priorityKit)
-            if (nil == node) then
-                return
-            end
-            uiPriority.apply(node, priorityKit)
-            local children = node.children and node:children()
-            if (type(children) == "table") then
-                for _, child in pairs(children) do
-                    applyTree(child, priorityKit)
-                end
-            end
-        end
-        if (nil ~= self.offerLayer) then
-            --- 带 offerLayer 的套件(如宝物): 常驻栏按"其他"层, 只有弹出面板走高优先级
-            applyTree(self.layer, "xlik_treasure_bar")
-            applyTree(self.offerLayer, self:kit())
-        else
-            applyTree(self.layer, self:kit())
-        end
-    end
+    --- 套件视觉层级依赖原生创建顺序即可
+    --- 曾用 uiPriority.applyTree 对套件整树递归设 DzFrameSetPriority,
+    --- 该提权在此环境会破坏 tooltip 置顶, 已正式移除(2026-10-19)
+    --- 套件模态排队逻辑(uiPriority.request/release)不受影响
     self._ltSetup = tostring(self.onSetup)
 end
 
