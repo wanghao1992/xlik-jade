@@ -36,7 +36,7 @@ function _index:alpha(alpha)
     if (isUIGame(self)) then
         return
     end
-    japi.FrameSetAlpha(self._handle, alpha)
+    japi.DZ_FrameSetAlpha(self._handle, alpha)
     return self
 end
 
@@ -48,7 +48,7 @@ function _index:size(w, h)
     if (isUIGame(self)) then
         return
     end
-    japi.FrameSetSize(self._handle, w, h)
+    japi.DZ_FrameSetSize(self._handle, w, h)
     return self
 end
 
@@ -64,8 +64,8 @@ function _index:relation(point, relativeFrame, relativePoint, x, y)
         return
     end
     if (nil ~= point and nil ~= relativeFrame and nil ~= relativePoint and nil ~= x and nil ~= y) then
-        japi.FrameClearAllPoints(self._handle)
-        japi.FrameSetPoint(self._handle, point, relativeFrame:handle(), relativePoint, x, y)
+        japi.DZ_FrameClearAllPoints(self._handle)
+        japi.DZ_FrameSetPoint(self._handle, point, relativeFrame:handle(), relativePoint, x, y)
     end
     return self
 end
@@ -89,7 +89,7 @@ function _index:show(status)
     if (isUIGame(self)) then
         return
     end
-    japi.FrameShow(self._handle, status)
+    japi.DZ_FrameShow(self._handle, status)
 end
 
 --- UI原生接管
@@ -107,7 +107,7 @@ function UINative(name, handle)
 end
 
 --- 游戏UI对象
-UIGame = UINative("Game", japi.GetGameUI())
+UIGame = UINative("Game", japi.DZ_GetGameUI())
 UIGame._children = {} -- 子UI
 UIGame._lowNodes = {} -- 子节点
 UIGame._adaptive = false -- 自适应

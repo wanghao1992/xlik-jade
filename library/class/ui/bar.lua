@@ -13,7 +13,7 @@ local _index = UI(UIBarClass, {
 ---@protected
 function _index:construct()
     if (self._fdfName == "LK_BACKDROP") then
-        japi.FrameSetTexture(self._handle, X_UI_NIL, 0)
+        japi.DZ_FrameSetTexture(self._handle, X_UI_NIL, 0)
     end
     --- 下条层(数值层)
     self._uiValue = UIBackdrop(self._key .. ":uiValue", self)

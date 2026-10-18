@@ -102,7 +102,7 @@ function _index:texture(path)
     if (nil ~= path and self._texture ~= path) then
         self._texture = path
         path = japi.AssetsUI(self._kit, path, "image")
-        japi.FrameSetTexture(self._handle, path, 0)
+        japi.DZ_FrameSetTexture(self._handle, path, 0)
     end
     return self
 end

@@ -30,7 +30,6 @@ Frame "TEXTAREA" "LK_TEXTAREA" {
 Frame "SPRITE" "LK_MODEL" {}
 
 Frame "BACKDROP" "LK_BACKDROP" {
-    BackdropBackground "UI\Widgets\BattleNet\bnet-tooltip-background.blp",
     BackdropBlendAll,
 }
 Frame "BACKDROP" "LK_BACKDROP_NIL" {

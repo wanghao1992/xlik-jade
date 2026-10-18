@@ -114,8 +114,8 @@ function UIDrag(key, parent)
                 y = math.max(y, a[4] / 2 + mb)
                 y = math.min(y, 0.6 - a[4] / 2 - mt)
                 local h = ui:handle()
-                japi.FrameClearAllPoints(h)
-                japi.FrameSetPoint(h, UI_ALIGN_CENTER, UIGame:handle(), UI_ALIGN_LEFT_BOTTOM, x, y)
+                japi.DZ_FrameClearAllPoints(h)
+                japi.DZ_FrameSetPoint(h, UI_ALIGN_CENTER, UIGame:handle(), UI_ALIGN_LEFT_BOTTOM, x, y)
                 ui._releaseX = x
                 ui._releaseY = y
             end)

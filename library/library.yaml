@@ -181,6 +181,3 @@ encrypt:
     - path: "japi/yd"
       repl: "^function (japi\\.\\w+)\\("
       del: ""
-    - path: "japi/wh"
-      repl: "^function (japi\\.\\w+)\\("
-      del: ""

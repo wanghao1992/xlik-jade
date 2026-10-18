@@ -14,7 +14,7 @@ function oUI(params, index)
     --- ID
     class.id(o, true)
     o._tag = japi.UITagIndex()
-    o._handle = japi.CreateFrameByTagName(params._fdfType, o._tag, params._parent._handle, params._fdfName, 0)
+    o._handle = japi.DZ_CreateFrameByTagName(params._fdfType, o._tag, params._parent._handle, params._fdfName, 0)
     must(type(o._handle) == "number" and o._handle > 0, "DZ_CreateFrameByTagName failed") -- 检测handle
     --- 子UI记录
     if (nil == params._parent._children) then

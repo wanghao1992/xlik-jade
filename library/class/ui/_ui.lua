@@ -94,7 +94,7 @@ function _index:destruct()
     self._lowNodes = nil
     class.destroy(self._gradientTimer)
     self._gradientTimer = nil
-    japi.DestroyFrame(self._handle)
+    japi.DZ_DestroyFrame(self._handle)
     self._handle = nil
 end
 
@@ -245,7 +245,7 @@ end
 --- 是否聚焦（焦点）中
 ---@return boolean
 function _index:isFocus()
-    return japi.GetMouseFocus() == self._handle
+    return japi.DZ_GetMouseFocus() == self._handle
 end
 
 --- 设置自适应[true,false]
@@ -310,8 +310,8 @@ function _index:relation(point, upperUI, upperPoint, x, y)
                 end
             end
         end
-        japi.FrameClearAllPoints(self._handle)
-        japi.FrameSetPoint(self._handle, point, upperUI._handle, upperPoint, ax, y)
+        japi.DZ_FrameClearAllPoints(self._handle)
+        japi.DZ_FrameSetPoint(self._handle, point, upperUI._handle, upperPoint, ax, y)
         self._point = point
         self._upNode = upperUI
         self._upNodePoint = upperPoint
@@ -337,7 +337,7 @@ end
 ---@return self
 function _index:alpha(alpha)
     if (type(alpha) == "number" and self._alpha ~= alpha) then
-        japi.FrameSetAlpha(self._handle, alpha)
+        japi.DZ_FrameSetAlpha(self._handle, alpha)
         self._alpha = alpha
     end
     return self
@@ -359,7 +359,7 @@ function _index:size(width, height)
             self._width = width
             self._height = height
             self:resetAnchor()
-            japi.FrameSetSize(self._handle, aw, height)
+            japi.DZ_FrameSetSize(self._handle, aw, height)
         end
     end
     return self
@@ -371,7 +371,7 @@ end
 function _index:show(status)
     if (type(status) == "boolean" and self._show ~= status) then
         self._show = status
-        japi.FrameShow(self._handle, status)
+        japi.DZ_FrameShow(self._handle, status)
         --- 隐藏时: 若指针焦点正落在本对象或其子孙上, 强制释放焦点
         --- 否则焦点会卡在已隐藏的控件上(其 enter 引用计数因 show 的递归注册而减不到0),
         --- 导致后续所有依赖 uiEnter 的控件(按钮/页签等)都无法进入 -> 点击失效
@@ -521,15 +521,15 @@ function _index:gradientStop()
     if (class.isObject(t, TimerAsyncClass)) then
         class.destroy(t)
         self._gradientTimer = nil
-        japi.FrameClearAllPoints(self._handle)
+        japi.DZ_FrameClearAllPoints(self._handle)
         if (nil ~= self._upNode) then
-            japi.FrameSetPoint(self._handle, self._point, self._upNode._handle, self._upNodePoint, self._x, self._y)
+            japi.DZ_FrameSetPoint(self._handle, self._point, self._upNode._handle, self._upNodePoint, self._x, self._y)
         end
         if (type(self._widthAdaptive) == "number") then
-            japi.FrameSetSize(self._handle, self._widthAdaptive, self._height)
+            japi.DZ_FrameSetSize(self._handle, self._widthAdaptive, self._height)
         end
-        japi.FrameSetAlpha(self._handle, self._alpha)
-        japi.FrameShow(self._handle, self:isShow())
+        japi.DZ_FrameSetAlpha(self._handle, self._alpha)
+        japi.DZ_FrameShow(self._handle, self:isShow())
     end
 end
 
@@ -575,7 +575,7 @@ function _index:gradientStart(options, callback)
             dtA = -baseAlpha / step
         end
         if (nil ~= curAlpha) then
-            japi.FrameSetAlpha(self._handle, curAlpha)
+            japi.DZ_FrameSetAlpha(self._handle, curAlpha)
         end
     end
     if (type(options.size) == "number" and nil ~= baseWidth) then
@@ -587,13 +587,13 @@ function _index:gradientStart(options, callback)
         end
     end
     if (dtX ~= 0 or dtY ~= 0) then
-        japi.FrameClearAllPoints(self._handle)
-        japi.FrameSetPoint(self._handle, basePoint, baseUpper._handle, baseUpperPoint, baseX + dtX * step, baseY + dtY * step)
+        japi.DZ_FrameClearAllPoints(self._handle)
+        japi.DZ_FrameSetPoint(self._handle, basePoint, baseUpper._handle, baseUpperPoint, baseX + dtX * step, baseY + dtY * step)
     end
     if (dtW ~= 0 and dtH ~= 0) then
-        japi.FrameSetSize(self._handle, baseWidth + dtW * step, baseHeight + dtH * step)
+        japi.DZ_FrameSetSize(self._handle, baseWidth + dtW * step, baseHeight + dtH * step)
     end
-    japi.FrameShow(self._handle, true)
+    japi.DZ_FrameShow(self._handle, true)
     self._gradientTimer = async.setInterval(options.duration / step * 60, function(_)
         step = step - 1
         if (step <= 0) then
@@ -605,14 +605,14 @@ function _index:gradientStart(options, callback)
         end
         if (nil ~= curAlpha) then
             curAlpha = curAlpha + dtA
-            japi.FrameSetAlpha(self._handle, curAlpha)
+            japi.DZ_FrameSetAlpha(self._handle, curAlpha)
         end
         if (dtX ~= 0 or dtY ~= 0) then
-            japi.FrameClearAllPoints(self._handle)
-            japi.FrameSetPoint(self._handle, basePoint, baseUpper._handle, baseUpperPoint, baseX + dtX * step, baseY + dtY * step)
+            japi.DZ_FrameClearAllPoints(self._handle)
+            japi.DZ_FrameSetPoint(self._handle, basePoint, baseUpper._handle, baseUpperPoint, baseX + dtX * step, baseY + dtY * step)
         end
         if (dtW ~= 0 and dtH ~= 0) then
-            japi.FrameSetSize(self._handle, baseWidth + dtW * step, baseHeight + dtH * step)
+            japi.DZ_FrameSetSize(self._handle, baseWidth + dtW * step, baseHeight + dtH * step)
         end
     end)
     return self

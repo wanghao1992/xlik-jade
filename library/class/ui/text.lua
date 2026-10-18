@@ -16,8 +16,8 @@ local _index = UI(UITextClass, {
 
 ---@protected
 function _index:construct()
-    japi.FrameSetFont(self._handle, 'fonts.ttf', self._fontSize * 0.001, 0)
-    japi.FrameSetTextAlignment(self._handle, self._textAlign)
+    japi.DZ_FrameSetFont(self._handle, 'fonts.ttf', self._fontSize * 0.001, 0)
+    japi.DZ_FrameSetTextAlignment(self._handle, self._textAlign)
 end
 
 --- 设置文本对齐方式
@@ -26,7 +26,7 @@ end
 function _index:textAlign(align)
     if (type(align) == "number" and self._textAlign ~= align) then
         self._textAlign = align
-        japi.FrameSetTextAlignment(self._handle, align)
+        japi.DZ_FrameSetTextAlignment(self._handle, align)
     end
     return self
 end
@@ -38,7 +38,7 @@ end
 function _index:textColor(color)
     if (type(color) == "number" and self._textColor ~= color) then
         self._textColor = color
-        japi.FrameSetTextColor(self._handle, color)
+        japi.DZ_FrameSetTextColor(self._handle, color)
     end
     return self
 end
@@ -49,9 +49,9 @@ end
 function _index:textSizeLimit(limit)
     if (type(limit) == "number" and self._textSizeLimit ~= limit) then
         if (limit > 0) then
-            japi.FrameSetText(self._handle, mbstring.sub(self._content, 1, limit))
+            japi.DZ_FrameSetText(self._handle, mbstring.sub(self._content, 1, limit))
         else
-            japi.FrameSetText(self._handle, self._content)
+            japi.DZ_FrameSetText(self._handle, self._content)
         end
         self._textSizeLimit = limit
     end
@@ -66,7 +66,7 @@ function _index:fontSize(size)
         self._fontSize = size
         size = math.max(5, size)
         size = math.min(18, size)
-        japi.FrameSetFont(self._handle, 'fonts.ttf', size * 0.001, 0)
+        japi.DZ_FrameSetFont(self._handle, 'fonts.ttf', size * 0.001, 0)
     end
     return self
 end
@@ -82,7 +82,7 @@ function _index:text(content)
         if (limit > 0) then
             ct = mbstring.sub(ct, 1, limit)
         end
-        japi.FrameSetText(self._handle, ct)
+        japi.DZ_FrameSetText(self._handle, ct)
     end
     return self
 end
