@@ -33,6 +33,30 @@ end
 ---@return void
 function _index:setup()
     self:onSetup()
+    --- 应用 UI 显示优先级(项目侧 uiPriority.register 定义; 越大越靠前)
+    --- 递归设置整个 UI 树: 原生优先级不一定继承给子控件, 逐个设置才能保证
+    --- 面板内容/按钮不会被低优先级套件盖住
+    if (uiPriority and uiPriority.apply) then
+        local function applyTree(node, priorityKit)
+            if (nil == node) then
+                return
+            end
+            uiPriority.apply(node, priorityKit)
+            local children = node.children and node:children()
+            if (type(children) == "table") then
+                for _, child in pairs(children) do
+                    applyTree(child, priorityKit)
+                end
+            end
+        end
+        if (nil ~= self.offerLayer) then
+            --- 带 offerLayer 的套件(如宝物): 常驻栏按"其他"层, 只有弹出面板走高优先级
+            applyTree(self.layer, "xlik_treasure_bar")
+            applyTree(self.offerLayer, self:kit())
+        else
+            applyTree(self.layer, self:kit())
+        end
+    end
     self._ltSetup = tostring(self.onSetup)
 end
 

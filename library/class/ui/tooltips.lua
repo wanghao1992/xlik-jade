@@ -277,6 +277,10 @@ function UITooltips(index)
         o:absolut(0, 0)
         o:size(0.1, 0.1)
         o:show(false)
+        --- tooltip 永远显示在最上层(高于所有面板套件), 避免被高优先级面板盖住
+        if (japi and japi.DZ_FrameSetPriority) then
+            pcall(japi.DZ_FrameSetPriority, o:handle(), 10000)
+        end
         --
         local ic = {}
         for i = 1, 4 do
