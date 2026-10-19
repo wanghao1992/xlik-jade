@@ -225,7 +225,9 @@ function _index:spell(evtData)
             return
         end
     end
-    if (true == self:isBan() or triggerUnit:isInterrupt() or triggerUnit:isPause()) then
+    --- 物品技能(装备升级等)不受随机事件冲锋/暂停锁定限制
+    local isItemAbility = class.isObject(self:bindItem(), ItemClass)
+    if (true == self:isBan() or triggerUnit:isInterrupt() or (false == isItemAbility and triggerUnit:isPause())) then
         return
     end
     local triggerOwner = triggerUnit:owner()

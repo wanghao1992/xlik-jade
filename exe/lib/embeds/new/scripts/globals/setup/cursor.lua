@@ -154,7 +154,9 @@ game.onPhase("process", function()
             alerter.message(p, ab:banReason())
             return false
         end
-        if (selection:isInterrupt() or selection:isPause()) then
+        --- 物品技能(装备升级等)不受随机事件冲锋/暂停锁定限制
+        local isItemAbility = class.isObject(ab:bindItem(), ItemClass)
+        if (selection:isInterrupt() or (false == isItemAbility and selection:isPause())) then
             alerter.message(p, "无法行动", colour.red)
             return false
         end
