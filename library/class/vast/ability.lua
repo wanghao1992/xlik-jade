@@ -225,9 +225,8 @@ function _index:spell(evtData)
             return
         end
     end
-    --- 物品技能(装备升级等)不受随机事件冲锋/暂停锁定限制
-    local isItemAbility = class.isObject(self:bindItem(), ItemClass)
-    if (true == self:isBan() or triggerUnit:isInterrupt() or (false == isItemAbility and triggerUnit:isPause())) then
+    --- 冲锋/追击(leap)期间引擎暂停只锁移动, 不应锁技能; 吟唱/持续施法由 isBan 拦截
+    if (true == self:isBan() or triggerUnit:isInterrupt()) then
         return
     end
     local triggerOwner = triggerUnit:owner()

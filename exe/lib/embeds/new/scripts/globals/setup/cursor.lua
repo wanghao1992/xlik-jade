@@ -154,9 +154,8 @@ game.onPhase("process", function()
             alerter.message(p, ab:banReason())
             return false
         end
-        --- 物品技能(装备升级等)不受随机事件冲锋/暂停锁定限制
-        local isItemAbility = class.isObject(ab:bindItem(), ItemClass)
-        if (selection:isInterrupt() or (false == isItemAbility and selection:isPause())) then
+        --- 冲锋/追击(leap)期间引擎暂停只锁移动, 不应锁技能; 眩晕/沉默等仍由 isBan/isInterrupt 拦截
+        if (selection:isInterrupt()) then
             alerter.message(p, "无法行动", colour.red)
             return false
         end
@@ -411,7 +410,7 @@ game.onPhase("process", function()
             ---@type Unit|Item
             local under = class.h2u(japi.DZ_GetUnitUnderMouse())
             ---@type Unit
-            local isBan = bu:isInterrupt() or bu:isPause() or bu:isCastChanting() or bu:isCastKeeping()
+            local isBan = bu:isInterrupt() or bu:isCastChanting() or bu:isCastKeeping()
             if (isBan) then
                 alpha = math.ceil(alpha / 2)
             end
@@ -528,7 +527,7 @@ game.onPhase("process", function()
             local texture = csTexture.aim.normal
             local width = csTexture.aim.width
             local height = csTexture.aim.height
-            local isBan = bu:isInterrupt() or bu:isPause() or bu:isCastChanting() or bu:isCastKeeping()
+            local isBan = bu:isInterrupt() or bu:isCastChanting() or bu:isCastKeeping()
             if (isBan) then
                 alpha = math.ceil(alpha / 2)
             end
