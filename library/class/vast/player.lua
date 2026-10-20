@@ -225,6 +225,16 @@ function _index:worth(operator, data)
             end
             w = worth.cale(self._worth, operator, data)
         end
+        --- 资源不允许为负: 扣除超过持有量时按 0 处理
+        ---   worth.cale 的减法会产生负数(再经 l2u 换算后可能放大成 -100000 之类),
+        ---   这里统一把各货币夹到 [0, +∞)。
+        if (type(w) == "table") then
+            for k, v in pairs(w) do
+                if (type(v) == "number" and v < 0) then
+                    w[k] = 0
+                end
+            end
+        end
     end
     return self:modify("worth", w)
 end
