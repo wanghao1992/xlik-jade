@@ -181,6 +181,45 @@ function keyboard.onRelease(keyboardCode, key, callFunc)
     event.asyncRegister("keyboard" .. keyboardCode, eventKind.keyboardRelease, key, callFunc)
 end
 
+--- 热键"已按下"锁(防长按连发)
+--- 旧写法是"按下时注销回调、松开时重挂", 但引擎在窗口失焦/聊天框打开时会丢弃 RELEASE 事件,
+--- 丢一次该热键就永久失效(表现为"放完技能后快捷键没反应")。
+--- 这里改为回调常驻 + 锁标记, 并轮询物理按键状态自动解锁。
+---@type table<number, boolean>
+keyboard._hotkeyHeld = keyboard._hotkeyHeld or {}
+
+--- 轮询等待松开: 一旦物理按键已松开(无论是否收到 RELEASE 事件)就解除热键锁
+---@param keycode number
+---@return void
+local function watchHotkeyRelease(keycode)
+    async.setTimeout(2, function()
+        if (true == keyboard.isPressing(keycode)) then
+            watchHotkeyRelease(keycode)
+        else
+            keyboard._hotkeyHeld[keycode] = nil
+        end
+    end)
+end
+
+--- 热键按下前置: 首次按下返回 true 并上锁; 长按期间的连发返回 false
+---@param keycode number
+---@return boolean
+local function hotkeyPressable(keycode)
+    if (true == keyboard._hotkeyHeld[keycode]) then
+        return false
+    end
+    keyboard._hotkeyHeld[keycode] = true
+    watchHotkeyRelease(keycode)
+    return true
+end
+
+--- 热键单次触发锁(公开给 UIButton 热键等复用: 按住只触发一次, 松开自动解锁)
+---@param keycode number
+---@return boolean
+function keyboard.hotkeyPressable(keycode)
+    return hotkeyPressable(keycode)
+end
+
 --- [异步]当组合键按下
 --- 主键按下事件触发时，检测修饰键是否同时按下，全部满足才回调
 --- 每次物理按下仅回调一次（内部自动防连发），主键释放后自动备好下一次
@@ -202,12 +241,10 @@ function keyboard.onComboPress(keyboardCode, modifierKeyNumbers, key, callFunc)
     end
     local press = nil
     press = function(evtData)
-        -- 先卸下按下事件，待主键释放后重新备好，避免长按期间连发
-        event.asyncUnregister(symbol, eventKind.keyboardPress, key)
-        event.asyncRegister(symbol, eventKind.keyboardRelease, key, function()
-            event.asyncUnregister(symbol, eventKind.keyboardRelease, key)
-            event.asyncRegister(symbol, eventKind.keyboardPress, key, press)
-        end)
+        --- 防连发用锁标记 + 轮询解锁(回调常驻, 不再依赖 RELEASE 事件重挂)
+        if (false == hotkeyPressable(keyboardCode)) then
+            return
+        end
         for _, modifierKeyNumber in ipairs(modifierKeyNumbers) do
             if (true ~= keyboard.isPressing(modifierKeyNumber)) then
                 return
@@ -253,10 +290,9 @@ function keyboard.abilityHotkey(param)
         for idx, keycode in ipairs(param) do
             local call = nil
             call = function(evtData)
-                keyboard.onPress(keycode, key, nil)
-                keyboard.onRelease(keycode, key, function()
-                    keyboard.onPress(keycode, key, call)
-                end)
+                if (false == hotkeyPressable(keycode)) then
+                    return
+                end
                 if (japi.IsLongPressing("keyboard")) then
                     return
                 end
@@ -320,10 +356,9 @@ function keyboard.itemHotkey(param)
         for idx, keycode in ipairs(param) do
             local call = nil
             call = function(evtData)
-                keyboard.onPress(keycode, key, nil)
-                keyboard.onRelease(keycode, key, function()
-                    keyboard.onPress(keycode, key, call)
-                end)
+                if (false == hotkeyPressable(keycode)) then
+                    return
+                end
                 if (japi.IsLongPressing("keyboard")) then
                     return
                 end

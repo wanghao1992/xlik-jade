@@ -288,12 +288,15 @@ function _index:hotkey(keycode, call, callFunc)
             end
         elseif (keyValid and type(call) == "function") then
             if (nil == modifierKeyNumbers) then
+                --- 防连发用锁标记 + 轮询解锁(keyboard.hotkeyPressable):
+                ---   不再"按下时注销、松开时重挂", 否则丢失一次 RELEASE 事件(窗口失焦/聊天框)
+                ---   会让该热键永久失效
                 local f = nil
                 f = function()
-                    keyboard.onPress(keycode, key, nil)
-                    keyboard.onRelease(keycode, key, function()
-                        keyboard.onPress(keycode, key, f)
-                    end)
+                    if (type(keyboard.hotkeyPressable) == "function"
+                        and false == keyboard.hotkeyPressable(keycode)) then
+                        return
+                    end
                     if (japi.IsLongPressing("keyboard")) then
                         return
                     end

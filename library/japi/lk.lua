@@ -819,6 +819,22 @@ function japi.IsLongPressing(kind, key)
         if (type(japi._longPress[kind]) ~= "table") then
             return false
         end
+        --- 兜底清理: 引擎在窗口失焦/聊天框打开时会丢 RELEASE 事件, 残留的长按状态(v.start>0)
+        ---   会让 abilityHotkey/itemHotkey 里的 `if IsLongPressing("keyboard") then return end`
+        ---   永久生效 -> 表现为"放完技能后快捷键没反应"。这里按物理按键状态自愈: 键已松开就复位。
+        if (kind == "keyboard") then
+            for k, v in pairs(japi._longPress[kind]) do
+                if (type(v) == "table" and type(k) == "number" and false == japi.DZ_IsKeyDown(k)) then
+                    if (type(v.start) == "number" and v.start > 0) then
+                        v.start = 0
+                    end
+                    if (nil ~= v.id) then
+                        pcall(japi.CancelAsyncExecDelay, v.id)
+                        v.id = nil
+                    end
+                end
+            end
+        end
         if (type(key) == "string") then
             return type(japi._longPress[kind][key]) == "table" and (japi._longPress[kind][key].start > 0)
         end
