@@ -900,6 +900,24 @@ function japi.Roulette(func, whichPlayer, key, value)
     end)
 end
 
+--- 立即执行轮盘队列里的所有待写请求
+---   用于"写入后可能马上退出游戏"的场景(如通关存档), 不能等 5 秒/条的队列
+---@return void
+function japi.RouletteFlush()
+    sync.must()
+    if (false == isArray(japi._roulette)) then
+        return
+    end
+    local ks = japi._roulette:keys()
+    for _, k in ipairs(ks) do
+        local f = japi._roulette:get(k)
+        if (type(f) == "function") then
+            f()
+        end
+        japi._roulette:set(k, nil)
+    end
+end
+
 --- 保存服务器存档
 --- 会根据数据类型自动添加前缀
 ---@param whichPlayer number
