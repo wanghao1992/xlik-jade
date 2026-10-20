@@ -1,7 +1,7 @@
 ﻿logs
 .idea
 .fleet
-.vscode
+# .vscode
 *.BridgeLabelsAndRatings
 /projects
 /.tmp/*

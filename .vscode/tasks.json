@@ -1,0 +1,62 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "更新代码",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}\\pull.ps1"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "测试demo",
+            "type": "shell",
+            "command": "${workspaceFolder}\\xlik.exe",
+            "args": [
+                "run",
+                "demo",
+                "-l"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "启动多开",
+            "type": "shell",
+            "command": "${workspaceFolder}\\xlik.exe",
+            "args": [
+                "multi",
+                "2"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "关闭魔兽",
+            "type": "shell",
+            "command": "${workspaceFolder}\\xlik.exe",
+            "args": [
+                "kill"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "清除存档",
+            "type": "shell",
+            "command": "${workspaceFolder}\\xlik.exe",
+            "args": [
+                "clear"
+            ],
+            "problemMatcher": []
+        }
+    ]
+}
