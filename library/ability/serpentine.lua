@@ -19,12 +19,15 @@
         offset1 = 200, --[可选]偏移距离值1，默认200
         point2 = 0.7, --[可选]偏移点2，默认0.7，不大于0.9
         offset2 = 200, --[可选]偏移距离值2，默认200
+        pause = true, --[可选]是否暂停单位（默认true；false时蛇行期间仍可攻击/施法）
+        facing = true, --[可选]是否每周期强制朝向移动方向（默认true；false时朝向交给外部控制, 避免打断攻击转向）
+        stunPause = false, --[可选]眩晕时是否暂停推进（默认false；true时眩晕期间停在原地, 眩晕结束后继续）
         onMove = abilitySerpentineFunc, --[可选]每周期移动回调（return false时可强行中止循环）
         onEnd = abilitySerpentineFunc, --[可选]结束回调（弹跳完毕才算结束）
     }
 ]]
 ---@alias abilitySerpentineFunc fun(options:abilitySerpentineOptions,vec:number[]):nil|boolean
----@alias abilitySerpentineOptions {sourceUnit:Unit,targetUnit:Unit,targetVec:number[],animate:string|number,animateScale:number,frequency:number,speed:number,acceleration:number,point1:number,point2:number,offset1:number,offset2:number,model:string,onMove:abilitySerpentineFunc,onEnd:abilitySerpentineFunc}
+---@alias abilitySerpentineOptions {sourceUnit:Unit,targetUnit:Unit,targetVec:number[],animate:string|number,animateScale:number,frequency:number,speed:number,acceleration:number,point1:number,point2:number,offset1:number,offset2:number,pause:boolean,facing:boolean,stunPause:boolean,model:string,onMove:abilitySerpentineFunc,onEnd:abilitySerpentineFunc}
 ---@private
 ---@param isComplete boolean
 ---@param options abilitySerpentineOptions
@@ -52,9 +55,14 @@ function ability.serpentine(options)
     if (sourceUnit:isSerpentine()) then
         return
     end
+    --- 位移互斥: 后触发的位移立即顶掉前一个(如冲锋), 保证同一时间只有一个位移在推进
+    ability.moveStop(sourceUnit)
 
     local frequency = options.frequency or 0.03
     local speed = math.min(5000, math.max(100, options.speed or 500))
+    local pauseUnit = (options.pause ~= false)
+    local facingLock = (options.facing ~= false)
+    local stunPause = (options.stunPause == true)
 
     local vec0 = { sourceUnit:x(), sourceUnit:y() }
     ---@type number[]
@@ -92,6 +100,25 @@ function ability.serpentine(options)
     local animate = options.animate
     local animateDiff = (options.animateScale or 1) - sourceUnit:animateScale()
 
+    --- 本段位移的"立即终止"入口: 自己结束或被新位移顶掉时统一走这里(销毁计时器 + 回滚 Buff)
+    ---@type Timer|nil
+    local timer
+    local stopped = false
+    local function stop(isComplete, endVec)
+        if (true == stopped) then
+            return
+        end
+        stopped = true
+        if (nil ~= timer) then
+            class.destroy(timer)
+            timer = nil
+        end
+        if (sourceUnit._moveStop == stop) then
+            sourceUnit._moveStop = nil
+        end
+        _call(isComplete, options, endVec)
+    end
+
     options.buff = Buff({
         key = "serpentine",
         object = sourceUnit,
@@ -109,7 +136,9 @@ function ability.serpentine(options)
             end
             superposition.plus(buffObj, "serpentine")
             superposition.plus(buffObj, "noPath")
-            superposition.plus(buffObj, "pause")
+            if (pauseUnit) then
+                superposition.plus(buffObj, "pause")
+            end
         end,
         ---@param buffObj Unit
         rollback = function(buffObj)
@@ -120,7 +149,9 @@ function ability.serpentine(options)
             if (animate ~= nil) then
                 buffObj:animate("stand")
             end
-            superposition.minus(buffObj, "pause")
+            if (pauseUnit) then
+                superposition.minus(buffObj, "pause")
+            end
             superposition.minus(buffObj, "noPath")
             superposition.minus(buffObj, "serpentine")
         end,
@@ -129,10 +160,18 @@ function ability.serpentine(options)
     local distancePrev = distance
     local vecT = { vec0[1], vec0[2] }
 
-    time.setInterval(frequency, function(curTimer)
+    timer = time.setInterval(frequency, function()
         if (sourceUnit:isDead()) then
-            class.destroy(curTimer)
-            _call(false, options, vecT)
+            stop(false, vecT)
+            return
+        end
+        --- 已被新位移顶掉/外部终止: 直接退出
+        if (true == stopped) then
+            return
+        end
+
+        --- 眩晕中: 暂停推进(不累计进度、不位移), 眩晕结束后从原进度继续
+        if (true == stunPause and true == sourceUnit:isStunning()) then
             return
         end
 
@@ -147,34 +186,46 @@ function ability.serpentine(options)
         if (dt < 1) then
             local nx, ny = vector2.bezier3(vec0, vec1, vec2, vec3, dt)
             if (RegionPlayable:isBorder(nx, ny)) then
-                class.destroy(curTimer)
-                _call(false, options, vecT)
+                stop(false, vecT)
                 return
             end
             vecT[1], vecT[2] = nx, ny
             distanceCur = vector2.distance(vecT[1], vecT[2], vec3[1], vec3[2])
         end
         if (dt >= 1) then
-            class.destroy(curTimer)
             sourceUnit:position(vec3[1], vec3[2])
-            sourceUnit:facing(vector2.angle(vecT[1], vecT[2], vec3[1], vec3[2]))
-            _call(true, options, vec3)
+            if (facingLock) then
+                sourceUnit:facing(vector2.angle(vecT[1], vecT[2], vec3[1], vec3[2]))
+            end
+            stop(true, vec3)
             return
         end
 
         if (type(options.onMove) == "function") then
             if (false == options.onMove(options, vecT)) then
-                class.destroy(curTimer)
-                _call(false, options, vecT)
+                stop(false, vecT)
                 return
             end
         end
+        --- 回调内可能已启动了新位移(本段被顶掉): 不再推进
+        if (true == stopped) then
+            return
+        end
         J.SetUnitX(sourceUnit:handle(), vecT[1])
         J.SetUnitY(sourceUnit:handle(), vecT[2])
-        sourceUnit:facing(vector2.angle(vecT[1], vecT[2], vec3[1], vec3[2]))
+        if (facingLock) then
+            sourceUnit:facing(vector2.angle(vecT[1], vecT[2], vec3[1], vec3[2]))
+        end
         distancePrev = distanceCur
         if (dtAcc ~= 0) then
             dtSpd = dtSpd + dtAcc
         end
     end)
+    --- 登记终止入口: 其它位移开始时通过 ability.moveStop 顶掉本段
+    if (true == stopped) then
+        class.destroy(timer)
+        timer = nil
+    else
+        sourceUnit._moveStop = stop
+    end
 end

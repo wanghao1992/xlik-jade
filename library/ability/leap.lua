@@ -60,13 +60,14 @@ end
         acceleration = 0, --[可选]冲击加速度（每个周期[0.02秒]都会增加一次）
         height = 0, --[可选]飞跃高度（默认0）
         reflex = 0, --[可选]弹射次数，当targetUnit存在时才有效，默认0
+        stunPause = false, --[可选]眩晕时是否暂停推进（默认false；true时眩晕期间停在原地, 眩晕结束后继续）
         onMove = abilityLeapFunc, --[可选]每周期移动回调（return false时可强行中止循环）
         onReflex = abilityLeapFunc, --[可选]每弹跳回调（return false时可强行中止后续弹跳）
         onEnd = abilityLeapFunc, --[可选]结束回调（弹跳完毕才算结束）
     }
 ]]
 ---@alias abilityLeapFunc fun(options:abilityLeapOptions,vec:number[]):nil|boolean
----@alias abilityLeapOptions {sourceUnit:Unit,targetUnit:Unit,targetVec:number[],animate:string|number,animateScale:number,frequency:number,speed:number,acceleration:number,height:number,reflex:number,model:string,onMove:abilityLeapFunc,onEnd:abilityLeapFunc,onReflex:abilityLeapFunc}
+---@alias abilityLeapOptions {sourceUnit:Unit,targetUnit:Unit,targetVec:number[],animate:string|number,animateScale:number,frequency:number,speed:number,acceleration:number,height:number,reflex:number,stunPause:boolean,model:string,onMove:abilityLeapFunc,onEnd:abilityLeapFunc,onReflex:abilityLeapFunc}
 ---@param options abilityLeapOptions|abilityBuffAddon
 function ability.leap(options)
     sync.must()
@@ -78,9 +79,12 @@ function ability.leap(options)
     if (sourceUnit:isLeaping()) then
         return
     end
+    --- 位移互斥: 后触发的位移立即顶掉前一个(如蛇行), 保证同一时间只有一个位移在推进
+    ability.moveStop(sourceUnit)
 
     local frequency = options.frequency or 0.03
     local speed = math.min(5000, math.max(100, options.speed or 500))
+    local stunPause = (options.stunPause == true)
 
     local vec0 = { sourceUnit:x(), sourceUnit:y(), sourceUnit:h() }
     ---@type number[]
@@ -110,6 +114,25 @@ function ability.leap(options)
     local flyHeight0 = sourceUnit:flyHeight()
     local animate = options.animate
     local animateDiff = (options.animateScale or 1) - sourceUnit:animateScale()
+
+    --- 本段位移的"立即终止"入口: 自己结束或被新位移顶掉时统一走这里(销毁计时器 + 回滚 Buff)
+    ---@type Timer|nil
+    local timer
+    local stopped = false
+    local function stop(isComplete, endVec)
+        if (true == stopped) then
+            return
+        end
+        stopped = true
+        if (nil ~= timer) then
+            class.destroy(timer)
+            timer = nil
+        end
+        if (sourceUnit._moveStop == stop) then
+            sourceUnit._moveStop = nil
+        end
+        _call(isComplete, options, endVec)
+    end
 
     options.buff = Buff({
         key = "leap",
@@ -149,10 +172,18 @@ function ability.leap(options)
     local distancePrev = distance
     local faraway = frequency * speed * 30
     local vecT = { vec0[1], vec0[2], vec0[3] }
-    time.setInterval(frequency, function(curTimer)
+    timer = time.setInterval(frequency, function()
         if (sourceUnit:isDead()) then
-            class.destroy(curTimer)
-            _call(false, options, vecT)
+            stop(false, vecT)
+            return
+        end
+        --- 已被新位移顶掉/外部终止: 直接退出
+        if (true == stopped) then
+            return
+        end
+
+        --- 眩晕中: 暂停推进(不累计进度、不位移), 眩晕结束后从原进度继续
+        if (true == stunPause and true == sourceUnit:isStunning()) then
             return
         end
 
@@ -173,33 +204,33 @@ function ability.leap(options)
                 nx, ny, nz = vector3.bezier2(vec0, vec1, vec2, dt)
             end
             if (RegionPlayable:isBorder(nx, ny)) then
-                class.destroy(curTimer)
-                _call(false, options, vecT)
+                stop(false, vecT)
                 return
             end
             vecT[1], vecT[2], vecT[3] = nx, ny, nz
             distanceCur = vector2.distance(vecT[1], vecT[2], vec2[1], vec2[2])
         end
         if (dt >= 1) then
-            class.destroy(curTimer)
             sourceUnit:position(vec2[1], vec2[2])
             sourceUnit:flyHeight(vec2[3])
             sourceUnit:facing(vector2.angle(vecT[1], vecT[2], vec2[1], vec2[2]))
-            _call(true, options, vec2)
+            stop(true, vec2)
             return
         end
         if (true == isDynTarget and dt > 0.25 and (distancePrev - distanceCur) > faraway) then
-            class.destroy(curTimer)
-            _call(false, options, vecT)
+            stop(false, vecT)
             return
         end
 
         if (type(options.onMove) == "function") then
             if (false == options.onMove(options, vecT)) then
-                class.destroy(curTimer)
-                _call(false, options, vecT)
+                stop(false, vecT)
                 return
             end
+        end
+        --- 回调内可能已启动了新位移(本段被顶掉): 不再推进
+        if (true == stopped) then
+            return
         end
 
         J.SetUnitX(sourceUnit:handle(), vecT[1])
@@ -211,4 +242,25 @@ function ability.leap(options)
             dtSpd = dtSpd + dtAcc
         end
     end)
+    --- 登记终止入口: 其它位移开始时通过 ability.moveStop 顶掉本段
+    if (true == stopped) then
+        class.destroy(timer)
+        timer = nil
+    else
+        sourceUnit._moveStop = stop
+    end
+end
+
+--- 立即终止单位当前正在进行的位移(冲锋/蛇行), 无位移时忽略
+---@param unit Unit
+---@return void
+function ability.moveStop(unit)
+    if (false == class.isObject(unit, UnitClass)) then
+        return
+    end
+    local moveStop = unit._moveStop
+    if (type(moveStop) == "function") then
+        unit._moveStop = nil
+        moveStop()
+    end
 end
