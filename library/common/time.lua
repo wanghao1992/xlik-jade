@@ -85,6 +85,14 @@ function time.unix()
     return (japi.DZ_Map_GetGameStartTime() or 0) + time._sec
 end
 
+--- 获取开局至今经过的秒数(单调递增)
+--- * 注意: 计算"经过了多久"必须用本方法, 不能用 time.unix()
+---   time.unix() 里的秒数每分钟回绕一次(0~59), 直接相减会出现负数或提前归零
+---@return number
+function time.elapsed()
+    return (time._inc or 0) / 100
+end
+
 --- 获取服务器当前时间对象
 --- * 此方法在本地不能准确获取当前时间，将从UNIX元秒开始(1970年)
 ---@param timestamp number
