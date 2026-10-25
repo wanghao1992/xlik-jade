@@ -353,6 +353,18 @@ function _index:isLeaping()
     return superposition.is(self, "leap")
 end
 
+--- 是否剑刃风暴中(供 ability.whirlwind 判定)
+---@return boolean
+function _index:isWhirlwind()
+    return superposition.is(self, "whirlwind")
+end
+
+--- 是否蛇形移动中(供 ability.serpentine 判定)
+---@return boolean
+function _index:isSerpentine()
+    return superposition.is(self, "serpentine")
+end
+
 --- 判断单位是否处于施法中止态
 --- 暂停不属于施法中止态
 --- 施法中止态定义：被销毁、死亡、眩晕、沉默
