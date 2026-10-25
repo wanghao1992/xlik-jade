@@ -105,6 +105,8 @@ function uiPriority._drain()
     end
     local item = table.remove(queue, best)
     if (type(item.openFn) ~= "function") then
+        --- 无效条目: 丢弃后继续处理队列里剩下的, 避免整条队列因为一个坏条目永远卡住
+        uiPriority._drain()
         return
     end
     local kit = item.kit
@@ -114,9 +116,15 @@ function uiPriority._drain()
     end
     local function open()
         if ((uiPriority._canceled[kit] or 0) ~= token) then
+            --- 该条目在排期期间已被取消: 继续消化队列, 否则后面的套件会被永久堵住
+            uiPriority._drain()
             return
         end
-        pcall(item.openFn)
+        local ok = pcall(item.openFn)
+        --- 打开失败(套件内部报错)时不能留下空转的队列: 没有新的模态占用就继续开下一个
+        if (true ~= ok and nil == uiPriority._active) then
+            uiPriority._drain()
+        end
     end
     --- 延迟约 0.1s: 让上一个面板的关闭逻辑(隐藏 layer / 恢复技能栏)先跑完
     if (sync and sync.is and sync.is()) then
