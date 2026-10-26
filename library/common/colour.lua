@@ -134,7 +134,7 @@ end
 
 
 --- 给描述文本中的数值上色: 百分比(如 30%)与普通数值(如 +250)使用不同颜色
---- 已存在的 |cXXXXXXXX...|r 片段保持原样, 不会被二次染色; |n 换行符原样保留
+--- 颜色码前补一个空格, 使数值与前文分隔; 已存在的 |cXXXXXXXX...|r 片段保持原样, 不会被二次染色; |n 换行符原样保留
 ---@param text string|number|nil 描述文本
 ---@param percentHex string|nil 百分比颜色码(6位), 默认金色
 ---@param valueHex string|nil 普通数值颜色码(6位), 默认深天蓝
@@ -174,7 +174,7 @@ function colour.highlightNumbers(text, percentHex, valueHex)
                 if (true == isPercent) then
                     num = num .. '%'
                 end
-                table.insert(builder, colour.hex(isPercent and percentHex or valueHex, num))
+                table.insert(builder, ' ' .. colour.hex(isPercent and percentHex or valueHex, num))
                 i = i + string.len(num)
             else
                 table.insert(builder, string.sub(text, i, i))
