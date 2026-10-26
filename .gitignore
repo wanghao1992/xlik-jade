@@ -9,3 +9,4 @@
 /vendor/*
 /env.yaml
 /exe/env.yaml
+/.exp/bridge_hit.txt
