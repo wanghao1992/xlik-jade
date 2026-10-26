@@ -22,6 +22,7 @@
         pause = true, --[可选]是否暂停单位（默认true；false时蛇行期间仍可攻击/施法）
         facing = true, --[可选]是否每周期强制朝向移动方向（默认true；false时朝向交给外部控制, 避免打断攻击转向）
         stunPause = false, --[可选]眩晕时是否暂停推进（默认false；true时眩晕期间停在原地, 眩晕结束后继续）
+        visible = true, --[可选]是否在Buff栏显示本段蛇行的内部Buff（默认true；外部已有常驻展示Buff时传false）
         onMove = abilitySerpentineFunc, --[可选]每周期移动回调（return false时可强行中止循环）
         onEnd = abilitySerpentineFunc, --[可选]结束回调（弹跳完毕才算结束）
     }
@@ -125,6 +126,7 @@ function ability.serpentine(options)
         name = options.name,
         icon = options.icon,
         description = options.description,
+        visible = options.visible,
         ---@param buffObj Unit
         purpose = function(buffObj)
             effector.attach(buffObj, options.model, "origin")
