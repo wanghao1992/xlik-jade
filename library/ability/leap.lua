@@ -64,6 +64,7 @@ end
         onMove = abilityLeapFunc, --[可选]每周期移动回调（return false时可强行中止循环）
         onReflex = abilityLeapFunc, --[可选]每弹跳回调（return false时可强行中止后续弹跳）
         onEnd = abilityLeapFunc, --[可选]结束回调（弹跳完毕才算结束）
+        visible = true, --[可选]是否在Buff栏显示本段位移的Buff(false=每段创建/销毁时不闪烁, 由外部常驻Buff统一展示)
     }
 ]]
 ---@alias abilityLeapFunc fun(options:abilityLeapOptions,vec:number[]):nil|boolean
@@ -140,6 +141,7 @@ function ability.leap(options)
         name = options.name,
         icon = options.icon,
         description = options.description,
+        visible = options.visible,
         ---@param buffObj Unit
         purpose = function(buffObj)
             effector.attach(buffObj, options.model, "origin")
