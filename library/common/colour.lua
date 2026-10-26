@@ -131,3 +131,56 @@ function colour.format(str, packHex, options)
         return table.concat(builder, '')
     end
 end
+
+
+--- 给描述文本中的数值上色: 百分比(如 30%)与普通数值(如 +250)使用不同颜色
+--- 已存在的 |cXXXXXXXX...|r 片段保持原样, 不会被二次染色; |n 换行符原样保留
+---@param text string|number|nil 描述文本
+---@param percentHex string|nil 百分比颜色码(6位), 默认金色
+---@param valueHex string|nil 普通数值颜色码(6位), 默认深天蓝
+---@return string
+function colour.highlightNumbers(text, percentHex, valueHex)
+    if (type(text) == "number") then
+        text = tostring(text)
+    end
+    if (type(text) ~= "string" or text == '') then
+        return ''
+    end
+    percentHex = percentHex or colour.gold
+    valueHex = valueHex or colour.deepskyblue
+    local builder = {}
+    local i, len = 1, string.len(text)
+    local inColour = false      -- 是否处于已有的 |c...|r 颜色片段内
+    while (i <= len) do
+        local rest = string.sub(text, i)
+        --- 已有颜色片段: 整段原样保留(避免把色码/片段中的数字再次染色)
+        local code = string.match(rest, '^|c%x%x%x%x%x%x%x%x')
+        if (code) then
+            table.insert(builder, code)
+            i = i + string.len(code)
+            inColour = true
+        elseif (string.sub(rest, 1, 2) == '|r') then
+            table.insert(builder, '|r')
+            i = i + 2
+            inColour = false
+        elseif (true == inColour) then
+            table.insert(builder, string.sub(text, i, i))
+            i = i + 1
+        else
+            --- 数值: 可带正负号/小数, 后紧跟 % 视为百分比
+            local num = string.match(rest, '^[%+%-]?%d+%.?%d*')
+            if (num) then
+                local isPercent = (string.sub(rest, string.len(num) + 1, string.len(num) + 1) == '%')
+                if (true == isPercent) then
+                    num = num .. '%'
+                end
+                table.insert(builder, colour.hex(isPercent and percentHex or valueHex, num))
+                i = i + string.len(num)
+            else
+                table.insert(builder, string.sub(text, i, i))
+                i = i + 1
+            end
+        end
+    end
+    return table.concat(builder, '')
+end
