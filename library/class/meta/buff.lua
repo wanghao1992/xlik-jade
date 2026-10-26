@@ -181,8 +181,8 @@ function Buff(params)
     if (type(params.visible) == "boolean") then
         p._visible = params.visible
     end
-    if (type(params.signal) == "table") then
-        p._signal = params._signal
+    if (type(params.signal) == "string") then
+        p._signal = params.signal
     end
     ---@type Buff
     local o = oMeta(p, _index)
