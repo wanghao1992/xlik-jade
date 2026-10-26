@@ -61,6 +61,7 @@ end
         height = 0, --[可选]飞跃高度（默认0）
         reflex = 0, --[可选]弹射次数，当targetUnit存在时才有效，默认0
         stunPause = false, --[可选]眩晕时是否暂停推进（默认false；true时眩晕期间停在原地, 眩晕结束后继续）
+        pauseKey = nil, --[可选]带该Buff(key)时暂停推进(如传送), 结束后从原进度继续
         onMove = abilityLeapFunc, --[可选]每周期移动回调（return false时可强行中止循环）
         onReflex = abilityLeapFunc, --[可选]每弹跳回调（return false时可强行中止后续弹跳）
         onEnd = abilityLeapFunc, --[可选]结束回调（弹跳完毕才算结束）
@@ -86,6 +87,7 @@ function ability.leap(options)
     local frequency = options.frequency or 0.03
     local speed = math.min(5000, math.max(100, options.speed or 500))
     local stunPause = (options.stunPause == true)
+    local pauseKey = options.pauseKey
 
     local vec0 = { sourceUnit:x(), sourceUnit:y(), sourceUnit:h() }
     ---@type number[]
@@ -186,6 +188,11 @@ function ability.leap(options)
 
         --- 眩晕中: 暂停推进(不累计进度、不位移), 眩晕结束后从原进度继续
         if (true == stunPause and true == sourceUnit:isStunning()) then
+            return
+        end
+
+        --- 传送等外部暂停: 停在原地不推进, 结束后从原进度继续
+        if (type(pauseKey) == "string" and true == BuffHas(sourceUnit, pauseKey)) then
             return
         end
 

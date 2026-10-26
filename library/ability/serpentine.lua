@@ -22,6 +22,7 @@
         pause = true, --[可选]是否暂停单位（默认true；false时蛇行期间仍可攻击/施法）
         facing = true, --[可选]是否每周期强制朝向移动方向（默认true；false时朝向交给外部控制, 避免打断攻击转向）
         stunPause = false, --[可选]眩晕时是否暂停推进（默认false；true时眩晕期间停在原地, 眩晕结束后继续）
+        pauseKey = nil, --[可选]带该Buff(key)时暂停推进(如传送), 结束后从原进度继续
         visible = true, --[可选]是否在Buff栏显示本段蛇行的内部Buff（默认true；外部已有常驻展示Buff时传false）
         onMove = abilitySerpentineFunc, --[可选]每周期移动回调（return false时可强行中止循环）
         onEnd = abilitySerpentineFunc, --[可选]结束回调（弹跳完毕才算结束）
@@ -64,6 +65,7 @@ function ability.serpentine(options)
     local pauseUnit = (options.pause ~= false)
     local facingLock = (options.facing ~= false)
     local stunPause = (options.stunPause == true)
+    local pauseKey = options.pauseKey
 
     local vec0 = { sourceUnit:x(), sourceUnit:y() }
     ---@type number[]
@@ -174,6 +176,11 @@ function ability.serpentine(options)
 
         --- 眩晕中: 暂停推进(不累计进度、不位移), 眩晕结束后从原进度继续
         if (true == stunPause and true == sourceUnit:isStunning()) then
+            return
+        end
+
+        --- 传送等外部暂停: 停在原地不推进, 结束后从原进度继续
+        if (type(pauseKey) == "string" and true == BuffHas(sourceUnit, pauseKey)) then
             return
         end
 
