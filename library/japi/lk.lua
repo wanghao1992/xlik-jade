@@ -1020,3 +1020,97 @@ function japi.ServerSaveRoom(whichPlayer, key, value)
     end
     japi.Roulette(japi.DZ_Map_Stat_SetStat, whichPlayer, key, value)
 end
+
+--- 设置模型颜色(ARGB)
+--- 平台原生提供，用于替代本地桥接插件的顶点色设置
+---@param frame number integer
+---@param color number integer ARGB
+---@return void
+function japi.FrameSetModelColor(frame, color)
+    japi.Exec("FrameSetModelColor", frame, color)
+end
+
+--- 设置模型按xyz轴缩放
+---@param frame number integer
+---@param x number
+---@param y number
+---@param z number
+---@return void
+function japi.FrameSetModelScale(frame, x, y, z)
+    japi.Exec("FrameSetModelScale", frame, x, y, z)
+end
+
+--- 替换模型指定槽位的贴图
+---@param frame number integer
+---@param path string 贴图路径
+---@param slot number integer 槽位ID
+---@return void
+function japi.FrameSetModelTexture(frame, path, slot)
+    japi.Exec("FrameSetModelTexture", frame, path, slot)
+end
+
+--- 给模型帧挂载渲染/光照设置
+--- 内核的 SPRITE 帧自身没有光照设置，模型会呈现黑白灰度；挂上与原生头像帧相同的设置后即可正常显示颜色
+---@param frame number integer
+---@return void
+function japi.WhAttachLit(frame)
+    japi.Exec("WhAttachLit", frame)
+end
+
+--- 设置模型帧的顶点色
+--- SPRITE 帧未设置顶点色时模型会偏灰，通常设为 0xFFFFFFFF 保持贴图原色
+---@param frame number integer
+---@param color number integer ARGB
+---@return void
+function japi.WhVertexColor(frame, color)
+    japi.Exec("WhVC", frame, color)
+end
+
+--- 开启模型帧的光照与粒子
+---@param frame number integer
+---@return void
+function japi.WhFix(frame)
+    japi.Exec("WhFix", frame)
+end
+
+--- 设置模型缩放比例
+---@param frame number integer
+---@param ratio number 相对原始尺寸的比例
+---@return void
+function japi.WhScale(frame, ratio)
+    japi.Exec("WhScale", frame, ratio)
+end
+
+--- 设置模型队伍颜色
+--- 注：内核 SetTeamColor 内部会触发一次受保护的异常，JAPI 绑定层会在函数返回后误报
+--- "Call jass function crash"，实际调用已经生效，用 pcall 吞掉该误报以免中断调用方执行流
+---@param frame number integer
+---@param color number integer 玩家颜色索引
+---@return void
+function japi.WhTeamColor(frame, color)
+    pcall(japi.Exec, "WhColor", frame, color)
+end
+
+--- 设置模型滚转角度（角度制）
+---@param frame number integer
+---@param angle number
+---@return void
+function japi.WhRotateX(frame, angle)
+    japi.Exec("FrameSetModelRotateX", frame, angle)
+end
+
+--- 设置模型俯仰角度（角度制）
+---@param frame number integer
+---@param angle number
+---@return void
+function japi.WhRotateY(frame, angle)
+    japi.Exec("FrameSetModelRotateY", frame, angle)
+end
+
+--- 设置模型水平朝向角度（角度制）
+---@param frame number integer
+---@param angle number
+---@return void
+function japi.WhRotateZ(frame, angle)
+    japi.Exec("FrameSetModelRotateZ", frame, angle)
+end

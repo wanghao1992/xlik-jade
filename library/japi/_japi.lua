@@ -59,3 +59,14 @@ function japi.Exec(method, ...)
     end
     return call(...)
 end
+
+--- 判断某个JAPI方法是否可用
+--- 平台原生引擎与本地开发引擎的JAPI集合不同，框架据此选择实现路径
+---@param method string 方法名，如 'FrameSetModelColor'
+---@return boolean
+function japi.Has(method)
+    if (nil == J.Japi or type(method) ~= "string") then
+        return false
+    end
+    return type(J.Japi[method]) == "function"
+end
