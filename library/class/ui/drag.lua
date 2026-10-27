@@ -17,6 +17,8 @@ local _index = UI(UIDragClass, {
     _marginLeft = 0,
     ---@type number 外边距右
     _marginRight = 0,
+    ---@type number|nil 仅顶部该高度范围内可按下拖动(nil=整块面板都可拖)
+    _grabHeight = nil,
 }):extend(UIPlateClass)
 
 ---@protected
@@ -38,6 +40,19 @@ function _index:margin(top, right, bottom, left)
         self._marginBottom = bottom
         self._marginLeft = left
         self._marginRight = right
+    end
+    return self
+end
+
+--- 设置"只有顶部横条可拖动"的高度
+--- 用于面板整体是拖拽容器、但只希望标题栏能拖动的场景; 其余区域点击不会移动面板
+---@param height number|nil 顶部可拖高度; nil 表示恢复整块可拖
+---@return self
+function _index:grabHeight(height)
+    if (type(height) == "number") then
+        self._grabHeight = height
+    elseif (nil == height) then
+        self._grabHeight = nil
     end
     return self
 end
@@ -94,6 +109,14 @@ function UIDrag(key, parent)
         end
         ---@param evtData eventOnUILeftClick
         o:onEvent(eventKind.uiLeftClick, eKey, function(evtData)
+            --- 限定拖动区: 只在面板顶部 grabHeight 高度内响应按下
+            local gh = evtData.triggerUI._grabHeight
+            if (type(gh) == "number") then
+                local ag = evtData.triggerUI:anchor()
+                if (japi.MouseRY() < ag[2] + ag[4] / 2 - gh) then
+                    return
+                end
+            end
             ---@type UIDrag
             local ui = evtData.triggerUI
             ui:onEvent(eventKind.uiHide, eKey, function()
