@@ -3,6 +3,15 @@
     对接引流 Flow `damage`
     使用 Unit:isHurting() 判断是否受伤中
     使用 Unit:isDamaging() 判断是否造成伤害中
+
+    options 字段约定(全部由本模块统一初始化, 业务只需填「入参」分区):
+      入参   : sourceUnit / targetUnit / damage / damageSrc / damageType / damageTypeLevel / breakArmor / extra
+      中间值 : defend(结算护甲) / crit(是否暴击) / critDamage(暴击伤害%) / damage(逐段结算后的伤害)
+      标记   : fixedHp(按最大生命百分比的固定伤害) / absorbed(被护盾吸收量) / capped(是否被伤害上限截断)
+               counter(元素克制倍率, 见 projects/demo 的 damaging.lua)
+    说明: 中间值/标记在 Flow 执行前统一给好默认值, flux 出错也不会让后续分段连锁拿到 nil;
+          sourceAttr/targetAttr 缓存属性表引用, 避免各 flux 反复做 sourceUnit._attr 链式取值。
+
     options = {
         sourceUnit = Unit, --[可选]源单位
         targetUnit = Unit, --[必须]目标单位
@@ -14,9 +23,6 @@
         extra = table, --[可选]自定义额外数据，框架自带的key将以“下划线”开头命名
     }
 ]]
----@see injury#damageType
----@see injury#damageSrc
----@see injury#breakArmorType
 
 --- 同帧伤害嵌套深度保护
 --- 伤害流程会依次触发 unitDamage / unitAttack / unitHurt 等事件, 若某个事件回调又发起新的伤害,
@@ -37,6 +43,10 @@ local DMG_TRACE_IDX = 0
 for i = 1, DMG_TRACE_MAX do
     DMG_TRACE[i] = {}
 end
+
+--- 受伤/造成伤害状态的持续时间(秒)
+--- 同一单位在持续时间内再次受到伤害时只刷新到期时间, 不再新建计时器
+local HURT_STATE_TIME = 3.5
 
 --- 单位描述(用于定位伤害链)
 ---@param u Unit
@@ -66,10 +76,102 @@ local function printTrace()
     print(table.concat(lines, '\n'))
 end
 
+--- 结束某状态(触发 superposition 回退)
+---@param obj Object
+---@param key string
+---@return void
+local function hurtStateDown(obj, key)
+    if (nil == obj) then
+        return
+    end
+    local states = obj._hurtStates
+    local st = states and states[key]
+    if (nil == st) then
+        return
+    end
+    states[key] = nil
+    st._timer = nil
+    if (false == class.isDestroy(obj)) then
+        superposition.minus(obj, key)
+    end
+end
+
+--- 刷新某单位的伤害/受伤状态(同一 key 单计时器)
+--- 旧实现每次伤害都新建 3.5s 计时器, 高频伤害(持续伤害/AoE)会堆积大量计时器;
+--- 这里改为"单位 + key"唯一计时器, 重复触发只把到期时间往后推。
+---@param obj Object
+---@param key string
+---@return void
+local function refreshHurtState(obj, key)
+    if (nil == obj) then
+        return
+    end
+    local states = obj._hurtStates
+    if (nil == states) then
+        states = {}
+        obj._hurtStates = states
+    end
+    local untilTime = time._inc * 0.01 + HURT_STATE_TIME
+    local st = states[key]
+    if (nil ~= st) then
+        st._until = untilTime
+        return
+    end
+    st = { _until = untilTime, _timer = nil }
+    states[key] = st
+    superposition.plus(obj, key)
+    local function tick()
+        local left = st._until - time._inc * 0.01
+        if (left > 0) then
+            st._timer = time.setTimeout(left, tick)
+            return
+        end
+        hurtStateDown(obj, key)
+    end
+    st._timer = time.setTimeout(HURT_STATE_TIME, tick)
+end
+
+--- 单次伤害上限(按目标最大生命的百分比)
+--- 配置 game.config.damage_cap_percent = 50 表示单次最多造成目标 50% 最大生命的伤害;
+--- 0 / 未配置 表示不限制(默认关闭, 不改变原有数值)。
+---@param u Unit
+---@return number 上限值(<=0 表示不限制)
+local function damageCap(u)
+    local pct = (type(game.config) == "table") and tonumber(game.config.damage_cap_percent) or nil
+    if (nil == pct or pct <= 0) then
+        return 0
+    end
+    local hp = tonumber(u:get("hp")) or 0
+    if (hp <= 0) then
+        return 0
+    end
+    return math.max(1, math.floor(hp * pct * 0.01))
+end
+
+--- 护盾吸收
+--- 护盾是纯 Lua 属性(unit:shieldCur), 不写入引擎生命值, 因此在扣血前先行消耗。
+--- 未设置护盾的单位 _shield / _shieldCur 为 0, 此函数直接返回 0(与旧行为完全一致)。
+---@param u Unit
+---@param damage number
+---@return number 实际吸收量
+local function absorbShield(u, damage)
+    if (damage <= 0) then
+        return 0
+    end
+    local shield = tonumber(u:get("shieldCur")) or 0
+    if (shield <= 0) then
+        return 0
+    end
+    local take = math.min(shield, damage)
+    u:set("shieldCur", shield - take)
+    return take
+end
+
 --- 伤害实现(原 ability.damage 函数体)
----@param options {sourceUnit:Unit,targetUnit:Unit,damage:number,damageSrc:MappingValue,damageType:MappingValue,damageTypeLevel:number,breakArmor:MappingValue[],extra:table}
+---@param options table
 ---@return void
 local function damageImpl(options)
+    --- ===== 入参整理 =====
     options.damage = options.damage or 0
     if (options.damage < 1 or false == class.isObject(options.targetUnit, UnitClass)) then
         return
@@ -113,46 +215,74 @@ local function damageImpl(options)
             must(false, "options.breakArmor[" .. notType .. "]@injury.breakArmorType")
         end
     end
+
+    --- ===== 中间值/标记初始化 =====
+    --- 业务 flux 直接读写这些字段, 不必各自兜底; 单个 flux 抛错也不会让后续分段拿到 nil
+    options.defend = 0
+    options.crit = false
+    options.critDamage = 0
+    options.absorbed = 0
+    options.capped = false
+    --- 按最大生命百分比的固定伤害: 不吃暴击/附魔/天赋/宝物等倍率(见 projects/demo 的 damaging.lua)
+    options.fixedHp = (type(options.extra) == "table" and true == options.extra._percentHp)
+    --- 属性表引用缓存(各 flux 共用, 避免重复链式取值)
+    options.sourceAttr = (nil ~= options.sourceUnit and options.sourceUnit._attr) or false
+    options.targetAttr = options.targetUnit._attr or false
+
     --- 对接伤害过程
     if (isFlow("damage")) then
         Flow("damage"):run(options)
     end
-    --- 最终伤害
-    if (options.damage >= 1) then
-        if (nil ~= options.sourceUnit) then
-            options.targetUnit._lastHurtSource = options.sourceUnit
-            options.sourceUnit._lastDamageTarget = options.targetUnit
-            superposition.plus(options.sourceUnit, "damage")
-            superposition.plus(options.sourceUnit:owner(), "damage")
-            time.setTimeout(3.5, function()
-                if (false == class.isDestroy(options.sourceUnit)) then
-                    superposition.minus(options.sourceUnit, "damage")
-                    superposition.minus(options.sourceUnit:owner(), "damage")
-                end
-            end)
-            --- 触发伤害事件
-            event.syncTrigger(options.sourceUnit, eventKind.unitDamage, options)
-            if (options.damageSrc == injury.damageSrc.attack) then
-                event.syncTrigger(options.sourceUnit, eventKind.unitAttack, options)
-            end
-        end
-        superposition.plus(options.targetUnit, "hurt")
-        superposition.plus(options.targetUnit:owner(), "hurt")
-        time.setTimeout(3.5, function()
-            if (false == class.isDestroy(options.targetUnit)) then
-                superposition.minus(options.targetUnit, "hurt")
-                superposition.minus(options.targetUnit:owner(), "hurt")
-            end
-        end)
-        --- 触发受伤事件
-        event.syncTrigger(options.targetUnit, eventKind.unitHurt, options)
-        if (options.damageSrc == injury.damageSrc.attack) then
-            event.syncTrigger(options.targetUnit, eventKind.unitBeAttack, options)
-        end
-        options.targetUnit:hpCur("-=" .. options.damage)
+
+    --- ===== 最终伤害结算(下限 -> 取整 -> 上限 -> 护盾 -> 扣血) =====
+    --- 伤害下限: 结算后不足 1 点视为无效伤害(不触发伤害/受伤事件, 与旧行为一致)
+    if (options.damage < 1) then
+        return
     end
+    --- 统一取整: 避免 hpCur 收到 12.7000000001 之类的浮点串, 也避免尾差累积
+    local damage = math.max(1, math.round(options.damage))
+    --- 单次伤害上限(默认不限制)
+    local cap = damageCap(options.targetUnit)
+    if (cap > 0 and damage > cap) then
+        damage = cap
+        options.capped = true
+    end
+    --- 护盾吸收(无护盾时 absorbed = 0, 与旧行为一致)
+    local absorbed = absorbShield(options.targetUnit, damage)
+    if (absorbed > 0) then
+        options.absorbed = absorbed
+        damage = damage - absorbed
+    end
+    options.damage = damage
+    --- 被护盾完全吸收: 不触发伤害/受伤事件
+    if (damage < 1) then
+        return
+    end
+
+    if (nil ~= options.sourceUnit) then
+        options.targetUnit._lastHurtSource = options.sourceUnit
+        options.sourceUnit._lastDamageTarget = options.targetUnit
+        refreshHurtState(options.sourceUnit, "damage")
+        refreshHurtState(options.sourceUnit:owner(), "damage")
+        --- 触发伤害事件
+        event.syncTrigger(options.sourceUnit, eventKind.unitDamage, options)
+        if (options.damageSrc == injury.damageSrc.attack) then
+            event.syncTrigger(options.sourceUnit, eventKind.unitAttack, options)
+        end
+    end
+    refreshHurtState(options.targetUnit, "hurt")
+    refreshHurtState(options.targetUnit:owner(), "hurt")
+    --- 触发受伤事件
+    event.syncTrigger(options.targetUnit, eventKind.unitHurt, options)
+    if (options.damageSrc == injury.damageSrc.attack) then
+        event.syncTrigger(options.targetUnit, eventKind.unitBeAttack, options)
+    end
+    options.targetUnit:hpCur("-=" .. options.damage)
 end
 
+---@see injury.damageType
+---@see injury.damageSrc
+---@see injury.breakArmorType
 ---@param options {sourceUnit:Unit,targetUnit:Unit,damage:number,damageSrc:MappingValue,damageType:MappingValue,damageTypeLevel:number,breakArmor:MappingValue[],extra:table}
 ---@return void
 function ability.damage(options)

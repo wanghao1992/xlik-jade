@@ -27,6 +27,10 @@ local _index = Vast(UnitAttrClass, {
     ---@type number
     _mpCur = 1e4,
     ---@type number
+    _shield = 0,
+    ---@type number
+    _shieldCur = 0,
+    ---@type number
     _sightBase = 0,
     ---@type number
     _sightDiff = 0,
@@ -166,6 +170,21 @@ end
 ---@return self|number
 function _index:mpRegen(variety)
     return self:modify("mpRegen", variety)
+end
+
+--- 护盾[上限]
+--- 设置时同时补满当前护盾(见 _vastModifier 的 _shield)
+---@param variety number|nil
+---@return self|number
+function _index:shield(variety)
+    return self:modify("shield", variety)
+end
+
+--- 护盾[当前]
+---@param variety number|nil
+---@return self|number
+function _index:shieldCur(variety)
+    return self:modify("shieldCur", variety)
 end
 
 --- 基础视野

@@ -450,7 +450,9 @@ local modifier = {
         ---@param obj UnitTpl
         ---@param newVal number
         _shield = function(obj, _, newVal)
-            obj._shieldCur = newVal
+            -- 上限变化时补满当前护盾(见 unitAttr 的 shield)
+            local cap = math.max(0, tonumber(newVal) or 0)
+            obj._shieldCur = cap
         end,
         ---@param obj UnitTpl
         ---@param newVal number
