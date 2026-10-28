@@ -16,6 +16,7 @@
         damageType 伤害类型 injury.damageType
         damageTypeLevel 伤害等级默认1
         breakArmor 破防类型 injury.breakArmorType
+        onHit = function(dmgParams), --命中回调(可选), dmgParams.damage 为本次实际伤害值
         prevUnit = [unit], --隐藏的参数，上一个的目标单位（必须有，用于构建两点间闪电特效）
         index = 1,--隐藏的参数，用于暗地里记录是第几个被电到的单位
         repeatGroup = [group],--隐藏的参数，用于暗地里记录单位是否被电过
@@ -41,9 +42,12 @@ local _call = function(index, lightningKind, prevUnit, dmgParams)
     end
     lightning.create(lightningKind, sx, sy, sz, tx, ty, th, 0.25)
     ability.damage(dmgParams)
+    if (type(dmgParams.onHit) == "function") then
+        dmgParams.onHit(dmgParams)
+    end
 end
 
----@param options {sourceUnit:Unit,targetUnit:Unit,lightningKind:table,qty:number,rate:number,radius:number,isRepeat:boolean,damage:number,damageSrc:table,damageType:table,damageTypeLevel:number,breakArmor:table,extra:table}
+---@param options {sourceUnit:Unit,targetUnit:Unit,lightningKind:table,qty:number,rate:number,radius:number,isRepeat:boolean,damage:number,damageSrc:table,damageType:table,damageTypeLevel:number,breakArmor:table,extra:table,onHit:fun(dmgParams:table)}
 ---@return void
 function ability.lightningChain(options)
     sync.must()
@@ -67,6 +71,7 @@ function ability.lightningChain(options)
             damageTypeLevel = options.damageTypeLevel or 1,
             breakArmor = options.breakArmor or { injury.breakArmorType.avoid },
             extra = options.extra,
+            onHit = options.onHit,
         }
         _call(index, lightningKind, nil, dmgParams)
         qty = qty - 1
