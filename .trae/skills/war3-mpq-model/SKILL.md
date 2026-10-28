@@ -65,10 +65,13 @@ python scripts/extract_mdx.py batch jobs.txt --out-dir ../assets/war3mapModel/jo
 ## 什么时候要剥离 CAMS
 
 - `CAMS` 是模型内置相机。**UI 模型帧**（`DzFrameSetModel`，即 `UIModel`/`LK_MODEL`）渲染带 `CAMS` 的模型时会按模型自带相机取景，实测常表现为**画面空白**。
-- 更隐蔽的问题：同一路径的模型一旦被 UI 模型帧加载过，之后单位再用它，**动作序列会错乱**（站立播 Walk、攻击不播 Attack）。所以 UI 预览不能用单位本体模型，必须用**另一个文件路径**的副本。
+- 另一个问题：同一路径的模型一旦被 UI 模型帧加载过，之后单位再用它，**动作序列会错乱**（站立播 Walk、攻击不播 Attack）。原因是引擎按模型路径缓存解析结果，单位复用了帧上下文解析出的数据。
+  这个问题**不需要副本**，但单纯调用 `DzModelRemoveFromCache` 无效：帧仍持有模型实例时引用不为零，缓存不会被真正释放，等于没清。正确顺序是**先销毁加载过该模型的 UI 帧 → 再清缓存 → 最后才给单位设置模型**（此时单位是首次加载）。实现见 `xlik_job/main.lua` 的 `ui:releaseCardModels`，由 `转职.lua` 的 `jobFlow.change` 在 `hero:model()` 之前调用；销毁必须发生在同步环境（`class.destroy` 内部有 `sync.must()`）。清缓存入口是 `library/class/ui/model.lua` 的 `UIModelRelease`。
 - `_Portrait.mdx` 全部带 `CAMS`，且序列名多为 `Portrait / Base / Stand - 2`，大多**没有 `Stand`**，不适合直接当卡片预览。
-- 因此卡片/头像预览的推荐做法：提取单位模型 → 剥离 `CAMS` → 另存为 `<名字>JobCard.mdx` 之类的独立文件 → 注册别名给 UI 用。
-- 体积：单位模型体积可观，全职业复制量级约 +7 MB，会直接体现在地图大小上，按需生成。
+- 因此卡片/头像预览只需对**带 `CAMS`** 的模型做副本：提取单位模型 → 剥离 `CAMS` → 另存为 `<名字>JobCard.mdx` → 注册别名给 UI 用；其余模型直接用原生路径。
+  `转职.lua` 的 `cardPreviewModel` 会按"是否注册过 `<模型名>JobCard` 别名"自动分流，未注册的原样返回原生路径。
+- 体积：单位模型体积可观，但只有带 `CAMS` 的模型才需要副本，量级很小（本图 41 个职业模型中仅 3 个带 `CAMS`，副本合计约 450 KB）。
+- 判断模型是否带 `CAMS`：`python scripts/extract_mdx.py info "<模型路径>"` 或对批量清单跑一遍 `describe`。
 
 ## 产物校验（可选）
 

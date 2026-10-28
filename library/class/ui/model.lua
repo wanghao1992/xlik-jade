@@ -68,6 +68,42 @@ local function _applySprite(self)
     end
 end
 
+--- 把模型从引擎的模型文件缓存中移除
+--- 引擎按模型路径缓存解析结果; UI 模型帧先加载过的模型会被单位复用, 动画序列会错位
+--- (站立播 Walk、攻击不播 Attack)。注意: 帧仍持有模型时缓存不会被真正释放,
+--- 只有等帧销毁(引用归零)后再清才对单位生效, 见 UIModelRelease。
+--- 引擎内部实际读取的是 .mdx(.mdl 只是 japi 接口的写法), 大小写也可能参与匹配,
+--- 各写法都清一次以免漏掉。
+---@protected
+---@param path string 真实模型路径(已由 japi.AssetsModel 解析)
+---@return void
+local function _releaseModelCache(path)
+    if (type(path) ~= "string" or false == japi.Has("DzModelRemoveFromCache")) then
+        return
+    end
+    local low = string.lower(path)
+    local mdx = string.gsub(path, "%.mdl$", ".mdx")
+    local lowMdx = string.gsub(low, "%.mdl$", ".mdx")
+    japi.DZ_ModelRemoveFromCache(path)
+    if (mdx ~= path) then japi.DZ_ModelRemoveFromCache(mdx) end
+    if (low ~= path) then japi.DZ_ModelRemoveFromCache(low) end
+    if (lowMdx ~= low and lowMdx ~= mdx) then japi.DZ_ModelRemoveFromCache(lowMdx) end
+end
+
+--- 清除指定模型路径的引擎模型缓存(供外部在销毁 UI 模型帧之后调用)
+--- 场景: 卡片等 UI 模型帧先加载过某个模型, 引擎按路径缓存了"帧上下文"的数据;
+--- 单位随后使用同一路径时会复用这份数据 -> 攻击/移动没有动作。
+--- 只清缓存不够: 帧仍持有模型时引用还在, 引擎不会真正释放。正确顺序是
+--- 先销毁(或换掉)所有加载过该模型的 UI 帧, 再调用本函数, 最后才给单位设置模型。
+---@param path string 模型路径(可传别名, 内部会经 japi.AssetsModel 解析)
+---@return void
+function UIModelRelease(path)
+    if (type(path) ~= "string") then
+        return
+    end
+    _releaseModelCache(japi.AssetsModel(path))
+end
+
 --- 设置模型
 ---@param path string 模型路径
 ---@return self
@@ -76,6 +112,7 @@ function _index:model(path)
         self._model = path
         path = japi.AssetsModel(path)
         japi.DZ_FrameSetModel(self._handle, path, 0, 0)
+        _releaseModelCache(path)
         --- SPRITE 帧没有光照设置会显示为黑白灰度，本地需挂上与原生头像帧相同的渲染/光照设置
         --- 平台原生环境自带光照，不需要挂；设置挂在帧上，只需挂一次
         if (false == isNative() and true ~= self._lit) then
