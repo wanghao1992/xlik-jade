@@ -8,7 +8,7 @@
       入参   : sourceUnit / targetUnit / damage / damageSrc / damageType / damageTypeLevel / breakArmor / extra
       中间值 : defend(结算护甲) / crit(是否暴击) / critDamage(暴击伤害%) / damage(逐段结算后的伤害)
       标记   : fixedHp(按最大生命百分比的固定伤害) / absorbed(被护盾吸收量) / capped(是否被伤害上限截断)
-               counter(元素克制倍率, 见 projects/demo 的 damaging.lua)
+               counter(元素克制倍率) / amplify(增伤加区, 见 projects/demo 的 damaging.lua)
     说明: 中间值/标记在 Flow 执行前统一给好默认值, flux 出错也不会让后续分段连锁拿到 nil;
           sourceAttr/targetAttr 缓存属性表引用, 避免各 flux 反复做 sourceUnit._attr 链式取值。
 
