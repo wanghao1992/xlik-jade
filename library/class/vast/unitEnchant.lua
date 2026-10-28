@@ -175,7 +175,7 @@ end
 ---@return void
 function _index:cls(eKey, isDelete)
     local data = self._enchantAppendingData
-    if (type(data) == "table") then
+    if (type(data) ~= "table") then
         return
     end
     data = data[eKey]
