@@ -219,7 +219,7 @@ uiPriority.register("xlik_job", 500)       -- 进化/转职面板(最高)
 uiPriority.register("xlik_ultimate", 400)  -- 奥义五选一
 uiPriority.register("xlik_treasure", 300)  -- 宝物选择
 uiPriority.register("xlik_event", 260)     -- 随机事件(必须排队显示, 不能因其他面板而丢弃)
-uiPriority.register("xlik_affix", 250)     -- 专属装备词条四选一
+uiPriority.register("xlik_affix", 250)     -- 专属装备词条三选一(面板本身不再参与模态排队)
 uiPriority.register("xlik_learn", 200)     -- 天赋三选一
 uiPriority.register("xlik_shop", 180)      -- 战功商店(低于天赋面板)
 uiPriority.register("xlik_alerter", 9000)  -- 飘字/提示
