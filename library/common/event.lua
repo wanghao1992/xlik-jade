@@ -253,7 +253,9 @@ function event.syncTrigger(symbol, evtKind, triggerData)
         return
     end
     -- 回调数据
-    local td = setmetatable({}, { __index = triggerData })
+    -- __newindex 也指向 triggerData: 回调里对 data.xxx 的赋值(如护盾吸收/单次受伤上限把 data.damage 改小)
+    -- 必须写回 options 本体, 只做 __index 读取转发会让伤害流程读到的仍是原值
+    local td = setmetatable({}, { __index = triggerData, __newindex = triggerData })
     if (class.is(symbol)) then
         local topSymbol = symbol._className
         td["trigger" .. topSymbol] = symbol
