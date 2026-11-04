@@ -1,0 +1,2271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>魔兽风格按钮边框 · UI 构件</title>
+<style>
+  /* ============================================================
+     设计令牌 —— 黑铁 / 青铜 / 陈年石料
+     ============================================================ */
+  :root{
+    --gold-0:#fff6cd;
+    --gold-1:#eed894;
+    --gold-2:#cdaa4a;
+    --gold-3:#9a7a28;
+    --gold-4:#5f4a14;
+    --iron:#0a0806;
+    --stone-0:#100f0c;
+    --stone-1:#1c1a14;
+    --stone-2:#2b281f;
+    --stone-3:#4a463a;
+    --ink:#f1e6c8;
+    --ink-dim:#a79c82;
+    --accent:#7fe3b8;
+    --danger:#e0664f;
+
+    --noise:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+
+    --metal:linear-gradient(162deg,#5d4a12 0%,#b8942f 11%,#f7e9ac 24%,#c2a03c 38%,#6d5416 55%,#d8bd6b 75%,#fdf1c1 88%,#8a6c20 100%);
+    --plate:linear-gradient(180deg,#3d372b 0%,#28241c 44%,#19170f 74%,#100f0b 100%);
+    --plate-press:linear-gradient(180deg,#0e0d0a 0%,#1a1712 55%,#241f18 100%);
+
+    --cut-lg:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px);
+    --cut-sm:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px);
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    color:var(--ink);
+    font-family:"Microsoft YaHei","PingFang SC","SimHei",sans-serif;
+    background-color:var(--stone-0);
+    background-image:
+      radial-gradient(120% 80% at 50% -10%,rgba(126,102,50,.20),transparent 55%),
+      radial-gradient(90% 60% at 50% 115%,rgba(36,88,68,.15),transparent 60%),
+      linear-gradient(180deg,#141310 0%,#0c0b09 70%,#090806 100%);
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0; z-index:0;
+    pointer-events:none;
+    background:var(--noise) repeat 0 0/160px 160px;
+    opacity:.14;
+    mix-blend-mode:overlay;
+  }
+  ::selection{background:rgba(205,170,74,.35);color:#fff8e0}
+  code,pre{font-family:Consolas,"Cascadia Mono","Courier New",monospace}
+
+  .shell{
+    position:relative; z-index:1;
+    max-width:1180px;
+    margin:0 auto;
+    padding:60px 28px 88px;
+  }
+
+  /* ============================================================
+     页头
+     ============================================================ */
+  .hero{text-align:center;padding:6px 0 0}
+  .hero__eyebrow{
+    display:inline-flex; align-items:center; gap:10px;
+    font-size:11px; font-weight:700; letter-spacing:.34em;
+    color:#b3a789; text-transform:uppercase;
+  }
+  .diamond{
+    width:7px; height:7px; flex:none;
+    background:linear-gradient(135deg,#ffe8a6,#a1832c);
+    transform:rotate(45deg);
+    box-shadow:0 0 0 1px #000,0 0 8px rgba(255,210,120,.45);
+  }
+  .hero h1{
+    margin:18px 0 0;
+    font-family:"SimHei","Microsoft YaHei",sans-serif;
+    font-size:clamp(34px,5.2vw,56px);
+    font-weight:700;
+    letter-spacing:.14em;
+    line-height:1.16;
+    background:linear-gradient(180deg,#fff8da 0%,#e9d394 42%,#c2a03c 62%,#8a6c20 100%);
+    -webkit-background-clip:text; background-clip:text;
+    color:transparent;
+    filter:drop-shadow(0 2px 0 rgba(0,0,0,.9)) drop-shadow(0 0 22px rgba(255,196,72,.18));
+  }
+  .hero__lead{
+    margin:20px auto 0;
+    max-width:640px;
+    font-size:14px; line-height:2;
+    color:var(--ink-dim);
+    letter-spacing:.04em;
+  }
+  .hero__lead b{color:#e2d3a6;font-weight:700}
+  .hero__meta{
+    list-style:none; margin:26px 0 0; padding:0;
+    display:flex; flex-wrap:wrap; justify-content:center; gap:10px;
+  }
+  .hero__meta li{
+    padding:7px 14px;
+    font-size:11px; letter-spacing:.14em; color:#c5b794;
+    background:linear-gradient(180deg,#24211a,#16140f);
+    border:1px solid #4a4433;
+    box-shadow:inset 0 0 0 1px #080705,inset 0 1px 0 rgba(255,240,190,.12);
+    clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 50%,calc(100% - 7px) 100%,7px 100%,0 50%);
+  }
+  .hero__divider{
+    display:flex; align-items:center; gap:14px;
+    margin:44px 0 0;
+  }
+  .hero__divider::before,.hero__divider::after{
+    content:""; flex:1; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(205,170,74,.55),transparent);
+  }
+
+  /* ============================================================
+     石质面板（窗口容器）
+     ============================================================ */
+  .wc-window{
+    position:relative;
+    background:
+      var(--noise) repeat 0 0/160px 160px,
+      linear-gradient(180deg,#2b281f 0%,#1c1a14 45%,#12100c 100%);
+    background-blend-mode:overlay,normal;
+    border:1px solid #66604d;
+    clip-path:polygon(16px 0,calc(100% - 16px) 0,100% 16px,100% calc(100% - 16px),calc(100% - 16px) 100%,16px 100%,0 calc(100% - 16px),0 16px);
+    box-shadow:
+      inset 0 0 0 1px #0a0806,
+      inset 0 0 0 3px rgba(255,255,255,.045),
+      inset 0 12px 30px rgba(0,0,0,.5);
+    filter:drop-shadow(0 3px 0 rgba(0,0,0,.75)) drop-shadow(0 18px 34px rgba(0,0,0,.45));
+  }
+  .wc-window__bar{
+    position:relative;
+    display:flex; align-items:center; justify-content:center; gap:12px;
+    padding:11px 34px;
+    background:linear-gradient(180deg,#4b4433 0%,#2e2a1f 55%,#201d15 100%);
+    border-bottom:1px solid #080705;
+    box-shadow:inset 0 1px 0 rgba(255,240,190,.18),inset 0 -1px 0 rgba(180,150,80,.18);
+    color:#efd9a0;
+    font-size:13px; font-weight:700; letter-spacing:.2em;
+    text-shadow:0 1px 0 #000,0 0 10px rgba(255,210,120,.25);
+  }
+  .wc-window__bar::before,.wc-window__bar::after{
+    content:""; position:absolute; top:50%;
+    width:6px; height:6px; margin-top:-3px;
+    background:linear-gradient(135deg,#f3e3a0,#8a6c20);
+    transform:rotate(45deg);
+    box-shadow:0 0 0 1px #000,0 0 8px rgba(255,215,106,.45);
+  }
+  .wc-window__bar::before{left:18px}
+  .wc-window__bar::after{right:18px}
+  .wc-window__body{padding:22px 22px 26px}
+
+  /* ============================================================
+     章节标题
+     ============================================================ */
+  .section{margin-top:46px}
+  .section__head{display:flex; align-items:baseline; gap:14px; margin-bottom:16px;padding-left:2px}
+  .section__idx{
+    font-size:11px; font-weight:700; letter-spacing:.18em;
+    color:#8b7f63;
+  }
+  .section__head h2{
+    margin:0; font-size:17px; font-weight:700; letter-spacing:.14em;
+    color:#eddba6;
+    text-shadow:0 1px 0 #000,0 0 14px rgba(255,205,110,.2);
+  }
+  .section__rule{flex:1;height:1px;background:linear-gradient(90deg,rgba(201,170,80,.5),transparent)}
+  .specs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+
+  /* ============================================================
+     主按钮 · 青铜重框
+     ============================================================ */
+  .wc-btn{
+    position:relative; isolation:isolate;
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:176px; min-height:46px;
+    padding:0 26px;
+    border:0; background:transparent;
+    cursor:pointer;
+    color:#f6ead0;
+    font-family:inherit; font-size:15px; font-weight:700; letter-spacing:.1em;
+    text-shadow:0 1px 0 #000,0 2px 8px rgba(0,0,0,.75);
+    filter:drop-shadow(0 2px 0 rgba(0,0,0,.7)) drop-shadow(0 6px 14px rgba(0,0,0,.4));
+    transition:filter .2s ease,transform .1s ease,color .2s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .wc-btn::before{
+    content:""; position:absolute; inset:0; z-index:-2;
+    background:
+      radial-gradient(circle at 11px 50%,rgba(255,138,100,.85) 0 1.5px,rgba(112,24,14,.95) 2px,transparent 3px),
+      radial-gradient(circle at calc(100% - 11px) 50%,rgba(255,138,100,.85) 0 1.5px,rgba(112,24,14,.95) 2px,transparent 3px),
+      var(--metal);
+    clip-path:var(--cut-lg);
+    box-shadow:
+      inset 0 0 0 1px rgba(255,247,208,.62),
+      inset 0 0 0 2px rgba(0,0,0,.88),
+      inset 0 0 0 3px rgba(24,19,8,.9);
+    transition:filter .2s ease;
+  }
+  .wc-btn::after{
+    content:""; position:absolute; inset:4px; z-index:-1;
+    background:
+      radial-gradient(120% 160% at 50% 0%,rgba(255,235,180,.10),transparent 55%),
+      radial-gradient(100% 80% at 50% 120%,rgba(120,95,45,.16),transparent 60%),
+      var(--plate);
+    clip-path:var(--cut-sm);
+    box-shadow:
+      inset 0 0 0 1px #050403,
+      inset 0 3px 7px rgba(0,0,0,.8),
+      inset 0 -2px 0 rgba(255,228,160,.10);
+    transition:background .15s ease,box-shadow .15s ease;
+  }
+  .wc-btn__text{position:relative;z-index:2}
+  .wc-btn__sheen{
+    position:absolute; inset:4px; z-index:0;
+    overflow:hidden; pointer-events:none;
+    clip-path:var(--cut-sm);
+  }
+  .wc-btn__sheen::before{
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(100deg,transparent 34%,rgba(255,246,200,.30) 48%,transparent 62%);
+    transform:translateX(-130%);
+  }
+  @keyframes wcSheen{
+    0%{transform:translateX(-130%)}
+    100%{transform:translateX(130%)}
+  }
+
+  /* 悬停：金属升温 + 外发光 + 扫光 */
+  .wc-btn:hover,.wc-btn.is-hover{
+    color:#fff8e2;
+    filter:drop-shadow(0 2px 0 rgba(0,0,0,.7)) drop-shadow(0 0 16px rgba(255,196,72,.42));
+  }
+  .wc-btn:hover::before,.wc-btn.is-hover::before{filter:brightness(1.12) saturate(1.08)}
+  .wc-btn:hover .wc-btn__sheen::before,
+  .wc-btn.is-hover .wc-btn__sheen::before{animation:wcSheen .9s ease-out}
+
+  /* 按下：整体下压 + 铭板内凹加深 */
+  .wc-btn:active,.wc-btn.is-press{
+    transform:translateY(2px);
+    color:#efe0bc;
+    filter:drop-shadow(0 1px 0 rgba(0,0,0,.7)) drop-shadow(0 4px 8px rgba(0,0,0,.25));
+  }
+  .wc-btn:active::after,.wc-btn.is-press::after{
+    background:var(--plate-press);
+    box-shadow:
+      inset 0 0 0 1px #000,
+      inset 0 4px 11px rgba(0,0,0,.95),
+      inset 0 -1px 0 rgba(255,228,160,.06);
+  }
+  .wc-btn:focus-visible{
+    outline:2px solid #ffd76a;
+    outline-offset:4px;
+  }
+
+  /* 禁用：去光 + 灰化金属 */
+  .wc-btn:disabled,.wc-btn.is-disabled{
+    cursor:not-allowed;
+    color:#8d8677;
+    text-shadow:0 1px 0 #000;
+    filter:drop-shadow(0 2px 0 rgba(0,0,0,.55));
+  }
+  .wc-btn:disabled::before,.wc-btn.is-disabled::before{
+    background:linear-gradient(160deg,#4e4b42 0%,#75705f 22%,#413e36 55%,#5a564a 78%,#37342c 100%);
+    filter:none;
+  }
+  .wc-btn:disabled::after,.wc-btn.is-disabled::after{
+    background:linear-gradient(180deg,#2a2822,#1b1915);
+    box-shadow:inset 0 0 0 1px #050403,inset 0 3px 7px rgba(0,0,0,.7);
+  }
+
+  /* 冷却：扇形遮罩 */
+  .wc-btn__cool{
+    position:absolute; inset:4px; z-index:2;
+    display:flex; align-items:center; justify-content:center;
+    clip-path:var(--cut-sm);
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .15s ease;
+    background:conic-gradient(from 0deg,
+      rgba(4,5,4,.86) 0deg,
+      rgba(4,5,4,.86) var(--cd,0deg),
+      rgba(4,5,4,0) var(--cd,0deg),
+      rgba(4,5,4,0) 360deg);
+  }
+  .wc-btn.is-cooling .wc-btn__cool{opacity:1}
+  .wc-btn__cdtext{
+    color:#ffe7ad; font-size:17px; letter-spacing:0;
+    text-shadow:0 1px 2px #000,0 0 12px rgba(255,200,80,.5);
+  }
+
+  /* ============================================================
+     物品格 · 金框
+     ============================================================ */
+  .wc-slot{
+    position:relative;
+    width:66px; height:66px;
+    padding:0;
+    border:3px solid transparent;
+    background:
+      linear-gradient(180deg,#2f2a21 0%,#201c15 45%,#0f0d09 100%) padding-box,
+      linear-gradient(160deg,#e7d18a 0%,#a8862e 38%,#5f4a14 62%,#d9bc6c 84%,#8a6c20 100%) border-box;
+    clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px);
+    box-shadow:
+      inset 0 0 0 1px #000,
+      inset 0 4px 10px rgba(0,0,0,.75);
+    cursor:pointer;
+    filter:drop-shadow(0 2px 2px rgba(0,0,0,.65));
+    transition:filter .18s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .wc-slot__art{
+    position:absolute; inset:3px;
+    display:grid; place-items:center;
+    background:
+      radial-gradient(80% 70% at 50% 32%,rgba(255,214,120,.22),transparent 66%),
+      radial-gradient(95% 95% at 50% 60%,#17140d 0%,#060504 100%);
+    color:#e5ca7d;
+  }
+  .wc-slot__art svg{width:36px;height:36px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.8))}
+  .wc-slot__corners{
+    position:absolute; inset:5px; z-index:2;
+    opacity:0; pointer-events:none;
+    transition:opacity .15s ease;
+    background:
+      linear-gradient(#ffe9a8,#ffe9a8) left top/12px 2px no-repeat,
+      linear-gradient(#ffe9a8,#ffe9a8) left top/2px 12px no-repeat,
+      linear-gradient(#ffe9a8,#ffe9a8) right top/12px 2px no-repeat,
+      linear-gradient(#ffe9a8,#ffe9a8) right top/2px 12px no-repeat,
+      linear-gradient(#ffe9a8,#ffe9a8) left bottom/12px 2px no-repeat,
+      linear-gradient(#ffe9a8,#ffe9a8) left bottom/2px 12px no-repeat,
+      linear-gradient(#ffe9a8,#ffe9a8) right bottom/12px 2px no-repeat,
+      linear-gradient(#ffe9a8,#ffe9a8) right bottom/2px 12px no-repeat;
+    filter:drop-shadow(0 0 4px rgba(255,210,120,.55));
+  }
+  .wc-slot:hover,.wc-slot.is-hover{filter:drop-shadow(0 2px 2px rgba(0,0,0,.65)) drop-shadow(0 0 10px rgba(255,200,90,.3))}
+  .wc-slot:hover .wc-slot__corners,.wc-slot.is-hover .wc-slot__corners{opacity:.9}
+  .wc-slot:focus-visible{outline:2px solid #ffd76a;outline-offset:3px}
+  .wc-slot.is-selected{
+    filter:drop-shadow(0 2px 2px rgba(0,0,0,.65)) drop-shadow(0 0 12px rgba(70,220,150,.45));
+    box-shadow:
+      inset 0 0 0 1px #000,
+      inset 0 4px 12px rgba(0,0,0,.8),
+      inset 0 0 22px rgba(70,235,160,.16);
+  }
+  .wc-slot.is-selected .wc-slot__art{color:#d9ffe9}
+  .wc-slot.is-selected .wc-slot__corners{
+    opacity:1;
+    background:
+      linear-gradient(#9dffd2,#9dffd2) left top/12px 2px no-repeat,
+      linear-gradient(#9dffd2,#9dffd2) left top/2px 12px no-repeat,
+      linear-gradient(#9dffd2,#9dffd2) right top/12px 2px no-repeat,
+      linear-gradient(#9dffd2,#9dffd2) right top/2px 12px no-repeat,
+      linear-gradient(#9dffd2,#9dffd2) left bottom/12px 2px no-repeat,
+      linear-gradient(#9dffd2,#9dffd2) left bottom/2px 12px no-repeat,
+      linear-gradient(#9dffd2,#9dffd2) right bottom/12px 2px no-repeat,
+      linear-gradient(#9dffd2,#9dffd2) right bottom/2px 12px no-repeat;
+    filter:drop-shadow(0 0 6px rgba(90,255,180,.65));
+  }
+
+  /* ============================================================
+     符文按钮 · 细双线
+     ============================================================ */
+  .wc-rune{
+    position:relative;
+    display:inline-flex; align-items:center; gap:9px;
+    min-height:38px; padding:0 18px;
+    border:1px solid #6f5c26;
+    background:linear-gradient(180deg,rgba(20,26,22,.4),rgba(7,10,8,.68));
+    color:#bcd9c8;
+    font-family:inherit; font-size:13px; font-weight:700; letter-spacing:.16em;
+    cursor:pointer;
+    clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px);
+    box-shadow:
+      inset 0 0 0 1px rgba(0,0,0,.8),
+      inset 0 0 0 3px rgba(127,227,184,.05);
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));
+    transition:color .2s ease,border-color .2s ease,background .2s ease,filter .2s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .wc-rune::before{
+    content:"";
+    position:absolute; inset:4px;
+    border:1px solid rgba(127,227,184,.2);
+    clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 6px,100% calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,0 calc(100% - 6px),0 6px);
+    pointer-events:none;
+    transition:border-color .2s ease;
+  }
+  .wc-rune__mark{
+    width:7px;height:7px;flex:none;
+    background:linear-gradient(135deg,#ffe8a6,#a1832c);
+    transform:rotate(45deg);
+    box-shadow:0 0 0 1px #000,0 0 8px rgba(255,210,120,.35);
+  }
+  .wc-rune:hover,.wc-rune.is-hover{
+    color:#eafff4;
+    border-color:#b5e3c4;
+    background:linear-gradient(180deg,rgba(26,44,36,.55),rgba(8,14,11,.7));
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(80,230,160,.35));
+  }
+  .wc-rune:hover::before,.wc-rune.is-hover::before{border-color:rgba(160,255,210,.5)}
+  .wc-rune:active{transform:translateY(1px)}
+  .wc-rune:focus-visible{outline:2px solid #ffd76a;outline-offset:3px}
+  .wc-rune:disabled,.wc-rune.is-disabled{
+    color:#7c7a6c;
+    border-color:#4b4534;
+    background:linear-gradient(180deg,rgba(18,18,16,.4),rgba(8,8,7,.65));
+    cursor:not-allowed;
+    filter:none;
+  }
+  .wc-rune:disabled::before,.wc-rune.is-disabled::before{border-color:rgba(140,140,120,.12)}
+  .wc-rune:disabled .wc-rune__mark,.wc-rune.is-disabled .wc-rune__mark{
+    background:linear-gradient(135deg,#7e7a6a,#444234);
+    box-shadow:0 0 0 1px #000;
+  }
+
+  /* ============================================================
+     规格行 / 状态展示
+     ============================================================ */
+  .spec{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:18px; padding:15px 0;
+    border-bottom:1px dashed rgba(201,170,80,.16);
+  }
+  .spec:first-child{padding-top:2px}
+  .spec:last-child{border-bottom:0;padding-bottom:2px}
+  .spec__label{min-width:120px}
+  .spec__label b{
+    display:block;
+    font-size:14px; font-weight:700; letter-spacing:.08em; color:#d8caa4;
+    margin-bottom:5px;
+  }
+  .spec__label span{
+    display:block;
+    font-size:11.5px; line-height:1.7; letter-spacing:.04em; color:#968b71;
+  }
+  .spec__demo{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+
+  .slots-row{display:flex;gap:16px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+
+  .state-grid{
+    display:flex; flex-wrap:wrap; gap:20px 16px;
+    justify-content:center;
+    padding:6px 0 4px;
+  }
+  .state-cell{display:flex;flex-direction:column;align-items:center;gap:10px;margin:0}
+  .state-cell figcaption{
+    font-size:11px; letter-spacing:.14em; color:#9c927a;
+  }
+  .state-cell .wc-btn{min-width:148px;padding:0 18px}
+  .hint{
+    margin:20px 0 0;
+    text-align:center;
+    font-size:12px; line-height:1.8; letter-spacing:.05em;
+    color:#93886f;
+  }
+  .hint strong{color:#d6c69b;font-weight:700}
+  .cooldown-demo{display:flex;flex-direction:column;align-items:center;padding-top:24px;border-top:1px solid rgba(201,170,80,.18)}
+
+  /* ============================================================
+     层级说明
+     ============================================================ */
+  .layer{display:flex;align-items:center;gap:14px;padding:11px 0;border-bottom:1px dashed rgba(201,170,80,.14)}
+  .layer:last-child{border-bottom:0;padding-bottom:0}
+  .layer__swatch{
+    width:58px;height:14px;flex:none;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.05);
+    clip-path:polygon(4px 0,calc(100% - 4px) 0,100% 50%,calc(100% - 4px) 100%,4px 100%,0 50%);
+  }
+  .layer__text b{display:block;font-size:13px;letter-spacing:.08em;color:#d8caa4;margin-bottom:3px}
+  .layer__text span{display:block;font-size:11.5px;line-height:1.7;color:#968b71}
+  .note{
+    margin:18px 0 0;padding:12px 14px;
+    font-size:11.5px;line-height:1.9;letter-spacing:.04em;color:#b3a685;
+    background:rgba(0,0,0,.28);
+    border-left:2px solid rgba(201,170,80,.5);
+  }
+  .note b{color:#e6d6a9}
+
+  /* ============================================================
+     令牌 & 代码
+     ============================================================ */
+  .swatches{
+    list-style:none;margin:0;padding:0;
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;
+  }
+  .swatches li{display:flex;align-items:center;gap:11px;padding:9px 10px;background:rgba(0,0,0,.24);border:1px solid rgba(201,170,80,.14)}
+  .swatches .chip{width:34px;height:34px;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.8),0 1px 2px rgba(0,0,0,.6);clip-path:polygon(5px 0,calc(100% - 5px) 0,100% 5px,100% calc(100% - 5px),calc(100% - 5px) 100%,5px 100%,0 calc(100% - 5px),0 5px)}
+  .swatches b{display:block;font-size:12px;letter-spacing:.06em;color:#d3c5a1;margin-bottom:2px}
+  .swatches code{font-size:11px;color:#8f8770}
+  .code-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .code-head span{font-size:11px;letter-spacing:.22em;color:#8f8570}
+  .copy-btn{
+    padding:5px 12px;
+    font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.12em;
+    color:#d9ca9e;background:linear-gradient(180deg,#2e2a21,#1b1913);
+    border:1px solid #5d5641;
+    cursor:pointer;
+    clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 50%,calc(100% - 6px) 100%,6px 100%,0 50%);
+    box-shadow:inset 0 0 0 1px #080705;
+    transition:color .2s,border-color .2s;
+  }
+  .copy-btn:hover{color:#fff3cf;border-color:#a8914d}
+  pre{
+    margin:0;padding:14px;
+    max-height:340px;overflow:auto;
+    background:rgba(4,4,3,.62);
+    border:1px solid rgba(201,170,80,.16);
+    box-shadow:inset 0 2px 10px rgba(0,0,0,.65);
+    color:#c3cdbd;
+    font-size:11.5px;line-height:1.85;
+    tab-size:2;
+  }
+  pre code{color:inherit;white-space:pre}
+  pre::-webkit-scrollbar{width:9px;height:9px}
+  pre::-webkit-scrollbar-thumb{background:#403a2b;border:1px solid #0a0806}
+  pre::-webkit-scrollbar-track{background:#0d0c09}
+
+  .foot{
+    margin-top:56px;padding-top:26px;
+    display:flex;align-items:center;gap:12px;justify-content:center;flex-wrap:wrap;
+    border-top:1px solid rgba(201,170,80,.16);
+    font-size:11.5px;letter-spacing:.06em;line-height:1.9;color:#8b8068;
+    text-align:center;
+  }
+
+  /* ============================================================
+     HUD 面板 · 顶部状态条 / 数据面板 / 操作框
+     ============================================================ */
+  .hud-stage{
+    position:relative;
+    display:flex; flex-direction:column; align-items:center; gap:16px;
+    padding:22px 18px 24px;
+    background:
+      var(--noise) repeat 0 0/160px 160px,
+      repeating-linear-gradient(0deg,rgba(255,255,255,.022) 0 1px,transparent 1px 44px),
+      repeating-linear-gradient(90deg,rgba(255,255,255,.022) 0 1px,transparent 1px 44px),
+      radial-gradient(70% 60% at 24% 22%,rgba(78,120,66,.36),transparent 62%),
+      radial-gradient(55% 50% at 82% 78%,rgba(52,86,118,.28),transparent 62%),
+      linear-gradient(160deg,#16241d,#101a15 46%,#0a110f);
+    background-blend-mode:overlay,normal,normal,normal,normal,normal;
+    border:1px solid #0a0907;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.05),inset 0 0 46px rgba(0,0,0,.6);
+    overflow:hidden;
+  }
+  .hud-stage__side{
+    width:min(340px,100%);
+    align-self:flex-end;
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .hud-stage__tag{
+    position:absolute; left:14px; bottom:12px;
+    font-size:9.5px; letter-spacing:.22em; text-transform:uppercase;
+    color:#6f7a6d;
+  }
+
+  /* 顶部状态条：左中右三段（怪物数量 / 游戏时间+模式难度 / BOSS 倒计时） */
+  .wc-hud-bar{
+    position:relative;
+    display:grid;
+    grid-template-columns:1fr 1px 1.1fr 1px 1fr;
+    width:100%;
+    border:1px solid #b08c3a;
+    background:linear-gradient(180deg,rgba(14,15,11,.92),rgba(4,5,4,.95));
+    clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px);
+    box-shadow:
+      inset 0 0 0 1px #050403,
+      inset 0 0 0 3px rgba(180,145,70,.16),
+      inset 0 8px 18px rgba(0,0,0,.5);
+    filter:drop-shadow(0 3px 8px rgba(0,0,0,.5));
+  }
+  .wc-hud-bar__cell{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    min-width:0; padding:7px 16px 8px;
+  }
+  .wc-hud-bar__cap{
+    font-size:9.5px; line-height:1.4; letter-spacing:.2em;
+    color:#93886f; white-space:nowrap;
+  }
+  .wc-hud-bar__val{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:17px; font-weight:700; line-height:1.15; letter-spacing:.06em;
+    color:#ffe9a8;
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+    text-shadow:0 1px 2px #000,0 0 12px rgba(255,210,120,.35);
+  }
+  .wc-hud-bar__sub{
+    max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    font-size:9.5px; line-height:1.4; letter-spacing:.1em;
+    color:#a9e3c8;
+    text-shadow:0 1px 0 #000;
+  }
+  /* 段间分隔：竖铜线 + 金菱 */
+  .wc-hud-bar__sep{
+    position:relative;
+    background:linear-gradient(180deg,transparent,rgba(201,170,80,.5) 22%,rgba(201,170,80,.5) 78%,transparent);
+  }
+  .wc-hud-bar__sep::after{
+    content:""; position:absolute; top:50%; left:50%;
+    width:5px; height:5px; margin:-2.5px 0 0 -2.5px;
+    background:linear-gradient(135deg,#ffe8a6,#a1832c);
+    transform:rotate(45deg);
+    box-shadow:0 0 0 1px #000,0 0 8px rgba(255,210,120,.4);
+  }
+  /* 右侧 BOSS 倒计时：暖红警示 */
+  .wc-hud-bar__cell--alert .wc-hud-bar__cap{color:#c08a76}
+  .wc-hud-bar__cell--alert .wc-hud-bar__val{
+    color:#ffb99c;
+    text-shadow:0 1px 2px #000,0 0 12px rgba(224,102,79,.4);
+  }
+
+  /* 侧边数据面板 */
+  .wc-board{
+    position:relative;
+    width:100%;
+    color:#e2d7bb;
+    background:linear-gradient(180deg,rgba(9,11,9,.90) 0%,rgba(4,5,4,.94) 100%);
+    border:1px solid #b08c3a;
+    clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px),0 12px);
+    box-shadow:
+      inset 0 0 0 1px #050403,
+      inset 0 0 0 3px rgba(180,145,70,.18),
+      inset 0 10px 26px rgba(0,0,0,.6);
+    filter:drop-shadow(0 6px 16px rgba(0,0,0,.55));
+    overflow:hidden;
+  }
+  .wc-board__head{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:8px 12px;
+    background:linear-gradient(180deg,#2b2410,#151106);
+    border-bottom:1px solid #000;
+    box-shadow:inset 0 1px 0 rgba(255,235,180,.16);
+  }
+  .wc-board__title{
+    font-size:11.5px; font-weight:700; letter-spacing:.08em;
+    color:#e9cf85; white-space:nowrap;
+    text-shadow:0 1px 0 #000;
+  }
+  .wc-board__timer{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:14px; font-weight:700; letter-spacing:.05em;
+    color:#ffd76a; font-variant-numeric:tabular-nums;
+    text-shadow:0 1px 2px #000,0 0 10px rgba(255,200,80,.35);
+  }
+  .wc-board__meta{
+    display:flex; flex-wrap:wrap; gap:3px 12px;
+    padding:6px 12px;
+    background:rgba(0,0,0,.28);
+    border-bottom:1px solid rgba(176,140,58,.28);
+    font-size:10.5px; letter-spacing:.03em; color:#93886f;
+  }
+  .wc-board__meta b{color:#cdbb8a;font-weight:700}
+  .wc-board table{
+    width:100%; border-collapse:collapse; table-layout:fixed;
+    font-size:11.5px;
+  }
+  .wc-board th{
+    padding:7px 8px;
+    font-size:10px; font-weight:700; letter-spacing:.1em; text-align:right;
+    color:#a8956a;
+    background:rgba(255,235,170,.04);
+    border-bottom:1px solid rgba(201,170,80,.25);
+  }
+  .wc-board th:first-child{text-align:left}
+  .wc-board td{
+    padding:6px 8px; text-align:right;
+    color:#cfc3a4; font-variant-numeric:tabular-nums;
+    border-bottom:1px solid rgba(201,170,80,.08);
+  }
+  .wc-board td:first-child{text-align:left}
+  .wc-board tbody tr:nth-child(even){background:rgba(255,240,190,.025)}
+  .wc-board tbody tr.is-self{
+    background:linear-gradient(90deg,rgba(127,227,184,.12),rgba(127,227,184,.015));
+  }
+  .wc-board tbody tr.is-self td:first-child{box-shadow:inset 2px 0 0 rgba(127,227,184,.65)}
+  .wc-board tbody tr:last-child td{border-bottom:0}
+  .wc-board .is-danger{color:#ef8a72}
+  .wc-board .is-accent{color:#9fe3b0}
+  .wc-board .is-gold{color:#f0d38a}
+  .wc-board .is-dim{color:#7d7663}
+
+  /* 操作提示框 */
+  .wc-dialog{
+    width:100%;
+    background:linear-gradient(180deg,rgba(12,13,10,.90),rgba(4,5,4,.95));
+    border:1px solid #b08c3a;
+    clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px);
+    box-shadow:
+      inset 0 0 0 1px #050403,
+      inset 0 0 0 3px rgba(180,145,70,.16),
+      inset 0 8px 20px rgba(0,0,0,.5);
+    filter:drop-shadow(0 6px 14px rgba(0,0,0,.5));
+  }
+  .wc-dialog__head{
+    padding:8px 12px; text-align:center;
+    font-size:11.5px; font-weight:700; letter-spacing:.12em;
+    color:#eed894;
+    background:linear-gradient(180deg,#2a2410,#141006);
+    border-bottom:1px solid #000;
+    box-shadow:inset 0 1px 0 rgba(255,235,180,.15);
+  }
+  .wc-dialog__body{padding:10px 14px 14px}
+  .wc-dialog__row{
+    display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+    padding:7px 2px;
+    border-bottom:1px dashed rgba(201,170,80,.15);
+    font-size:12px; color:#a99e85;
+  }
+  .wc-dialog__row b{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:13px; font-weight:700; color:#f0d38a;
+    font-variant-numeric:tabular-nums;
+  }
+  .wc-dialog__row b.is-accent{color:#9fe3b0}
+  .wc-dialog__actions{display:flex;justify-content:center;gap:10px;margin-top:13px}
+
+  /* 小号按钮（对话框用） */
+  .wc-btn--sm{
+    min-width:96px; min-height:36px; padding:0 18px;
+    font-size:12.5px; letter-spacing:.08em;
+    --cut-lg:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);
+    --cut-sm:polygon(6px 0,calc(100% - 6px) 0,100% 6px,100% calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,0 calc(100% - 6px),0 6px);
+  }
+  .wc-rune--sm{min-height:36px;padding:0 16px;font-size:12px}
+
+  /* ============================================================
+     事件抉择框 · 弹窗
+     ============================================================ */
+  .event-stage{display:grid;place-items:center;min-height:470px;padding:26px 20px}
+  .wc-event{
+    position:relative;
+    width:min(560px,100%);
+    background:linear-gradient(180deg,rgba(16,15,11,.94),rgba(5,5,4,.96));
+    border:2px solid #b08c3a;
+    clip-path:polygon(16px 0,calc(100% - 16px) 0,100% 16px,100% calc(100% - 16px),calc(100% - 16px) 100%,16px 100%,0 calc(100% - 16px),0 16px);
+    box-shadow:
+      inset 0 0 0 1px #050403,
+      inset 0 0 0 4px rgba(180,145,70,.22),
+      inset 0 0 0 6px rgba(0,0,0,.85),
+      inset 0 12px 30px rgba(0,0,0,.6);
+    filter:drop-shadow(0 12px 28px rgba(0,0,0,.6));
+    transition:opacity .2s ease,transform .2s ease;
+  }
+  .wc-event.is-closed{opacity:0;transform:translateY(8px) scale(.985);pointer-events:none}
+  .wc-event.is-rolling{animation:talentRoll .48s ease}
+  .wc-event__corners{
+    position:absolute; inset:8px; z-index:2; pointer-events:none;
+    opacity:.85;
+    background:
+      linear-gradient(#e7d18a,#e7d18a) left top/18px 2px no-repeat,
+      linear-gradient(#e7d18a,#e7d18a) left top/2px 18px no-repeat,
+      linear-gradient(#e7d18a,#e7d18a) right top/18px 2px no-repeat,
+      linear-gradient(#e7d18a,#e7d18a) right top/2px 18px no-repeat,
+      linear-gradient(#e7d18a,#e7d18a) left bottom/18px 2px no-repeat,
+      linear-gradient(#e7d18a,#e7d18a) left bottom/2px 18px no-repeat,
+      linear-gradient(#e7d18a,#e7d18a) right bottom/18px 2px no-repeat,
+      linear-gradient(#e7d18a,#e7d18a) right bottom/2px 18px no-repeat;
+    filter:drop-shadow(0 0 6px rgba(255,210,120,.35));
+  }
+  .wc-event__title{
+    display:flex; align-items:center; justify-content:center; gap:14px;
+    padding:14px 26px 6px;
+    font-size:16px; font-weight:700; letter-spacing:.28em;
+    color:#f3dfa6;
+    text-shadow:0 1px 0 #000,0 0 16px rgba(255,210,120,.35);
+  }
+  .wc-event__title .rule{
+    width:44px; height:1px; flex:none;
+    background:linear-gradient(90deg,transparent,#c9a63f);
+  }
+  .wc-event__title .rule:last-child{transform:scaleX(-1)}
+  .wc-event__icon{
+    width:64px; height:64px;
+    margin:10px auto 14px;
+    display:grid; place-items:center;
+    border:2px solid #c2a03c;
+    background:
+      radial-gradient(90% 90% at 50% 38%,rgba(127,200,255,.20),transparent 62%),
+      linear-gradient(180deg,#25221a,#0b0a07);
+    box-shadow:
+      inset 0 0 0 1px #000,
+      inset 0 3px 10px rgba(0,0,0,.8),
+      0 0 16px rgba(255,200,90,.15);
+    color:#bfe6ff;
+  }
+  .wc-event__icon svg{
+    width:38px; height:38px;
+    filter:drop-shadow(0 0 9px rgba(127,200,255,.45)) drop-shadow(0 2px 3px rgba(0,0,0,.9));
+  }
+  .wc-event__body{
+    padding:0 52px;
+    text-align:center;
+    font-size:13px; line-height:2.1; letter-spacing:.04em;
+    color:#c9bd9f;
+  }
+  .wc-event__body b{font-weight:700}
+  .wc-event__body .kw-danger{color:#ef8a72}
+  .wc-event__body .kw-gold{color:#f0d38a}
+  .wc-event__body .kw-accent{color:#9fe3b0}
+  .wc-event__divider{
+    height:1px; margin:18px 34px 16px;
+    background:linear-gradient(90deg,transparent,rgba(201,170,80,.45),transparent);
+  }
+  .wc-event__actions{
+    display:flex; justify-content:center; flex-wrap:wrap; gap:14px;
+    padding:0 24px 22px;
+  }
+  .wc-hotkey{
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    min-width:112px; min-height:38px; padding:0 14px;
+    border:1px solid #9a7a28;
+    background:linear-gradient(180deg,#2e2816,#151207);
+    color:#e6d7ae;
+    font-family:inherit; font-size:12.5px; font-weight:700; letter-spacing:.1em;
+    clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px);
+    box-shadow:
+      inset 0 0 0 1px #050403,
+      inset 0 0 0 3px rgba(180,145,70,.14),
+      inset 0 8px 16px rgba(0,0,0,.5);
+    cursor:pointer;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));
+    transition:color .18s ease,border-color .18s ease,filter .18s ease,transform .1s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .wc-hotkey .key{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:11px; letter-spacing:0; color:#a8956a;
+  }
+  .wc-hotkey:hover{color:#fff3cf;border-color:#d3b361;filter:drop-shadow(0 0 10px rgba(255,200,90,.3))}
+  .wc-hotkey:hover .key{color:#e2c98a}
+  .wc-hotkey:active{transform:translateY(1px)}
+  .wc-hotkey:focus-visible{outline:2px solid #ffd76a;outline-offset:3px}
+  .wc-hotkey--primary{
+    border-color:#c9a63f;
+    background:linear-gradient(180deg,#3a3016,#1c1709);
+    color:#fff0c4;
+  }
+  .event-again{
+    position:absolute; inset:0; z-index:3;
+    display:grid; place-items:center;
+    background:rgba(3,4,3,.35);
+    opacity:0; pointer-events:none;
+    transition:opacity .2s ease;
+  }
+  .event-again.is-visible{opacity:1;pointer-events:auto}
+  .event-again .wc-hotkey{min-width:148px}
+
+  /* ============================================================
+     天赋三选一
+     ============================================================ */
+  .talent-stage{display:grid;place-items:center;min-height:520px;padding:24px 18px}
+  .wc-talent{
+    position:relative;
+    width:min(720px,100%);
+    background:linear-gradient(180deg,rgba(14,14,10,.94),rgba(4,5,4,.96));
+    border:2px solid #b08c3a;
+    clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px),0 14px);
+    box-shadow:
+      inset 0 0 0 1px #050403,
+      inset 0 0 0 4px rgba(180,145,70,.2),
+      inset 0 0 0 6px rgba(0,0,0,.85),
+      inset 0 12px 30px rgba(0,0,0,.58);
+    filter:drop-shadow(0 12px 28px rgba(0,0,0,.58));
+  }
+  .wc-talent__head{position:relative;padding:13px 96px 9px;text-align:center}
+  .wc-talent__title{
+    display:inline-flex; align-items:center; gap:12px;
+    font-size:15px; font-weight:700; letter-spacing:.22em;
+    color:#f3dfa6;
+    text-shadow:0 1px 0 #000,0 0 16px rgba(255,210,120,.3);
+  }
+  .wc-talent__title .rule{
+    width:34px; height:1px; flex:none;
+    background:linear-gradient(90deg,transparent,#c9a63f);
+  }
+  .wc-talent__title .rule:last-child{transform:scaleX(-1)}
+  .wc-talent__point{
+    position:absolute; right:18px; top:50%;
+    transform:translateY(-50%);
+    padding:3px 9px;
+    font-size:10.5px; font-weight:700; letter-spacing:.08em;
+    color:#bfeed3;
+    background:rgba(0,0,0,.3);
+    border:1px solid rgba(127,227,184,.3);
+    clip-path:polygon(5px 0,calc(100% - 5px) 0,100% 50%,calc(100% - 5px) 100%,5px 100%,0 50%);
+  }
+  .wc-talent__point b{color:#9fe3b0}
+  .wc-talent__grid{
+    display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:14px; padding:4px 20px 0;
+  }
+  .talent-card{
+    appearance:none; -webkit-appearance:none;
+    position:relative;
+    display:flex; flex-direction:column; align-items:center;
+    margin:0; padding:14px 10px 16px;
+    border:1px solid #7c6526;
+    background:linear-gradient(180deg,#241f15,#0d0c08);
+    clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);
+    color:inherit; font-family:inherit; text-align:center; cursor:pointer;
+    box-shadow:
+      inset 0 0 0 1px #050403,
+      inset 0 8px 18px rgba(0,0,0,.55);
+    filter:drop-shadow(0 4px 8px rgba(0,0,0,.4));
+    transition:transform .18s ease,border-color .18s ease,filter .18s ease,box-shadow .18s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .talent-card:hover{
+    transform:translateY(-3px);
+    border-color:#c9a63f;
+    filter:drop-shadow(0 10px 16px rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(255,200,90,.25));
+  }
+  .talent-card:focus-visible{outline:2px solid #ffd76a;outline-offset:3px}
+  .talent-card.is-selected{
+    border-color:#e2c375;
+    box-shadow:
+      inset 0 0 0 1px #050403,
+      inset 0 0 0 3px rgba(201,166,63,.28),
+      inset 0 10px 24px rgba(0,0,0,.5);
+  }
+  .talent-card__icon{
+    width:58px; height:58px;
+    margin-bottom:10px;
+    display:grid; place-items:center;
+    border:2px solid #b08c3a;
+    background:
+      radial-gradient(80% 80% at 50% 34%,rgba(255,206,110,.18),transparent 66%),
+      linear-gradient(180deg,#26221a,#0b0a07);
+    box-shadow:inset 0 0 0 1px #000,inset 0 3px 8px rgba(0,0,0,.8);
+    color:#e5ca7d;
+    transition:border-color .18s ease,box-shadow .18s ease,color .18s ease;
+  }
+  .talent-card__icon svg{width:34px;height:34px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.8))}
+  .talent-card:hover .talent-card__icon{
+    border-color:#e0c272;
+    box-shadow:inset 0 0 0 1px #000,inset 0 3px 8px rgba(0,0,0,.8),0 0 14px rgba(255,200,90,.25);
+  }
+  .talent-card.is-selected .talent-card__icon{border-color:#ffe9a8;color:#fff0c4}
+  .talent-card__info{display:block;min-width:0}
+  .talent-card__name{
+    display:block;
+    font-size:13px; font-weight:700; letter-spacing:.05em;
+    color:#edda9f; text-shadow:0 1px 0 #000;
+    margin-bottom:7px;
+  }
+  .talent-card__desc{
+    display:block;
+    font-size:11.5px; line-height:1.95; letter-spacing:.02em;
+    color:#a99e85;
+  }
+  .talent-card__desc b{font-weight:700;color:#f0d38a}
+  .talent-card__desc .is-danger{color:#ef8a72}
+  .wc-talent__actions{display:flex;justify-content:center;gap:14px;padding:18px 20px 16px}
+  @keyframes talentRoll{0%{opacity:.35}55%{opacity:.8}100%{opacity:1}}
+  .wc-talent.is-rolling .talent-card{animation:talentRoll .55s ease}
+
+  /* ============================================================
+     战功商店 · 商品条
+     ============================================================ */
+  .shop-stage{display:grid;place-items:center;min-height:440px;padding:24px 18px}
+  .wc-shop{
+    position:relative;
+    width:min(660px,100%);
+    background:linear-gradient(180deg,rgba(14,14,10,.94),rgba(4,5,4,.96));
+    border:2px solid #b08c3a;
+    clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px),0 12px);
+    box-shadow:
+      inset 0 0 0 1px #050403,
+      inset 0 0 0 4px rgba(180,145,70,.2),
+      inset 0 12px 30px rgba(0,0,0,.58);
+    filter:drop-shadow(0 12px 28px rgba(0,0,0,.55));
+  }
+  .wc-shop__head{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:9px 14px;
+    background:linear-gradient(180deg,#2b2410,#151106);
+    border-bottom:1px solid #000;
+    box-shadow:inset 0 1px 0 rgba(255,235,180,.16);
+  }
+  .wc-shop__title{
+    font-size:12px; font-weight:700; letter-spacing:.18em;
+    color:#eed894; text-shadow:0 1px 0 #000;
+  }
+  .wc-shop__wallet{font-size:10.5px;letter-spacing:.08em;color:#93886f}
+  .wc-shop__wallet b{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:12px; color:#f0d38a;
+    font-variant-numeric:tabular-nums;
+    text-shadow:0 1px 0 #000;
+  }
+  .wc-shop__offers{
+    display:grid; grid-template-columns:repeat(6,minmax(0,1fr));
+    gap:9px; padding:14px 14px 6px;
+  }
+  .offer{
+    appearance:none; -webkit-appearance:none;
+    position:relative;
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    margin:0; padding:0; border:0; background:transparent;
+    font-family:inherit; color:inherit; text-align:center; cursor:pointer;
+    filter:drop-shadow(0 3px 6px rgba(0,0,0,.45));
+    transition:transform .16s ease,filter .16s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .offer:hover{
+    transform:translateY(-2px);
+    filter:drop-shadow(0 8px 14px rgba(0,0,0,.5)) drop-shadow(0 0 10px var(--q-glow,rgba(255,200,90,.25)));
+  }
+  .offer:focus-visible{outline:2px solid #ffd76a;outline-offset:3px}
+  .offer__figure{position:relative;width:100%;aspect-ratio:1}
+  .offer__icon{
+    position:absolute; inset:0;
+    display:grid; place-items:center;
+    border:2px solid var(--q,#c2a03c);
+    background:
+      radial-gradient(80% 80% at 50% 36%,var(--q-glow,rgba(255,206,110,.18)),transparent 66%),
+      linear-gradient(180deg,#26221a,#0b0a07);
+    clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px);
+    box-shadow:
+      inset 0 0 0 1px #000,
+      inset 0 4px 10px rgba(0,0,0,.8);
+    color:var(--q,#e5ca7d);
+  }
+  .offer__icon svg{
+    width:52%; height:auto;
+    filter:drop-shadow(0 2px 2px rgba(0,0,0,.85));
+  }
+  .offer__badge{
+    position:absolute; top:-5px; left:-5px; z-index:2;
+    padding:1px 5px;
+    font-size:9.5px; font-weight:700; letter-spacing:.06em;
+    color:#ffe9a8;
+    background:linear-gradient(180deg,#2a2410,#0c0a05);
+    border:1px solid #c9a63f;
+    clip-path:polygon(4px 0,calc(100% - 4px) 0,100% 50%,calc(100% - 4px) 100%,4px 100%,0 50%);
+    text-shadow:0 1px 0 #000;
+    box-shadow:0 1px 4px rgba(0,0,0,.6);
+  }
+  .offer__price{
+    position:absolute; right:5px; bottom:3px; z-index:2;
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:11px; font-weight:700; letter-spacing:.02em;
+    color:#ffe28f; font-variant-numeric:tabular-nums;
+    text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.8);
+  }
+  .offer__name{
+    display:block; width:100%;
+    padding:3px 3px;
+    font-size:10px; font-weight:700; line-height:1.4;
+    color:var(--q,#e5ca7d);
+    background:linear-gradient(180deg,rgba(16,14,9,.92),rgba(4,4,3,.94));
+    border:1px solid rgba(0,0,0,.85);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.03),0 1px 3px rgba(0,0,0,.5);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    text-shadow:0 1px 0 #000;
+  }
+  .offer.is-selected{filter:drop-shadow(0 4px 10px rgba(0,0,0,.5)) drop-shadow(0 0 12px var(--q-glow,rgba(255,200,90,.3)))}
+  .offer.is-selected .offer__icon{
+    border-color:#ffe9a8;
+    box-shadow:
+      inset 0 0 0 1px #000,
+      inset 0 0 0 3px rgba(255,240,190,.25),
+      inset 0 4px 10px rgba(0,0,0,.8);
+  }
+  .offer.is-selected .offer__name{color:#fff0c4;border-color:#8f7420}
+  .offer--epic{--q:#b48cff;--q-glow:rgba(150,100,255,.35)}
+  .offer--rare{--q:#74b9ff;--q-glow:rgba(90,160,255,.35)}
+  .offer--uncommon{--q:#8fe08a;--q-glow:rgba(110,220,120,.32)}
+  .offer--legend{--q:#f3c95e;--q-glow:rgba(255,205,82,.4)}
+  .offer--refresh{--q:#f3c95e;--q-glow:rgba(255,205,82,.35)}
+  .offer--refresh .offer__icon{background:linear-gradient(180deg,#2f2814,#0e0b07);border-color:#d0ad4f}
+  .offer--refresh .offer__price{display:none}
+  .wc-shop__foot{
+    margin:0; padding:2px 16px 12px;
+    text-align:center; font-size:10.5px; letter-spacing:.06em; color:#8f8570;
+  }
+  .wc-shop.is-rolling .offer{animation:talentRoll .5s ease}
+
+  /* ============================================================
+     响应式 / 动效偏好
+     ============================================================ */
+  @media (max-width:920px){
+    .specs{grid-template-columns:1fr}
+    .swatches{grid-template-columns:1fr}
+  }
+  @media (max-width:700px){
+    .talent-stage{padding:18px 12px;min-height:480px}
+    .wc-talent__grid{grid-template-columns:1fr;gap:10px;padding:0 16px}
+    .talent-card{flex-direction:row;align-items:center;gap:12px;text-align:left;padding:9px 12px}
+    .talent-card__icon{width:46px;height:46px;margin:0}
+    .talent-card__info{flex:1}
+    .talent-card__desc{font-size:11px}
+    .shop-stage{padding:18px 12px;min-height:380px}
+    .wc-shop__offers{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+    .offer__name{font-size:10.5px}
+  }
+  @media (max-width:620px){
+    .shell{padding:42px 18px 64px}
+    .spec{flex-direction:column;align-items:flex-start;gap:12px}
+    .spec__demo{justify-content:flex-start;width:100%}
+    .wc-window__body{padding:18px 16px 20px}
+    .state-cell .wc-btn{min-width:136px}
+    .hud-stage{padding:18px 12px 20px}
+    .hud-stage__side{width:100%}
+    .wc-hud-bar__cell{padding:6px 8px 7px}
+    .wc-hud-bar__cap{letter-spacing:.12em}
+    .wc-hud-bar__val{font-size:15px}
+    .wc-hud-bar__sub{font-size:9px;letter-spacing:.04em}
+    .wc-board th{padding:6px;letter-spacing:.06em}
+    .wc-board td{padding:6px}
+    .event-stage{padding:18px 12px}
+    .wc-event__title{font-size:15px;letter-spacing:.2em}
+    .wc-event__body{padding:0 22px;font-size:12.5px}
+    .wc-event__actions{gap:10px;padding:0 14px 18px}
+    .wc-hotkey{min-width:96px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{
+      animation-duration:.01ms !important;
+      animation-iteration-count:1 !important;
+      transition-duration:.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="hero">
+    <div class="hero__eyebrow"><span class="diamond"></span>Warcraft III · UI Components</div>
+    <h1>魔兽风格按钮边框</h1>
+    <p class="hero__lead">
+      以<b>黑铁外沿、青铜主体、内凹铭板</b>三段式结构为骨，所有转角做 45° 切角，<br>
+      让按钮像从陈年石墙里凿出来的一样。
+    </p>
+    <ul class="hero__meta">
+      <li>纯 CSS 实现</li>
+      <li>零图片依赖</li>
+      <li>悬停 / 按下 / 冷却 / 选中态</li>
+    </ul>
+    <div class="hero__divider"><span class="diamond"></span></div>
+  </header>
+
+  <!-- 01 主按钮 -->
+  <section class="section" aria-labelledby="s1">
+    <div class="section__head">
+      <span class="section__idx">01</span>
+      <h2 id="s1">主按钮 · 青铜重框</h2>
+      <span class="section__rule"></span>
+    </div>
+    <div class="specs">
+
+      <article class="wc-window">
+        <div class="wc-window__bar">主行动按钮</div>
+        <div class="wc-window__body">
+          <div class="spec">
+            <div class="spec__label"><b>默认态</b><span>金属高光从左上打亮，两侧嵌红宝石</span></div>
+            <div class="spec__demo">
+              <button type="button" class="wc-btn">
+                <span class="wc-btn__sheen" aria-hidden="true"></span>
+                <span class="wc-btn__text">开始游戏</span>
+              </button>
+            </div>
+          </div>
+          <div class="spec">
+            <div class="spec__label"><b>悬停态</b><span>金属升温 + 外圈暖光 + 一道扫光</span></div>
+            <div class="spec__demo">
+              <button type="button" class="wc-btn is-hover">
+                <span class="wc-btn__sheen" aria-hidden="true"></span>
+                <span class="wc-btn__text">开始游戏</span>
+              </button>
+            </div>
+          </div>
+          <div class="spec">
+            <div class="spec__label"><b>按下态</b><span>整体下压 2px，铭板转为深内凹</span></div>
+            <div class="spec__demo">
+              <button type="button" class="wc-btn is-press">
+                <span class="wc-btn__sheen" aria-hidden="true"></span>
+                <span class="wc-btn__text">开始游戏</span>
+              </button>
+            </div>
+          </div>
+          <div class="spec">
+            <div class="spec__label"><b>禁用态</b><span>金属去饱和，文字降到暗灰</span></div>
+            <div class="spec__demo">
+              <button type="button" class="wc-btn" disabled>
+                <span class="wc-btn__text">开始游戏</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="wc-window">
+        <div class="wc-window__bar">边框层级</div>
+        <div class="wc-window__body">
+          <div class="layer">
+            <span class="layer__swatch" style="background:#0a0806"></span>
+            <div class="layer__text"><b>暗铁外沿</b><span>近黑描边压住背景，避免金属“浮”起来</span></div>
+          </div>
+          <div class="layer">
+            <span class="layer__swatch" style="background:linear-gradient(162deg,#5d4a12,#b8942f 20%,#f7e9ac 38%,#c2a03c 52%,#6d5416 68%,#e6cf8a 86%,#8a6c20)"></span>
+            <div class="layer__text"><b>青铜主框 · 4px</b><span>斜向渐变模拟受光，切角处自然出现亮边</span></div>
+          </div>
+          <div class="layer">
+            <span class="layer__swatch" style="background:linear-gradient(180deg,#3d372b,#28241c 44%,#19170f 74%,#100f0b)"></span>
+            <div class="layer__text"><b>内凹铭板</b><span>上暗下沉的双内阴影，承载文字与图标</span></div>
+          </div>
+          <div class="layer">
+            <span class="layer__swatch" style="background:linear-gradient(90deg,#ff8a64,#70180e 40%,#2a0b07)"></span>
+            <div class="layer__text"><b>细节铆钉</b><span>两侧红宝石与顶部 1px 高光，是魔兽味的关键</span></div>
+          </div>
+          <p class="note"><b>切角规则：</b>外框 10px、铭板 7px，内层切角比外层小 3px，视觉上才咬得住。</p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- 02 物品格 -->
+  <section class="section" aria-labelledby="s2">
+    <div class="section__head">
+      <span class="section__idx">02</span>
+      <h2 id="s2">物品格 · 方形金框</h2>
+      <span class="section__rule"></span>
+    </div>
+    <div class="wc-window">
+      <div class="wc-window__bar">装备与道具槽位</div>
+      <div class="wc-window__body">
+        <div class="spec">
+          <div class="spec__label"><b>默认 / 悬停 / 选中</b><span>默认仅铜框；悬停亮四角；选中转翠绿色角标与辉光</span></div>
+          <div class="spec__demo">
+            <div class="slots-row">
+              <button type="button" class="wc-slot" aria-label="长剑">
+                <span class="wc-slot__art">
+                  <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                    <path d="M20 4l8 8-16 16-5-3-3-5z"/>
+                    <path d="M13 23l-3 5M9 25l-2 2"/>
+                    <path d="M18 8l6 6"/>
+                  </svg>
+                </span>
+                <span class="wc-slot__corners" aria-hidden="true"></span>
+              </button>
+              <button type="button" class="wc-slot is-hover" aria-label="盾牌">
+                <span class="wc-slot__art">
+                  <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                    <path d="M16 4l11 4v9c0 6-11 11-11 11S5 22 5 16V8z"/>
+                    <path d="M16 9v12M11 14h10"/>
+                  </svg>
+                </span>
+                <span class="wc-slot__corners" aria-hidden="true"></span>
+              </button>
+              <button type="button" class="wc-slot is-selected" aria-label="宝石">
+                <span class="wc-slot__art">
+                  <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                    <path d="M16 4l10 9-10 15L6 13z"/>
+                    <path d="M6 13h20M16 4l-4 9 4 15 4-15-4-9"/>
+                  </svg>
+                </span>
+                <span class="wc-slot__corners" aria-hidden="true"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="spec">
+          <div class="spec__label"><b>尺寸</b><span>66px 格身 + 3px 边框，与原生技能按钮比例一致</span></div>
+          <div class="spec__demo">
+            <button type="button" class="wc-slot" aria-label="药剂">
+              <span class="wc-slot__art">
+                <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                  <path d="M12 5h8M13 5v7c0 2-6 5-6 11a9 9 0 0018 0c0-6-6-9-6-11V5"/>
+                  <path d="M9 20h14"/>
+                </svg>
+              </span>
+              <span class="wc-slot__corners" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="wc-slot is-hover" aria-label="护符">
+              <span class="wc-slot__art">
+                <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                  <circle cx="16" cy="17" r="8"/>
+                  <path d="M16 5v4M9 8l2.6 3M23 8l-2.6 3"/>
+                </svg>
+              </span>
+              <span class="wc-slot__corners" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="wc-slot is-selected" aria-label="符文石">
+              <span class="wc-slot__art">
+                <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                  <path d="M16 4l11 6v12l-11 6-11-6V10z"/>
+                  <path d="M16 11v10M11 16h10"/>
+                </svg>
+              </span>
+              <span class="wc-slot__corners" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 符文按钮 -->
+  <section class="section" aria-labelledby="s3">
+    <div class="section__head">
+      <span class="section__idx">03</span>
+      <h2 id="s3">次级操作 · 符文细框</h2>
+      <span class="section__rule"></span>
+    </div>
+    <div class="wc-window">
+      <div class="wc-window__bar">低权重操作</div>
+      <div class="wc-window__body">
+        <div class="spec">
+          <div class="spec__label"><b>默认态</b><span>1px 铜线 + 内嵌 1px 绿线，安静但不廉价</span></div>
+          <div class="spec__demo">
+            <button type="button" class="wc-rune"><span class="wc-rune__mark" aria-hidden="true"></span>查看详情</button>
+          </div>
+        </div>
+        <div class="spec">
+          <div class="spec__label"><b>悬停态</b><span>绿线提亮，外发光偏冷色，与主按钮区分</span></div>
+          <div class="spec__demo">
+            <button type="button" class="wc-rune is-hover"><span class="wc-rune__mark" aria-hidden="true"></span>查看详情</button>
+          </div>
+        </div>
+        <div class="spec">
+          <div class="spec__label"><b>禁用态</b><span>铜线褪成灰褐，符文晶石失去光泽</span></div>
+          <div class="spec__demo">
+            <button type="button" class="wc-rune" disabled><span class="wc-rune__mark" aria-hidden="true"></span>查看详情</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 状态与冷却 -->
+  <section class="section" aria-labelledby="s4">
+    <div class="section__head">
+      <span class="section__idx">04</span>
+      <h2 id="s4">状态与冷却</h2>
+      <span class="section__rule"></span>
+    </div>
+    <div class="wc-window">
+      <div class="wc-window__bar">状态矩阵 · 冷却演示</div>
+      <div class="wc-window__body">
+        <div class="state-grid">
+          <figure class="state-cell">
+            <button type="button" class="wc-btn">
+              <span class="wc-btn__sheen" aria-hidden="true"></span>
+              <span class="wc-btn__text">普通</span>
+            </button>
+            <figcaption>普通</figcaption>
+          </figure>
+          <figure class="state-cell">
+            <button type="button" class="wc-btn is-hover">
+              <span class="wc-btn__sheen" aria-hidden="true"></span>
+              <span class="wc-btn__text">悬停</span>
+            </button>
+            <figcaption>悬停</figcaption>
+          </figure>
+          <figure class="state-cell">
+            <button type="button" class="wc-btn is-press">
+              <span class="wc-btn__sheen" aria-hidden="true"></span>
+              <span class="wc-btn__text">按下</span>
+            </button>
+            <figcaption>按下</figcaption>
+          </figure>
+          <figure class="state-cell">
+            <button type="button" class="wc-btn is-cooling" style="--cd:250deg" aria-disabled="true">
+              <span class="wc-btn__text">冷却</span>
+              <span class="wc-btn__cool" aria-hidden="true"><span class="wc-btn__cdtext">2.8</span></span>
+            </button>
+            <figcaption>冷却中</figcaption>
+          </figure>
+          <figure class="state-cell">
+            <button type="button" class="wc-btn" disabled>
+              <span class="wc-btn__text">禁用</span>
+            </button>
+            <figcaption>禁用</figcaption>
+          </figure>
+        </div>
+
+        <div class="cooldown-demo">
+          <button type="button" class="wc-btn" id="coolBtn">
+            <span class="wc-btn__sheen" aria-hidden="true"></span>
+            <span class="wc-btn__text">释放技能</span>
+            <span class="wc-btn__cool" aria-hidden="true"><span class="wc-btn__cdtext"></span></span>
+          </button>
+          <p class="hint">点击后进入 <strong>4 秒</strong>冷却：扇形遮罩按剩余时间收缩，数字实时倒数。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 HUD 面板 -->
+  <section class="section" aria-labelledby="s5">
+    <div class="section__head">
+      <span class="section__idx">05</span>
+      <h2 id="s5">HUD 面板 · 背景与边框</h2>
+      <span class="section__rule"></span>
+    </div>
+    <div class="specs">
+
+      <article class="wc-window">
+        <div class="wc-window__bar">半透明底 + 铜线框</div>
+        <div class="wc-window__body" style="padding:14px">
+          <div class="hud-stage">
+            <div class="wc-hud-bar">
+              <div class="wc-hud-bar__cell">
+                <span class="wc-hud-bar__cap">怪物数量</span>
+                <span class="wc-hud-bar__val" id="hudMonsters">50</span>
+              </div>
+              <span class="wc-hud-bar__sep" aria-hidden="true"></span>
+              <div class="wc-hud-bar__cell">
+                <span class="wc-hud-bar__cap">游戏时间</span>
+                <span class="wc-hud-bar__val" id="hudTime">00:00:31</span>
+                <span class="wc-hud-bar__sub" id="hudMode">亚欧奥法 · N2 难度</span>
+              </div>
+              <span class="wc-hud-bar__sep" aria-hidden="true"></span>
+              <div class="wc-hud-bar__cell wc-hud-bar__cell--alert">
+                <span class="wc-hud-bar__cap">BOSS 来临</span>
+                <span class="wc-hud-bar__val" id="hudBoss">00:04:50</span>
+              </div>
+            </div>
+            <div class="hud-stage__side">
+              <div class="wc-board">
+                <div class="wc-board__head">
+                  <span class="wc-board__title">玩家战绩</span>
+                  <span class="wc-board__timer">第 3 波</span>
+                </div>
+                <div class="wc-board__meta">
+                  <span>当前进展 <b>1290 / 1290</b></span>
+                </div>
+                <table>
+                  <colgroup>
+                    <col style="width:34%"><col style="width:15%"><col style="width:15%"><col style="width:15%"><col style="width:21%">
+                  </colgroup>
+                  <thead>
+                    <tr><th>玩家</th><th>击杀</th><th>死亡</th><th>摧毁</th><th>金币</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td class="is-danger">红笔</td><td>576</td><td class="is-danger">2</td><td>12</td><td class="is-gold">12,530</td></tr>
+                    <tr class="is-self"><td class="is-accent">白起</td><td>35</td><td>0</td><td>0</td><td class="is-gold">8,640</td></tr>
+                    <tr><td>蓝月</td><td>128</td><td>1</td><td>3</td><td class="is-gold">4,210</td></tr>
+                    <tr><td class="is-dim">灰烬</td><td class="is-dim">0</td><td class="is-dim">0</td><td class="is-dim">0</td><td class="is-dim">0</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="wc-dialog">
+                <div class="wc-dialog__head">使用一次天赋点</div>
+                <div class="wc-dialog__body">
+                  <div class="wc-dialog__row"><span>当前天赋点</span><b class="is-accent">1</b></div>
+                  <div class="wc-dialog__row"><span>单次消耗</span><b>10</b></div>
+                  <div class="wc-dialog__row"><span>剩余可用</span><b>60</b></div>
+                  <div class="wc-dialog__actions">
+                    <button type="button" class="wc-btn wc-btn--sm">
+                      <span class="wc-btn__sheen" aria-hidden="true"></span>
+                      <span class="wc-btn__text">确定</span>
+                    </button>
+                    <button type="button" class="wc-rune wc-rune--sm">
+                      <span class="wc-rune__mark" aria-hidden="true"></span>取消
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <span class="hud-stage__tag">HUD Preview</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="wc-window">
+        <div class="wc-window__bar">构造说明</div>
+        <div class="wc-window__body">
+          <div class="layer">
+            <span class="layer__swatch" style="background:linear-gradient(180deg,rgba(9,11,9,.9),rgba(4,5,4,.94))"></span>
+            <div class="layer__text"><b>半透明墨黑底</b><span>约 90% 不透明，地形能透出一点，信息读数不受影响</span></div>
+          </div>
+          <div class="layer">
+            <span class="layer__swatch" style="background:#b08c3a"></span>
+            <div class="layer__text"><b>1px 铜线外框</b><span>内衬 3px 暗铜带，双线结构替代粗边框，不遮挡战场</span></div>
+          </div>
+          <div class="layer">
+            <span class="layer__swatch" style="background:linear-gradient(135deg,#f7e9ac,#c2a03c 46%,#6d5416)"></span>
+            <div class="layer__text"><b>切角与金饰</b><span>状态条 10px、数据面板 12px；段间竖线嵌金菱，标题条压住整体重心</span></div>
+          </div>
+          <div class="layer">
+            <span class="layer__swatch" style="background:linear-gradient(90deg,#9fe3b0,#ef8a72 55%,#f0d38a)"></span>
+            <div class="layer__text"><b>语义色分区</b><span>自身=翠绿、死亡=宝石红、击杀与金币=亮金，扫一眼就能读表</span></div>
+          </div>
+          <p class="note"><b>布局规则：</b>顶部状态条分左中右三段（怪物数量 / 游戏时间+模式难度 / BOSS 倒计时），宽度占满、段间 1px 竖线分隔，数字使用等宽字形避免抖动；侧边面板固定右对齐、列宽不变。</p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- 06 事件框 -->
+  <section class="section" aria-labelledby="s6">
+    <div class="section__head">
+      <span class="section__idx">06</span>
+      <h2 id="s6">事件抉择框 · 弹窗</h2>
+      <span class="section__rule"></span>
+    </div>
+    <div class="specs">
+
+      <article class="wc-window">
+        <div class="wc-window__bar">事件触发</div>
+        <div class="wc-window__body" style="padding:14px">
+          <div class="hud-stage event-stage" id="eventStage">
+            <div class="wc-event" id="eventBox" role="dialog" aria-labelledby="eventTitle">
+              <span class="wc-event__corners" aria-hidden="true"></span>
+              <div class="wc-event__title" id="eventTitle"><span class="rule"></span>雷霆<span class="rule"></span></div>
+              <div class="wc-event__icon">
+                <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                  <path d="M18 3L8 18h7l-1 11 10-15h-7z"/>
+                </svg>
+              </div>
+              <div class="wc-event__body">
+                全图小怪触发<b class="kw-danger">雷霆重击</b>：<b class="kw-gold">10%</b> 概率，造成 <b class="kw-gold">50</b> 点生命伤害。
+              </div>
+              <div class="wc-event__divider" aria-hidden="true"></div>
+              <div class="wc-event__actions">
+                <button type="button" class="wc-hotkey wc-hotkey--primary" data-event-action="accept"><span>我要</span><span class="key">(1)</span></button>
+                <button type="button" class="wc-hotkey" data-event-action="reroll"><span>刷新</span><span class="key">(R)</span></button>
+                <button type="button" class="wc-hotkey" data-event-action="decline"><span>放弃</span><span class="key">(4)</span></button>
+              </div>
+            </div>
+            <div class="event-again" id="eventAgainWrap">
+              <button type="button" class="wc-hotkey" id="eventAgain">重新触发事件</button>
+            </div>
+          </div>
+          <p class="hint">按 <strong>1</strong> / <strong>4</strong> 或点击按钮关闭弹窗，按 <strong>R</strong> 刷新事件；点「重新触发事件」恢复演示。</p>
+        </div>
+      </article>
+
+      <article class="wc-window">
+        <div class="wc-window__bar">构造说明</div>
+        <div class="wc-window__body">
+          <div class="layer">
+            <span class="layer__swatch" style="background:linear-gradient(180deg,rgba(16,15,11,.94),rgba(5,5,4,.96))"></span>
+            <div class="layer__text"><b>加重一档的框</b><span>2px 铜框 + 6px 内衬 + 四角金饰，弹窗比常驻面板更重，提示“需要决策”</span></div>
+          </div>
+          <div class="layer">
+            <span class="layer__swatch" style="background:linear-gradient(90deg,transparent,#c9a63f,transparent)"></span>
+            <div class="layer__text"><b>标题与饰线</b><span>字距 .28em 的金色标题，两侧渐隐铜线收束视线</span></div>
+          </div>
+          <div class="layer">
+            <span class="layer__swatch" style="background:linear-gradient(135deg,#dff4ff,#4aa7d8 55%,#173a4d)"></span>
+            <div class="layer__text"><b>图标铭牌</b><span>64px 方框，内发光取事件主题色（雷霆用冷蓝），与角色栏图标同规格</span></div>
+          </div>
+          <div class="layer">
+            <span class="layer__swatch" style="background:linear-gradient(90deg,#c9a63f,#9a7a28 60%,#5f4a14)"></span>
+            <div class="layer__text"><b>热键按钮</b><span>主选项亮框，其余同规格；热键统一 (1)/(R)/(4) 排在右侧</span></div>
+          </div>
+          <p class="note"><b>色彩纪律：</b>正文只保留两种强调色——数字用亮金、危险/代价用宝石红；其余文字一律暗米色，保证一眼抓到关键数值。</p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- 07 天赋三选一 -->
+  <section class="section" aria-labelledby="s7">
+    <div class="section__head">
+      <span class="section__idx">07</span>
+      <h2 id="s7">天赋三选一 · 卡牌选择</h2>
+      <span class="section__rule"></span>
+    </div>
+    <div class="specs">
+
+      <article class="wc-window">
+        <div class="wc-window__bar">三选一</div>
+        <div class="wc-window__body" style="padding:14px">
+          <div class="hud-stage talent-stage">
+            <div class="wc-talent" id="talentPanel">
+              <div class="wc-talent__head">
+                <div class="wc-talent__title"><span class="rule"></span>天赋三选一<span class="rule"></span></div>
+                <span class="wc-talent__point">天赋点 <b>1</b></span>
+              </div>
+              <div class="wc-talent__grid">
+                <button type="button" class="talent-card" data-name="致命一击 · 锋锐">
+                  <span class="talent-card__icon">
+                    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                      <path d="M20 4l8 8-16 16-5-3-3-5z"/>
+                      <path d="M13 23l-3 5M9 25l-2 2"/>
+                      <path d="M18 8l6 6"/>
+                    </svg>
+                  </span>
+                  <span class="talent-card__info">
+                    <span class="talent-card__name">致命一击 · 锋锐</span>
+                    <span class="talent-card__desc">攻击时 <b>15%</b> 概率，造成 <b class="is-danger">13 倍</b> 伤害</span>
+                  </span>
+                </button>
+                <button type="button" class="talent-card" data-name="法术伤害">
+                  <span class="talent-card__icon">
+                    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                      <circle cx="16" cy="17" r="7"/>
+                      <path d="M16 4v3M16 26v2M6 17h3M24 17h3M8.5 9.5l2 2M21.5 22.5l2 2M23.5 9.5l-2 2M10.5 22.5l-2 2"/>
+                    </svg>
+                  </span>
+                  <span class="talent-card__info">
+                    <span class="talent-card__name">法术伤害</span>
+                    <span class="talent-card__desc">所有法术伤害 <b>+12%</b></span>
+                  </span>
+                </button>
+                <button type="button" class="talent-card" data-name="金币加成">
+                  <span class="talent-card__icon">
+                    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                      <ellipse cx="16" cy="23" rx="8" ry="3"/>
+                      <ellipse cx="16" cy="16.5" rx="8" ry="3"/>
+                      <ellipse cx="16" cy="10" rx="8" ry="3"/>
+                    </svg>
+                  </span>
+                  <span class="talent-card__info">
+                    <span class="talent-card__name">金币加成</span>
+                    <span class="talent-card__desc">击杀金币收益 <b>+60%</b></span>
+                  </span>
+                </button>
+              </div>
+              <div class="wc-talent__actions">
+                <button type="button" class="wc-hotkey" data-talent="skip"><span>暂不选择</span></button>
+                <button type="button" class="wc-hotkey" data-talent="refresh"><span>刷新</span><span class="key">(1)</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="wc-window">
+        <div class="wc-window__bar">构造说明</div>
+        <div class="wc-window__body">
+          <div class="layer">
+            <span class="layer__swatch" style="background:linear-gradient(180deg,#241f15,#0d0c08)"></span>
+            <div class="layer__text"><b>等权重栅格</b><span>三卡同宽同高、间距 14px，描述不超过三行，避免排版偏向某一项</span></div>
+          </div>
+          <div class="layer">
+            <span class="layer__swatch" style="background:linear-gradient(135deg,#ffe9a8,#c9a63f 55%,#7c6526)"></span>
+            <div class="layer__text"><b>选中态</b><span>点击即选中：金色亮框 + 内衬铜环，不弹确认层、不显示「已选」标签</span></div>
+          </div>
+          <div class="layer">
+            <span class="layer__swatch" style="background:linear-gradient(160deg,#ffe9a8,#c2a03c 50%,#6d5416)"></span>
+            <div class="layer__text"><b>图标铭牌</b><span>58px 方框 + 暖金内发光，与物品格同一套金框语言</span></div>
+          </div>
+          <div class="layer">
+            <span class="layer__swatch" style="background:linear-gradient(90deg,#edda9f,#a99e85 60%,#f0d38a)"></span>
+            <div class="layer__text"><b>信息层级</b><span>名称 13px 金 → 描述 11.5px 米灰，数值亮金、代价宝石红</span></div>
+          </div>
+          <p class="note"><b>交互：</b>点击卡牌即直接选中，无需确认；「刷新」重新滚牌并清空选择；「暂不选择」保留面板稍后再选。天赋点不足时，可把 <b>天赋点</b> 徽标换成红色警示。</p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- 08 战功商店 -->
+  <section class="section" aria-labelledby="s8">
+    <div class="section__head">
+      <span class="section__idx">08</span>
+      <h2 id="s8">战功商店 · 商品条</h2>
+      <span class="section__rule"></span>
+    </div>
+    <div class="specs">
+
+      <article class="wc-window">
+        <div class="wc-window__bar">战功兑换</div>
+        <div class="wc-window__body" style="padding:14px">
+          <div class="hud-stage shop-stage">
+            <div class="wc-shop" id="shopPanel">
+              <div class="wc-shop__head">
+                <span class="wc-shop__title">战功商店</span>
+                <span class="wc-shop__wallet">战功 <b>3,260</b></span>
+              </div>
+              <div class="wc-shop__offers">
+                <button type="button" class="offer offer--epic" data-name="凌波微步" data-price="480">
+                  <span class="offer__figure">
+                    <span class="offer__icon">
+                      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                        <path d="M11 6h6v10l9 4c3 1.6 3 6 0 6H7v-7c0-3 3-5 4-8z"/>
+                        <path d="M6 22h20"/>
+                      </svg>
+                    </span>
+                    <span class="offer__badge">8折</span>
+                    <span class="offer__price">480</span>
+                  </span>
+                  <span class="offer__name">凌波微步</span>
+                </button>
+                <button type="button" class="offer offer--uncommon" data-name="回春药剂" data-price="280">
+                  <span class="offer__figure">
+                    <span class="offer__icon">
+                      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                        <path d="M12 4h8M13 4v8c0 2-6 5-6 11a9 9 0 0018 0c0-6-6-9-6-11V4"/>
+                        <path d="M9 20h14"/>
+                      </svg>
+                    </span>
+                    <span class="offer__badge">7折</span>
+                    <span class="offer__price">280</span>
+                  </span>
+                  <span class="offer__name">回春药剂</span>
+                </button>
+                <button type="button" class="offer offer--rare" data-name="坐骑冲锋" data-price="500">
+                  <span class="offer__figure">
+                    <span class="offer__icon">
+                      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                        <path d="M7 8l7 8-7 8M17 8l7 8-7 8"/>
+                        <path d="M26 16h1"/>
+                      </svg>
+                    </span>
+                    <span class="offer__badge">5折</span>
+                    <span class="offer__price">500</span>
+                  </span>
+                  <span class="offer__name">坐骑冲锋</span>
+                </button>
+                <button type="button" class="offer offer--rare" data-name="雷霆扑杀" data-price="360">
+                  <span class="offer__figure">
+                    <span class="offer__icon">
+                      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                        <path d="M18 3L8 18h7l-1 11 10-15h-7z"/>
+                      </svg>
+                    </span>
+                    <span class="offer__badge">9折</span>
+                    <span class="offer__price">360</span>
+                  </span>
+                  <span class="offer__name">雷霆扑杀</span>
+                </button>
+                <button type="button" class="offer offer--uncommon" data-name="疾风药剂" data-price="400">
+                  <span class="offer__figure">
+                    <span class="offer__icon">
+                      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                        <path d="M12 4h8M13 4v7c0 2-5 4-5 9a8 8 0 0016 0c0-5-5-7-5-9V4"/>
+                        <path d="M9 19c2-2 4 2 6 0s4 2 6 0"/>
+                      </svg>
+                    </span>
+                    <span class="offer__badge">8折</span>
+                    <span class="offer__price">400</span>
+                  </span>
+                  <span class="offer__name">疾风药剂</span>
+                </button>
+                <button type="button" class="offer offer--refresh" aria-label="刷新商品">
+                  <span class="offer__figure">
+                    <span class="offer__icon">
+                      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                        <path d="M26 16a10 10 0 1 1-10-10c2.8 0 5.48 1.1 7.5 3.05"/>
+                        <path d="M26 4v7h-7"/>
+                      </svg>
+                    </span>
+                    <span class="offer__badge">R</span>
+                  </span>
+                  <span class="offer__name">刷新</span>
+                </button>
+              </div>
+              <p class="wc-shop__foot" id="shopStatus" aria-live="polite">每次刷新随机 5 件 · 点击卡牌查看价格</p>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="wc-window">
+        <div class="wc-window__bar">构造说明</div>
+        <div class="wc-window__body">
+          <div class="layer">
+            <span class="layer__swatch" style="background:linear-gradient(90deg,#b48cff,#74b9ff 34%,#8fe08a 67%,#f3c95e)"></span>
+            <div class="layer__text"><b>品质色边框</b><span>史诗紫 / 精良蓝 / 优秀绿 / 传说金，2px 描边 + 同色内辉光</span></div>
+          </div>
+          <div class="layer">
+            <span class="layer__swatch" style="background:linear-gradient(180deg,#2a2410,#0c0a05)"></span>
+            <div class="layer__text"><b>折扣角标</b><span>左上悬浮不占格，8折 / 7折 / 9折 用金框黑底，一眼比价</span></div>
+          </div>
+          <div class="layer">
+            <span class="layer__swatch" style="background:linear-gradient(90deg,#ffe28f,#8a6c20)"></span>
+            <div class="layer__text"><b>价格铭文</b><span>右下等宽亮金 + 黑描边，直接压在图标上，不额外占一行</span></div>
+          </div>
+          <div class="layer">
+            <span class="layer__swatch" style="background:linear-gradient(135deg,#ffe9a8,#c9a63f 55%,#6d5416)"></span>
+            <div class="layer__text"><b>刷新卡</b><span>金框圆箭头 + 名称「刷新」，与商品同高；R 角标提示热键</span></div>
+          </div>
+          <p class="note"><b>密度控制：</b>商品卡整卡可点、不设底栏按钮；名称单独一条深色铭牌，长名自动省略，避免六列挤压时串行。</p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- 09 令牌与代码 -->
+  <section class="section" aria-labelledby="s9">
+    <div class="section__head">
+      <span class="section__idx">09</span>
+      <h2 id="s9">设计令牌与实现</h2>
+      <span class="section__rule"></span>
+    </div>
+    <div class="specs">
+
+      <article class="wc-window">
+        <div class="wc-window__bar">色彩与材质</div>
+        <div class="wc-window__body">
+          <ul class="swatches">
+            <li><span class="chip" style="background:linear-gradient(160deg,#f7e9ac,#c2a03c 50%,#6d5416)"></span><div><b>青铜主框</b><code>#c2a03c</code></div></li>
+            <li><span class="chip" style="background:linear-gradient(180deg,#4b4433,#2e2a1f)"></span><div><b>石质面板</b><code>#2b281f</code></div></li>
+            <li><span class="chip" style="background:#0a0806"></span><div><b>暗铁描边</b><code>#0a0806</code></div></li>
+            <li><span class="chip" style="background:linear-gradient(180deg,#3d372b,#100f0b)"></span><div><b>内凹铭板</b><code>#19170f</code></div></li>
+            <li><span class="chip" style="background:linear-gradient(160deg,#b9ffe0,#3fae83)"></span><div><b>选中辉光</b><code>#7fe3b8</code></div></li>
+            <li><span class="chip" style="background:linear-gradient(160deg,#ff8a64,#70180e)"></span><div><b>宝石暗红</b><code>#70180e</code></div></li>
+          </ul>
+          <p class="note"><b>比例建议：</b>按钮高 46px、外框 4px、切角 10px；物品格 66px、框 3px、切角 7px。字号保持 13–15px 并加 <b>1px 黑色描边</b>，才接近游戏内的位图字。</p>
+        </div>
+      </article>
+
+      <article class="wc-window">
+        <div class="wc-window__bar">核心 CSS</div>
+        <div class="wc-window__body">
+          <div class="code-head">
+            <span>.WC-BTN · .WC-HUD-BAR · .WC-BOARD · .WC-EVENT · .WC-TALENT · .WC-SHOP</span>
+            <button type="button" class="copy-btn" data-copy="codeBtn">复制样式</button>
+          </div>
+          <pre id="codeBtn"><code>.wc-btn{
+  position:relative; isolation:isolate;
+  min-height:46px; padding:0 26px; border:0;
+  background:transparent; cursor:pointer;
+  color:#f6ead0; font-weight:700; letter-spacing:.1em;
+  filter:drop-shadow(0 2px 0 rgba(0,0,0,.7));
+}
+
+/* 第一层：青铜金属框 */
+.wc-btn::before{
+  content:""; position:absolute; inset:0; z-index:-2;
+  background:linear-gradient(162deg,
+    #5d4a12 0%, #b8942f 11%, #f7e9ac 24%,
+    #c2a03c 38%, #6d5416 55%, #d8bd6b 75%,
+    #fdf1c1 88%, #8a6c20 100%);
+  clip-path:polygon(10px 0,calc(100% - 10px) 0,
+    100% 10px,100% calc(100% - 10px),
+    calc(100% - 10px) 100%,10px 100%,
+    0 calc(100% - 10px),0 10px);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,247,208,.62),
+    inset 0 0 0 2px rgba(0,0,0,.88),
+    inset 0 0 0 3px rgba(24,19,8,.9);
+}
+
+/* 第二层：内凹铭板 */
+.wc-btn::after{
+  content:""; position:absolute; inset:4px; z-index:-1;
+  background:linear-gradient(180deg,
+    #3d372b 0%, #28241c 44%,
+    #19170f 74%, #100f0b 100%);
+  clip-path:polygon(7px 0,calc(100% - 7px) 0,
+    100% 7px,100% calc(100% - 7px),
+    calc(100% - 7px) 100%,7px 100%,
+    0 calc(100% - 7px),0 7px);
+  box-shadow:
+    inset 0 0 0 1px #050403,
+    inset 0 3px 7px rgba(0,0,0,.8),
+    inset 0 -2px 0 rgba(255,228,160,.10);
+}
+
+/* 悬停：升温 + 暖光 */
+.wc-btn:hover{
+  color:#fff8e2;
+  filter:drop-shadow(0 2px 0 rgba(0,0,0,.7))
+         drop-shadow(0 0 16px rgba(255,196,72,.42));
+}
+.wc-btn:hover::before{filter:brightness(1.12) saturate(1.08)}
+
+/* ---------- HUD 面板 ---------- */
+
+/* 侧边数据面板：半透明墨黑底 + 铜线框 */
+.wc-board{
+  position:relative; width:100%;
+  background:linear-gradient(180deg,
+    rgba(9,11,9,.90) 0%,rgba(4,5,4,.94) 100%);
+  border:1px solid #b08c3a;
+  clip-path:polygon(12px 0,calc(100% - 12px) 0,
+    100% 12px,100% calc(100% - 12px),
+    calc(100% - 12px) 100%,12px 100%,
+    0 calc(100% - 12px),0 12px);
+  box-shadow:
+    inset 0 0 0 1px #050403,
+    inset 0 0 0 3px rgba(180,145,70,.18),
+    inset 0 10px 26px rgba(0,0,0,.6);
+}
+
+/* 顶部状态条：左中右三段等分，1px 竖线分隔，宽度占满 */
+.wc-hud-bar{
+  display:grid;
+  grid-template-columns:1fr 1px 1.1fr 1px 1fr;
+  width:100%;
+  border:1px solid #b08c3a;
+  background:linear-gradient(180deg,
+    rgba(14,15,11,.92),rgba(4,5,4,.95));
+  clip-path:polygon(10px 0,calc(100% - 10px) 0,
+    100% 10px,100% calc(100% - 10px),
+    calc(100% - 10px) 100%,10px 100%,
+    0 calc(100% - 10px),0 10px);
+  box-shadow:
+    inset 0 0 0 1px #050403,
+    inset 0 0 0 3px rgba(180,145,70,.16);
+}
+/* 单格：小标题 + 数值（中格多一行模式难度） */
+.wc-hud-bar__cell{
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  gap:2px; padding:7px 16px 8px;
+}
+.wc-hud-bar__cap{
+  font-size:9.5px; letter-spacing:.2em;
+  color:#93886f; white-space:nowrap;
+}
+.wc-hud-bar__val{
+  color:#ffe9a8;
+  font-family:Consolas,monospace;
+  font-variant-numeric:tabular-nums;
+  font-size:17px; font-weight:700;
+  white-space:nowrap;
+}
+.wc-hud-bar__sub{
+  font-size:9.5px; letter-spacing:.1em;
+  color:#a9e3c8; white-space:nowrap;
+}
+/* 分隔线 + 金菱；右格暖红警示 */
+.wc-hud-bar__sep{
+  background:linear-gradient(180deg,transparent,
+    rgba(201,170,80,.5) 22%,rgba(201,170,80,.5) 78%,transparent);
+}
+.wc-hud-bar__cell--alert .wc-hud-bar__cap{color:#c08a76}
+.wc-hud-bar__cell--alert .wc-hud-bar__val{color:#ffb99c}
+
+/* ---------- 事件弹窗 ---------- */
+
+/* 比常驻面板更重的框：2px 铜框 + 6px 内衬 */
+.wc-event{
+  position:relative;
+  width:min(560px,100%);
+  background:linear-gradient(180deg,
+    rgba(16,15,11,.94),rgba(5,5,4,.96));
+  border:2px solid #b08c3a;
+  clip-path:polygon(16px 0,calc(100% - 16px) 0,
+    100% 16px,100% calc(100% - 16px),
+    calc(100% - 16px) 100%,16px 100%,
+    0 calc(100% - 16px),0 16px);
+  box-shadow:
+    inset 0 0 0 1px #050403,
+    inset 0 0 0 4px rgba(180,145,70,.22),
+    inset 0 0 0 6px rgba(0,0,0,.85),
+    inset 0 12px 30px rgba(0,0,0,.6);
+}
+
+/* 标题 / 图标 / 正文 / 热键按钮 */
+.wc-event__title{
+  display:flex; align-items:center;
+  justify-content:center; gap:14px;
+  padding:14px 26px 6px;
+  font-size:16px; font-weight:700;
+  letter-spacing:.28em; color:#f3dfa6;
+}
+.wc-event__icon{
+  width:64px; height:64px; margin:10px auto 14px;
+  display:grid; place-items:center;
+  border:2px solid #c2a03c;
+  background:
+    radial-gradient(90% 90% at 50% 38%,
+      rgba(127,200,255,.20),transparent 62%),
+    linear-gradient(180deg,#25221a,#0b0a07);
+  box-shadow:inset 0 0 0 1px #000,
+    inset 0 3px 10px rgba(0,0,0,.8);
+}
+.wc-event__body{
+  padding:0 52px; text-align:center;
+  font-size:13px; line-height:2.1; color:#c9bd9f;
+}
+.wc-hotkey{
+  display:inline-flex; align-items:center;
+  justify-content:center; gap:6px;
+  min-width:112px; min-height:38px; padding:0 14px;
+  border:1px solid #9a7a28;
+  background:linear-gradient(180deg,#2e2816,#151207);
+  color:#e6d7ae; font-size:12.5px; font-weight:700;
+  clip-path:polygon(7px 0,calc(100% - 7px) 0,
+    100% 7px,100% calc(100% - 7px),
+    calc(100% - 7px) 100%,7px 100%,
+    0 calc(100% - 7px),0 7px);
+}
+.wc-hotkey--primary{
+  border-color:#c9a63f;
+  background:linear-gradient(180deg,#3a3016,#1c1709);
+  color:#fff0c4;
+}
+
+/* ---------- 天赋三选一 ---------- */
+.wc-talent{
+  width:min(720px,100%);
+  background:linear-gradient(180deg,
+    rgba(14,14,10,.94),rgba(4,5,4,.96));
+  border:2px solid #b08c3a;
+  clip-path:polygon(14px 0,calc(100% - 14px) 0,
+    100% 14px,100% calc(100% - 14px),
+    calc(100% - 14px) 100%,14px 100%,
+    0 calc(100% - 14px),0 14px);
+}
+.wc-talent__grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px; padding:4px 20px 0;
+}
+.talent-card{
+  border:1px solid #7c6526;
+  background:linear-gradient(180deg,#241f15,#0d0c08);
+  clip-path:polygon(8px 0,calc(100% - 8px) 0,
+    100% 8px,100% calc(100% - 8px),
+    calc(100% - 8px) 100%,8px 100%,
+    0 calc(100% - 8px),0 8px);
+  box-shadow:
+    inset 0 0 0 1px #050403,
+    inset 0 8px 18px rgba(0,0,0,.55);
+}
+.talent-card.is-selected{
+  border-color:#e2c375;
+  box-shadow:
+    inset 0 0 0 1px #050403,
+    inset 0 0 0 3px rgba(201,166,63,.28);
+}
+
+/* ---------- 战功商店 ---------- */
+.wc-shop{
+  width:min(660px,100%);
+  border:2px solid #b08c3a;
+  background:linear-gradient(180deg,
+    rgba(14,14,10,.94),rgba(4,5,4,.96));
+  clip-path:polygon(12px 0,calc(100% - 12px) 0,
+    100% 12px,100% calc(100% - 12px),
+    calc(100% - 12px) 100%,12px 100%,
+    0 calc(100% - 12px),0 12px);
+}
+.wc-shop__offers{
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:9px; padding:14px 14px 6px;
+}
+.offer{--q:#c2a03c;--q-glow:rgba(255,200,80,.25)}
+.offer__icon{
+  border:2px solid var(--q);
+  background:
+    radial-gradient(80% 80% at 50% 36%,
+      var(--q-glow),transparent 66%),
+    linear-gradient(180deg,#26221a,#0b0a07);
+  box-shadow:
+    inset 0 0 0 1px #000,
+    inset 0 4px 10px rgba(0,0,0,.8);
+}
+.offer--epic{--q:#b48cff}
+.offer--rare{--q:#74b9ff}
+.offer--uncommon{--q:#8fe08a}
+.offer--legend{--q:#f3c95e}
+
+/* 折扣角标 / 价格铭文 */
+.offer__badge{
+  position:absolute; top:-5px; left:-5px; z-index:2;
+  padding:1px 5px; font-size:9.5px; font-weight:700;
+  color:#ffe9a8; border:1px solid #c9a63f;
+  background:linear-gradient(180deg,#2a2410,#0c0a05);
+}
+.offer__price{
+  position:absolute; right:5px; bottom:3px; z-index:2;
+  font-family:Consolas,monospace;
+  font-size:11px; font-weight:700;
+  color:#ffe28f; text-shadow:0 1px 2px #000;
+}</code></pre>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span class="diamond"></span>
+    <span>边框基于 4px 外沿 + 10px 切角，可按比例缩放；颜色全部集中在 :root 变量中。</span>
+  </footer>
+
+</div>
+
+<script>
+  (function(){
+    var btn = document.getElementById('coolBtn');
+    if(!btn){ return; }
+    var overlayText = btn.querySelector('.wc-btn__cdtext');
+    var cooling = false;
+    var DURATION = 4000;
+
+    btn.addEventListener('click', function(){
+      if(cooling){ return; }
+      cooling = true;
+      btn.classList.add('is-cooling');
+      btn.setAttribute('aria-disabled','true');
+      var start = performance.now();
+      var raf = window.requestAnimationFrame || function(fn){ return setTimeout(function(){ fn(performance.now()); },16); };
+
+      function tick(now){
+        var p = Math.min(1,(now - start) / DURATION);
+        var deg = 360 * (1 - p);
+        btn.style.setProperty('--cd',deg.toFixed(1) + 'deg');
+        if(overlayText){
+          overlayText.textContent = ((1 - p) * DURATION / 1000).toFixed(1);
+        }
+        if(p < 1){
+          raf(tick);
+        }else{
+          btn.classList.remove('is-cooling');
+          btn.removeAttribute('aria-disabled');
+          btn.style.setProperty('--cd','0deg');
+          cooling = false;
+        }
+      }
+      raf(tick);
+    });
+  })();
+
+  (function(){
+    var el = document.getElementById('hudTime');
+    if(!el){ return; }
+    var sec = 31;
+    var pad = function(n){ return n < 10 ? '0' + n : '' + n; };
+    setInterval(function(){
+      sec++;
+      el.textContent = pad(Math.floor(sec / 3600)) + ':' + pad(Math.floor(sec % 3600 / 60)) + ':' + pad(sec % 60);
+    },1000);
+  })();
+
+  (function(){
+    var box = document.getElementById('eventBox');
+    var again = document.getElementById('eventAgainWrap');
+    if(!box || !again){ return; }
+
+    function closeEvent(){
+      if(box.classList.contains('is-closed')){ return; }
+      box.classList.add('is-closed');
+      again.classList.add('is-visible');
+    }
+    function openEvent(){
+      box.classList.remove('is-closed');
+      again.classList.remove('is-visible');
+    }
+    function rerollEvent(){
+      box.classList.remove('is-rolling');
+      void box.offsetWidth;
+      box.classList.add('is-rolling');
+      setTimeout(function(){ box.classList.remove('is-rolling'); }, 500);
+    }
+
+    Array.prototype.forEach.call(box.querySelectorAll('[data-event-action]'), function(btn){
+      btn.addEventListener('click', function(){
+        if(btn.getAttribute('data-event-action') === 'reroll'){ rerollEvent(); }
+        else{ closeEvent(); }
+      });
+    });
+    again.addEventListener('click', openEvent);
+
+    document.addEventListener('keydown', function(e){
+      if(box.classList.contains('is-closed')){ return; }
+      if(e.key === '1' || e.key === '4'){ closeEvent(); }
+      if(e.key === 'r' || e.key === 'R'){ rerollEvent(); }
+    });
+  })();
+
+  (function(){
+    var panel = document.getElementById('talentPanel');
+    if(!panel){ return; }
+    var cards = Array.prototype.slice.call(panel.querySelectorAll('.talent-card'));
+
+    function clearSelection(){
+      cards.forEach(function(c){ c.classList.remove('is-selected'); });
+    }
+
+    cards.forEach(function(card){
+      card.addEventListener('click', function(){
+        clearSelection();
+        card.classList.add('is-selected');
+      });
+    });
+
+    var skip = panel.querySelector('[data-talent="skip"]');
+    if(skip){
+      skip.addEventListener('click', function(){ clearSelection(); });
+    }
+
+    var refresh = panel.querySelector('[data-talent="refresh"]');
+    if(refresh){
+      refresh.addEventListener('click', function(){
+        clearSelection();
+        panel.classList.remove('is-rolling');
+        void panel.offsetWidth;
+        panel.classList.add('is-rolling');
+        setTimeout(function(){ panel.classList.remove('is-rolling'); }, 560);
+      });
+    }
+  })();
+
+  (function(){
+    var shop = document.getElementById('shopPanel');
+    if(!shop){ return; }
+    var status = document.getElementById('shopStatus');
+    var offers = Array.prototype.slice.call(shop.querySelectorAll('.offer:not(.offer--refresh)'));
+    var hintText = '每次刷新随机 5 件 · 点击卡牌查看价格';
+
+    offers.forEach(function(offer){
+      offer.addEventListener('click', function(){
+        var wasSelected = offer.classList.contains('is-selected');
+        offers.forEach(function(o){ o.classList.remove('is-selected'); });
+        if(!wasSelected){
+          offer.classList.add('is-selected');
+          status.textContent = '已选中：' + offer.getAttribute('data-name') + ' · ' + offer.getAttribute('data-price') + ' 战功';
+        }else{
+          status.textContent = hintText;
+        }
+      });
+    });
+
+    var refresh = shop.querySelector('.offer--refresh');
+    if(refresh){
+      refresh.addEventListener('click', function(){
+        offers.forEach(function(o){ o.classList.remove('is-selected'); });
+        status.textContent = '商品已刷新：5 件新货已上架。';
+        shop.classList.remove('is-rolling');
+        void shop.offsetWidth;
+        shop.classList.add('is-rolling');
+        setTimeout(function(){ shop.classList.remove('is-rolling'); }, 520);
+      });
+    }
+  })();
+
+  (function(){
+    var buttons = document.querySelectorAll('[data-copy]');
+    Array.prototype.forEach.call(buttons,function(b){
+      b.addEventListener('click',function(){
+        var target = document.getElementById(b.getAttribute('data-copy'));
+        if(!target){ return; }
+        var text = target.innerText;
+        var done = function(){
+          var old = b.textContent;
+          b.textContent = '已复制';
+          setTimeout(function(){ b.textContent = old; },1500);
+        };
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(text).then(done).catch(function(){ fallback(text,done); });
+        }else{
+          fallback(text,done);
+        }
+      });
+    });
+
+    function fallback(text,done){
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try{ document.execCommand('copy'); }catch(e){}
+      document.body.removeChild(ta);
+      done();
+    }
+  })();
+</script>
+</body>
+</html>
