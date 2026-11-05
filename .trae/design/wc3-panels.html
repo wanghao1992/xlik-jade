@@ -1,0 +1,2708 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>魔兽风格 · 功能面板设计</title>
+<style>
+  /* ============================================================
+     设计令牌 —— 与 wc3-button-frames.html 同源
+     ============================================================ */
+  :root{
+    --gold-0:#fff6cd;
+    --gold-1:#eed894;
+    --gold-2:#cdaa4a;
+    --gold-3:#9a7a28;
+    --gold-4:#5f4a14;
+    --iron:#0a0806;
+    --stone-0:#100f0c;
+    --stone-1:#1c1a14;
+    --stone-2:#2b281f;
+    --stone-3:#4a463a;
+    --ink:#f1e6c8;
+    --ink-dim:#a79c82;
+    --accent:#7fe3b8;
+    --danger:#e0664f;
+
+    --noise:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+
+    --metal:linear-gradient(162deg,#5d4a12 0%,#b8942f 11%,#f7e9ac 24%,#c2a03c 38%,#6d5416 55%,#d8bd6b 75%,#fdf1c1 88%,#8a6c20 100%);
+    --plate:linear-gradient(180deg,#3d372b 0%,#28241c 44%,#19170f 74%,#100f0b 100%);
+
+    --cut-lg:polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px),0 14px);
+    --cut-md:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);
+    --cut-sm:polygon(5px 0,calc(100% - 5px) 0,100% 5px,100% calc(100% - 5px),calc(100% - 5px) 100%,5px 100%,0 calc(100% - 5px),0 5px);
+
+    /* 品质色阶 */
+    --q1:linear-gradient(160deg,#f7fafc 0%,#c3ccd4 26%,#737b84 55%,#e2e8ee 80%,#8b939c 100%);
+    --q2:linear-gradient(160deg,#eaffdf 0%,#9ee37e 26%,#2f7c23 55%,#bdf3a5 80%,#3e8b2e 100%);
+    --q3:linear-gradient(160deg,#dff0ff 0%,#8dc8ff 26%,#24649f 55%,#b3dcff 80%,#2f74b4 100%);
+    --q4:linear-gradient(160deg,#f4e0ff 0%,#cf9dff 26%,#6a2f9c 55%,#e8c4ff 80%,#7b3cb2 100%);
+    --q5:var(--metal);
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    color:var(--ink);
+    font-family:"Microsoft YaHei","PingFang SC","SimHei",sans-serif;
+    background-color:var(--stone-0);
+    background-image:
+      radial-gradient(120% 80% at 50% -10%,rgba(126,102,50,.20),transparent 55%),
+      radial-gradient(90% 60% at 50% 115%,rgba(36,88,68,.15),transparent 60%),
+      linear-gradient(180deg,#141310 0%,#0c0b09 70%,#090806 100%);
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:var(--noise) repeat 0 0/160px 160px;
+    opacity:.14;mix-blend-mode:overlay;
+  }
+  ::selection{background:rgba(205,170,74,.35);color:#fff8e0}
+
+  .sprite{position:absolute;width:0;height:0;overflow:hidden}
+  .glyph{
+    fill:none;stroke:currentColor;stroke-width:1.5;
+    stroke-linecap:round;stroke-linejoin:round;
+  }
+
+  /* ============================================================
+     页面骨架
+     ============================================================ */
+  .shell{
+    position:relative;z-index:1;
+    max-width:1240px;margin:0 auto;
+    padding:56px 32px 72px;
+  }
+
+  .hero{text-align:center;padding-top:6px}
+  .hero__eyebrow{
+    display:inline-flex;align-items:center;gap:10px;
+    font-size:11px;font-weight:700;letter-spacing:.34em;
+    color:#b3a789;text-transform:uppercase;
+  }
+  .diamond{
+    width:7px;height:7px;flex:none;
+    background:linear-gradient(135deg,#ffe8a6,#a1832c);
+    transform:rotate(45deg);
+    box-shadow:0 0 0 1px #000,0 0 8px rgba(255,210,120,.45);
+  }
+  .hero h1{
+    margin:18px 0 0;
+    font-family:"SimHei","Microsoft YaHei",sans-serif;
+    font-size:clamp(32px,4.6vw,52px);
+    font-weight:700;letter-spacing:.14em;line-height:1.16;
+    background:linear-gradient(180deg,#fff8da 0%,#e9d394 42%,#c2a03c 62%,#8a6c20 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 2px 0 rgba(0,0,0,.9)) drop-shadow(0 0 22px rgba(255,196,72,.18));
+  }
+  .hero__lead{
+    margin:18px auto 0;max-width:660px;
+    font-size:14px;line-height:2;letter-spacing:.04em;color:var(--ink-dim);
+  }
+  .hero__lead b{color:#e2d3a6;font-weight:700}
+  .hero__meta{
+    list-style:none;margin:24px 0 0;padding:0;
+    display:flex;flex-wrap:wrap;justify-content:center;gap:10px;
+  }
+  .hero__meta li{
+    padding:7px 14px;font-size:11px;letter-spacing:.14em;color:#c5b794;
+    background:linear-gradient(180deg,#24211a,#16140f);
+    border:1px solid #4a4433;
+    box-shadow:inset 0 0 0 1px #080705,inset 0 1px 0 rgba(255,240,190,.12);
+    clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 50%,calc(100% - 7px) 100%,7px 100%,0 50%);
+  }
+
+  .nav{
+    position:sticky;top:0;z-index:30;
+    margin:32px -32px 0;
+    padding:9px 32px;
+    display:flex;justify-content:center;flex-wrap:wrap;gap:8px;
+    background:linear-gradient(180deg,rgba(15,14,11,.96),rgba(10,9,7,.9));
+    border-top:1px solid rgba(201,170,80,.18);
+    border-bottom:1px solid rgba(201,170,80,.24);
+    backdrop-filter:blur(6px);
+  }
+  .nav a{
+    display:inline-flex;align-items:baseline;gap:7px;
+    padding:7px 15px;
+    font-size:12px;font-weight:700;letter-spacing:.12em;
+    color:#a99d81;text-decoration:none;
+    background:linear-gradient(180deg,#24201a,#15130e);
+    border:1px solid #4c4431;
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px #080705;
+    transition:color .18s,border-color .18s,box-shadow .18s;
+  }
+  .nav a span{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:10px;letter-spacing:.04em;color:#7f7358;
+  }
+  .nav a:hover{color:#f0dfb2;border-color:#a8852f}
+  .nav a.is-active{
+    color:#fff0c4;border-color:#c9a63f;
+    background:linear-gradient(180deg,#3a3016,#1c1709);
+    box-shadow:inset 0 0 0 1px #080705,0 0 14px rgba(255,200,90,.2);
+  }
+  .nav a.is-active span{color:#e2c98a}
+
+  /* ============================================================
+     章节 / 展示台
+     ============================================================ */
+  .sec{margin-top:52px;scroll-margin-top:70px}
+  .sec__head{display:flex;align-items:baseline;gap:14px;margin-bottom:16px;padding-left:2px}
+  .sec__idx{font-size:11px;font-weight:700;letter-spacing:.18em;color:#8b7f63}
+  .sec__head h2{
+    margin:0;font-size:18px;font-weight:700;letter-spacing:.16em;color:#eddba6;
+    text-shadow:0 1px 0 #000,0 0 14px rgba(255,205,110,.2);
+  }
+  .sec__en{font-family:Consolas,"Cascadia Mono","Courier New",monospace;font-size:10px;letter-spacing:.26em;color:#7d7259}
+  .sec__rule{flex:1;height:1px;background:linear-gradient(90deg,rgba(201,170,80,.5),transparent)}
+
+  .stage{
+    position:relative;
+    display:flex;justify-content:center;
+    padding:38px 34px;
+    border:1px solid #0a0907;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.05),inset 0 0 52px rgba(0,0,0,.6);
+    background:
+      var(--noise) repeat 0 0/160px 160px,
+      repeating-linear-gradient(0deg,rgba(255,255,255,.02) 0 1px,transparent 1px 48px),
+      repeating-linear-gradient(90deg,rgba(255,255,255,.02) 0 1px,transparent 1px 48px),
+      radial-gradient(62% 58% at 20% 16%,rgba(84,118,68,.24),transparent 62%),
+      radial-gradient(56% 52% at 84% 84%,rgba(56,82,116,.2),transparent 62%),
+      linear-gradient(165deg,#121a16,#0a100d 50%,#080b09);
+    background-blend-mode:overlay,normal,normal,normal,normal,normal;
+    overflow:hidden;
+  }
+  .stage__mark{
+    position:absolute;right:14px;top:6px;
+    font-family:"SimHei",sans-serif;font-size:92px;line-height:1;
+    color:rgba(255,240,190,.035);pointer-events:none;user-select:none;
+  }
+  .stage__tag{
+    position:absolute;left:15px;bottom:11px;
+    font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:#6d7869;
+    pointer-events:none;
+  }
+
+  .chips{
+    list-style:none;margin:14px 0 0;padding:0;
+    display:flex;flex-wrap:wrap;gap:8px;
+  }
+  .chips li{
+    padding:6px 12px;font-size:11px;letter-spacing:.06em;color:#9a8f74;
+    background:rgba(0,0,0,.26);
+    border:1px solid rgba(201,170,80,.18);
+    clip-path:var(--cut-sm);
+  }
+
+  /* ============================================================
+     面板窗口
+     ============================================================ */
+  .panel{
+    position:relative;
+    width:min(var(--w,900px),100%);
+    background:
+      var(--noise) repeat 0 0/160px 160px,
+      linear-gradient(180deg,#2b281f 0%,#1b1913 46%,#0f0e0a 100%);
+    background-blend-mode:overlay,normal;
+    border:1px solid #a07f34;
+    clip-path:polygon(18px 0,calc(100% - 18px) 0,100% 18px,100% calc(100% - 18px),calc(100% - 18px) 100%,18px 100%,0 calc(100% - 18px),0 18px);
+    box-shadow:
+      inset 0 0 0 1px #060504,
+      inset 0 0 0 3px rgba(205,170,74,.14),
+      inset 0 0 0 4px rgba(0,0,0,.68),
+      inset 0 20px 48px rgba(0,0,0,.55);
+    filter:drop-shadow(0 3px 0 rgba(0,0,0,.7)) drop-shadow(0 22px 40px rgba(0,0,0,.55));
+  }
+  .panel--save{--w:880px}
+  .panel--sign{--w:860px}
+  .panel--pass{--w:820px}
+  .panel--wardrobe{--w:700px}
+  .panel--vault{--w:820px}
+  .panel--codex{--w:860px}
+
+  .panel__head{
+    position:relative;
+    display:flex;align-items:center;justify-content:center;gap:12px;
+    height:46px;padding:0 46px;
+    background:linear-gradient(180deg,#413a29 0%,#2a2519 56%,#1a160e 100%);
+    border-bottom:1px solid #050403;
+    box-shadow:inset 0 1px 0 rgba(255,240,190,.16),inset 0 -1px 0 rgba(180,150,80,.18);
+  }
+  .head-line{height:1px;width:52px;flex:none;background:linear-gradient(90deg,transparent,rgba(201,170,80,.7))}
+  .head-line--r{transform:scaleX(-1)}
+  .panel__title{
+    margin:0;flex:none;
+    font-size:16px;font-weight:700;letter-spacing:.3em;
+    color:#f4dfa6;
+    text-shadow:0 1px 0 #000,0 0 16px rgba(255,210,120,.35);
+  }
+  .panel__title--vault{color:#e0b6ff;text-shadow:0 1px 0 #000,0 0 16px rgba(190,120,255,.35)}
+  .panel__close{
+    position:absolute;right:13px;top:50%;width:26px;height:26px;margin-top:-13px;
+    padding:0;border:1px solid #7d6a34;cursor:pointer;
+    background:linear-gradient(180deg,#2f2a1c,#15120a);
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px #050403,inset 0 0 10px rgba(0,0,0,.6);
+    transition:border-color .18s,box-shadow .18s;
+  }
+  .panel__close i{
+    position:absolute;left:50%;top:50%;width:11px;height:1.5px;margin:-.75px 0 0 -5.5px;
+    background:#d3bd82;box-shadow:0 1px 0 #000;
+  }
+  .panel__close i:first-child{transform:rotate(45deg)}
+  .panel__close i:last-child{transform:rotate(-45deg)}
+  .panel__close:hover{border-color:#d3b361;box-shadow:inset 0 0 0 1px #050403,0 0 12px rgba(255,200,90,.3)}
+  .panel__close:hover i{background:#fff0c4}
+
+  .panel__body{padding:16px 20px 4px}
+  .panel__foot{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    margin:6px 20px 16px;padding-top:12px;
+    border-top:1px solid rgba(201,170,80,.2);
+    font-size:11.5px;letter-spacing:.04em;color:#958a70;
+  }
+  .panel__foot .foot-note b{color:#e6d3a2;font-weight:700}
+  .panel__foot .foot-stat{white-space:nowrap;color:#8f846a}
+  .panel__foot .foot-stat b{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:13px;color:#f0d38a;
+  }
+
+  /* ============================================================
+     格子 / 品质框
+     ============================================================ */
+  .slot{
+    position:relative;display:block;flex:none;
+    width:var(--slot,58px);height:var(--slot-h,var(--slot,58px));
+    padding:0;border:0;background:none;cursor:pointer;
+    filter:drop-shadow(0 2px 2px rgba(0,0,0,.65));
+    transition:filter .18s ease,transform .12s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .slot__art{
+    position:absolute;inset:0;display:grid;place-items:center;
+    border:3px solid transparent;
+    background:
+      radial-gradient(85% 72% at 50% 22%,var(--tint,rgba(255,210,120,.16)),transparent 68%) padding-box,
+      linear-gradient(180deg,#2d2920 0%,#1a1712 52%,#0b0a07 100%) padding-box,
+      var(--q,var(--q5)) border-box;
+    clip-path:var(--cut-md);
+    box-shadow:inset 0 0 0 1px #000,inset 0 4px 12px rgba(0,0,0,.72);
+    color:var(--qc,#e6cb84);
+    transition:filter .18s ease;
+  }
+  .slot__art .glyph{
+    width:50%;height:50%;
+    filter:drop-shadow(0 1px 2px rgba(0,0,0,.85));
+  }
+  .slot__corners{
+    position:absolute;inset:4px;z-index:2;opacity:0;pointer-events:none;
+    transition:opacity .15s ease;
+    background:
+      linear-gradient(var(--qc,#ffe9a8),var(--qc,#ffe9a8)) left top/11px 2px no-repeat,
+      linear-gradient(var(--qc,#ffe9a8),var(--qc,#ffe9a8)) left top/2px 11px no-repeat,
+      linear-gradient(var(--qc,#ffe9a8),var(--qc,#ffe9a8)) right top/11px 2px no-repeat,
+      linear-gradient(var(--qc,#ffe9a8),var(--qc,#ffe9a8)) right top/2px 11px no-repeat,
+      linear-gradient(var(--qc,#ffe9a8),var(--qc,#ffe9a8)) left bottom/11px 2px no-repeat,
+      linear-gradient(var(--qc,#ffe9a8),var(--qc,#ffe9a8)) left bottom/2px 11px no-repeat,
+      linear-gradient(var(--qc,#ffe9a8),var(--qc,#ffe9a8)) right bottom/11px 2px no-repeat,
+      linear-gradient(var(--qc,#ffe9a8),var(--qc,#ffe9a8)) right bottom/2px 11px no-repeat;
+    filter:drop-shadow(0 0 5px rgba(255,210,120,.5));
+  }
+  .slot:hover{filter:drop-shadow(0 2px 2px rgba(0,0,0,.65)) drop-shadow(0 0 10px rgba(255,205,90,.35));transform:translateY(-1px)}
+  .slot:hover .slot__art{filter:brightness(1.12)}
+  .slot:hover .slot__corners{opacity:.95}
+  .slot:active{transform:translateY(1px)}
+  .slot:focus-visible{outline:2px solid #ffd76a;outline-offset:3px}
+
+  .slot.is-selected{
+    filter:drop-shadow(0 2px 2px rgba(0,0,0,.65)) drop-shadow(0 0 12px rgba(70,220,150,.45));
+  }
+  .slot.is-selected .slot__art{
+    box-shadow:inset 0 0 0 1px #000,inset 0 4px 12px rgba(0,0,0,.8),inset 0 0 22px rgba(70,235,160,.16);
+  }
+  .slot.is-selected .slot__corners,
+  .slot.is-equipped .slot__corners,
+  .slot.is-today .slot__corners{
+    opacity:1;
+    background:
+      linear-gradient(#9dffd2,#9dffd2) left top/11px 2px no-repeat,
+      linear-gradient(#9dffd2,#9dffd2) left top/2px 11px no-repeat,
+      linear-gradient(#9dffd2,#9dffd2) right top/11px 2px no-repeat,
+      linear-gradient(#9dffd2,#9dffd2) right top/2px 11px no-repeat,
+      linear-gradient(#9dffd2,#9dffd2) left bottom/11px 2px no-repeat,
+      linear-gradient(#9dffd2,#9dffd2) left bottom/2px 11px no-repeat,
+      linear-gradient(#9dffd2,#9dffd2) right bottom/11px 2px no-repeat,
+      linear-gradient(#9dffd2,#9dffd2) right bottom/2px 11px no-repeat;
+    filter:drop-shadow(0 0 6px rgba(90,255,180,.6));
+  }
+  .slot.is-selected .slot__art,.slot.is-equipped .slot__art,.slot.is-today .slot__art{color:#d9ffe9}
+  .slot.is-today{filter:drop-shadow(0 0 10px rgba(90,230,160,.35))}
+
+  .slot__count{
+    position:absolute;right:5px;bottom:3px;z-index:4;
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:10px;font-weight:700;line-height:1;letter-spacing:.02em;
+    color:#b9ad90;
+    text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.9);
+  }
+  .slot__count.is-full{color:#9fe3b0}
+
+  .slot__veil{
+    position:absolute;inset:3px;z-index:3;pointer-events:none;
+    display:grid;place-items:center;
+    background:radial-gradient(80% 70% at 50% 40%,rgba(4,5,4,.58),rgba(3,4,3,.84));
+    clip-path:var(--cut-sm);
+    color:rgba(235,225,200,.55);
+  }
+  .slot__veil .glyph{width:16px;height:16px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.85))}
+  .slot.is-locked{cursor:not-allowed}
+  .slot.is-locked:hover{transform:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.65))}
+  .slot.is-locked .slot__art{color:#736c5b}
+
+  /* 品质 → 边框 / 图标色 */
+  .slot[data-q="q1"],.cell[data-q="q1"]{--q:var(--q1);--tint:rgba(208,224,234,.14);--qc:#dfe8ee}
+  .slot[data-q="q2"],.cell[data-q="q2"]{--q:var(--q2);--tint:rgba(120,230,120,.14);--qc:#c9f6b8}
+  .slot[data-q="q3"],.cell[data-q="q3"]{--q:var(--q3);--tint:rgba(110,190,255,.16);--qc:#bfe3ff}
+  .slot[data-q="q4"],.cell[data-q="q4"]{--q:var(--q4);--tint:rgba(190,120,255,.16);--qc:#e4c6ff}
+  .slot[data-q="q5"],.cell[data-q="q5"]{--q:var(--q5);--tint:rgba(255,214,120,.18);--qc:#f3dc9c}
+
+  .cell{display:flex;flex-direction:column;align-items:center;width:var(--slot,58px)}
+  .cell__name{
+    margin-top:5px;width:100%;height:14px;
+    font-size:10.5px;line-height:14px;text-align:center;
+    color:#b4a78a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    text-shadow:0 1px 0 #000;
+  }
+  .grid--vault .cell__name{color:#d5b4f2}
+  .grid--codex .cell__name{color:#cfc1a2}
+  .cell__name.is-locked{color:#6d6758;text-shadow:none}
+  .grid--vault .cell__name.is-locked,
+  .grid--codex .cell__name.is-locked{color:#6d6758}
+  .cell__name.is-equipped{color:#a9f0c8}
+  .cell__name.is-equipped::before{
+    content:"";display:inline-block;width:5px;height:5px;margin-right:4px;
+    background:linear-gradient(135deg,#c9ffe2,#2f9c68);
+    transform:rotate(45deg) translateY(-1px);
+    box-shadow:0 0 6px rgba(90,230,160,.6);
+  }
+  .cell--card .cell__name{
+    height:28px;line-height:14px;font-size:10px;
+    white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+    overflow:hidden;
+  }
+
+  .grid{
+    display:grid;
+    gap:var(--gap-y,10px) var(--gap-x,8px);
+    grid-template-columns:repeat(var(--cols),var(--slot,58px));
+    align-content:start;
+  }
+  .grid--save{--cols:10;--slot:58px}
+  .grid--wardrobe{--cols:8;--slot:64px;--gap-x:10px;--gap-y:12px}
+  .grid--vault{--cols:10;--slot:60px}
+  .grid--codex{--cols:11;--slot:62px;--gap-x:8px;--gap-y:12px}
+
+  .grid--save .cell__name{font-size:9px}
+  .grid--vault .cell__name{font-size:9.5px}
+  .grid--wardrobe .cell__name{font-size:10px}
+
+  .card{--slot:62px;--slot-h:100px;border-radius:0}
+  .card .slot__art{border-width:3px}
+  .card .slot__art .glyph{width:46%;height:46%}
+
+  /* ============================================================
+     侧栏 / 页签 / 按钮
+     ============================================================ */
+  .save{display:flex;gap:16px;align-items:flex-start}
+  .save__side{width:116px;flex:none;display:flex;flex-direction:column;gap:6px}
+  .save__hint{font-size:9px;letter-spacing:.08em;color:#7fe3b8;padding-left:2px;margin-bottom:2px}
+  .side{
+    position:relative;display:flex;align-items:center;justify-content:space-between;gap:8px;
+    width:100%;height:34px;padding:0 10px;
+    text-align:left;font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.06em;
+    color:#bdb093;cursor:pointer;
+    background:linear-gradient(180deg,#322c20,#1a1710);
+    border:1px solid #574e35;
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px #080705,inset 0 1px 0 rgba(255,240,190,.08);
+    transition:color .18s,background .18s,border-color .18s;
+  }
+  .side:hover{color:#e8d8ac;border-color:#8b7634}
+  .side.is-on{
+    color:#ffe9a8;border-color:#a8852f;
+    background:linear-gradient(180deg,#4a3d1c,#241c0a);
+    box-shadow:inset 0 0 0 1px #0a0806,inset 0 0 16px rgba(255,200,90,.16),0 0 12px rgba(255,200,90,.1);
+  }
+  .side.is-on::before{
+    content:"";position:absolute;left:0;top:50%;width:3px;height:12px;margin-top:-6px;
+    background:linear-gradient(#ffe8a6,#9a7a28);
+    box-shadow:0 0 8px rgba(255,210,120,.6);
+  }
+  .save__main{flex:1;min-width:0}
+  /* 子分类: 平面文字页签 + 金色下划线, 与主分类的立体青铜按钮区分开 */
+  .subtabs{
+    display:flex;align-items:flex-end;gap:2px;margin-bottom:12px;
+    border-bottom:1px solid rgba(201,170,80,.2);
+  }
+  .subtab{
+    position:relative;height:31px;padding:0 16px;cursor:pointer;
+    font-family:inherit;font-size:11.5px;font-weight:700;letter-spacing:.1em;
+    color:#93876c;background:none;border:0;border-radius:0;
+    transition:color .18s,background .18s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .subtab:hover{color:#e5d3a4;background:linear-gradient(180deg,rgba(255,220,130,.07),transparent)}
+  .subtab.is-on{color:#ffe9a8;text-shadow:0 0 12px rgba(255,200,90,.35)}
+  .subtab.is-on::after{
+    content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:2px;
+    background:linear-gradient(90deg,transparent,#e7c56e,transparent);
+    box-shadow:0 0 10px rgba(255,200,90,.5);
+  }
+  .subtab.is-on::before{
+    content:"";position:absolute;left:50%;bottom:-5px;width:5px;height:5px;margin-left:-2.5px;
+    background:linear-gradient(135deg,#ffe8a6,#a1832c);
+    transform:rotate(45deg);
+    box-shadow:0 0 0 1px #000,0 0 8px rgba(255,210,120,.55);
+  }
+  .scroll{
+    position:relative;width:12px;flex:none;align-self:stretch;
+    background:linear-gradient(90deg,#0b0a07,#1d1a12 45%,#090806);
+    border:1px solid #5b5038;
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px #050403,inset 0 0 10px rgba(0,0,0,.8);
+  }
+  .scroll__knob{
+    position:absolute;left:-3px;right:-3px;top:8%;
+    background:var(--metal);
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px rgba(255,247,208,.5),inset 0 0 0 2px rgba(0,0,0,.82);
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,.65));
+  }
+
+  .typeRow{display:flex;gap:6px;margin-bottom:14px}
+  .typebtn{
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    height:32px;padding:0 12px;cursor:pointer;
+    font-family:inherit;font-size:11.5px;font-weight:700;letter-spacing:.06em;
+    color:#b9ac8e;
+    background:linear-gradient(180deg,#2c271c,#17140e);
+    border:1px solid #514830;
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px #080705;
+    transition:color .18s,border-color .18s,background .18s;
+  }
+  .typebtn .glyph{width:14px;height:14px;color:#c9b47a}
+  .typebtn:hover{color:#e5d3a4;border-color:#8b7634}
+  .typebtn.is-on{
+    color:#ffe9a8;border-color:#a8852f;
+    background:linear-gradient(180deg,#46391a,#221a08);
+    box-shadow:inset 0 0 0 1px #0a0806,0 0 12px rgba(255,200,90,.18);
+  }
+  .typebtn.is-on .glyph{color:#ffe0a0}
+
+  .tierRow{display:flex;gap:8px;margin-bottom:14px}
+  .tier{
+    width:86px;height:32px;cursor:pointer;
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:13px;font-weight:700;letter-spacing:.12em;
+    color:var(--tc,#c7cfd6);
+    background:linear-gradient(180deg,#2c271c,#17140e);
+    border:1px solid #514830;
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px #080705;
+    transition:color .18s,border-color .18s,box-shadow .18s,background .18s;
+  }
+  .tier--n{--tc:#c7cfd6;--tg:rgba(200,212,222,.35)}
+  .tier--r{--tc:#8fe07a;--tg:rgba(120,230,110,.35)}
+  .tier--sr{--tc:#7cc4ff;--tg:rgba(110,190,255,.35)}
+  .tier--ssr{--tc:#d09bff;--tg:rgba(190,120,255,.35)}
+  .tier--ur{--tc:#f5d47a;--tg:rgba(255,210,120,.4)}
+  .tier:hover{border-color:#8b7634;color:#fff3cf}
+  .tier.is-on{
+    color:#fff3cf;border-color:var(--tc);
+    background:linear-gradient(180deg,#3a3016,#1c1709);
+    box-shadow:inset 0 0 0 1px #0a0806,inset 0 0 16px var(--tg),0 0 14px var(--tg);
+  }
+  .typeRow .glyph,.tierRow .glyph{pointer-events:none}
+
+  .tabRow{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px}
+  .tabs2{display:flex;gap:6px}
+  .tab{
+    height:32px;padding:0 18px;cursor:pointer;
+    font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.1em;
+    color:#b9ac8e;
+    background:linear-gradient(180deg,#2c271c,#17140e);
+    border:1px solid #514830;
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px #080705;
+    transition:color .18s,border-color .18s,background .18s;
+  }
+  .tab.is-on{
+    color:#ffe9a8;border-color:#a8852f;
+    background:linear-gradient(180deg,#46391a,#221a08);
+    box-shadow:inset 0 0 0 1px #0a0806,0 0 12px rgba(255,200,90,.18);
+  }
+
+  .btn{
+    position:relative;isolation:isolate;
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:126px;height:40px;padding:0 22px;
+    border:0;background:transparent;cursor:pointer;
+    font-family:inherit;font-size:13px;font-weight:700;letter-spacing:.12em;
+    color:#f6ead0;text-shadow:0 1px 0 #000,0 2px 8px rgba(0,0,0,.75);
+    filter:drop-shadow(0 2px 0 rgba(0,0,0,.7)) drop-shadow(0 6px 14px rgba(0,0,0,.4));
+    transition:filter .2s ease,transform .1s ease,color .2s ease;
+  }
+  .btn::before{
+    content:"";position:absolute;inset:0;z-index:-2;
+    background:var(--metal);
+    clip-path:var(--cut-md);
+    box-shadow:inset 0 0 0 1px rgba(255,247,208,.62),inset 0 0 0 2px rgba(0,0,0,.88),inset 0 0 0 3px rgba(24,19,8,.9);
+  }
+  .btn::after{
+    content:"";position:absolute;inset:4px;z-index:-1;
+    background:
+      radial-gradient(120% 160% at 50% 0%,rgba(255,235,180,.1),transparent 55%),
+      var(--plate);
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px #050403,inset 0 3px 7px rgba(0,0,0,.8),inset 0 -2px 0 rgba(255,228,160,.1);
+  }
+  .btn span{position:relative;z-index:1}
+  .btn:hover{color:#fff8e2;filter:drop-shadow(0 2px 0 rgba(0,0,0,.7)) drop-shadow(0 0 16px rgba(255,196,72,.42))}
+  .btn:hover::before{filter:brightness(1.12) saturate(1.08)}
+  .btn:active{transform:translateY(2px)}
+  .btn:disabled{cursor:not-allowed;color:#8d8677;filter:drop-shadow(0 2px 0 rgba(0,0,0,.55))}
+  .btn:disabled::before{background:linear-gradient(160deg,#4e4b42 0%,#75705f 22%,#413e36 55%,#5a564a 78%,#37342c 100%)}
+  .btn:disabled::after{background:linear-gradient(180deg,#2a2822,#1b1915);box-shadow:inset 0 0 0 1px #050403,inset 0 3px 7px rgba(0,0,0,.7)}
+  .btn--sm{min-width:104px;height:34px;padding:0 16px;font-size:12px;letter-spacing:.1em}
+  .btn--ghost{
+    min-width:96px;height:32px;padding:0 14px;
+    font-size:11.5px;letter-spacing:.1em;color:#bcd9c8;
+    background:linear-gradient(180deg,rgba(20,26,22,.5),rgba(7,10,8,.7));
+    border:1px solid #6f5c26;
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.8);
+    filter:none;
+  }
+  .btn--ghost::before,.btn--ghost::after{display:none}
+  .btn--ghost:hover{color:#eafff4;border-color:#b5e3c4;box-shadow:inset 0 0 0 1px rgba(0,0,0,.8),0 0 12px rgba(80,230,160,.28)}
+  .btn--ghost:active{transform:translateY(1px)}
+
+  /* ============================================================
+     02 签到 · 皮肤轮播
+     ============================================================ */
+  .sign2__top{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:10px}
+  .sign2__round{font-size:11px;letter-spacing:.12em;color:#a99d81}
+  .sign2__round b{color:#ffe9a8;font-weight:700;letter-spacing:.16em}
+  .sign2__sum{font-size:10.5px;color:#8d8165;white-space:nowrap}
+  .sign2__sum b{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:13px;color:#f0d38a;
+  }
+
+  .sign2__stage{display:flex;align-items:center;gap:10px}
+  .sign2__arrow{
+    flex:none;width:34px;height:120px;padding:0;cursor:pointer;
+    display:grid;place-items:center;
+    font-family:inherit;font-size:20px;line-height:1;color:#c3ae76;
+    background:linear-gradient(180deg,#2b261a,#151209);
+    border:1px solid #574e35;
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px #080705;
+    transition:color .18s,border-color .18s,box-shadow .18s,transform .1s;
+  }
+  .sign2__arrow:hover{color:#ffe9a8;border-color:#c9a63f;box-shadow:inset 0 0 0 1px #080705,0 0 12px rgba(255,200,90,.28)}
+  .sign2__arrow:active{transform:translateY(1px)}
+
+  .skin-show{
+    position:relative;flex:1;min-width:0;height:248px;overflow:hidden;
+    border:1px solid rgba(201,170,80,.38);
+    background:
+      var(--noise) repeat 0 0/160px 160px,
+      radial-gradient(62% 78% at 74% 46%,var(--sc-soft,rgba(201,166,63,.18)),transparent 66%),
+      linear-gradient(120deg,#1b1912 0%,#12100b 46%,#090806 100%);
+    background-blend-mode:overlay,normal,normal;
+    clip-path:var(--cut-md);
+    box-shadow:inset 0 0 0 1px #050403,inset 0 0 40px rgba(0,0,0,.6);
+  }
+  .skin-show[data-q="q2"]{--sc:var(--q2);--sc-text:#c9f6b8;--sc-soft:rgba(120,230,120,.18)}
+  .skin-show[data-q="q3"]{--sc:var(--q3);--sc-text:#bfe3ff;--sc-soft:rgba(110,190,255,.18)}
+  .skin-show[data-q="q4"]{--sc:var(--q4);--sc-text:#e4c6ff;--sc-soft:rgba(190,120,255,.2)}
+  .skin-show[data-q="q5"]{--sc:var(--q5);--sc-text:#f3dc9c;--sc-soft:rgba(255,210,120,.2)}
+
+  .skin-show__info{position:relative;z-index:2;width:55%;padding:26px 0 24px 26px}
+  .skin-show__kicker{display:inline-flex;align-items:center;gap:8px;font-size:9.5px;letter-spacing:.18em;color:#93866b}
+  .skin-show__kicker::before{content:"";width:18px;height:1px;background:rgba(201,170,80,.6)}
+  .skin-show__name{
+    display:block;margin-top:10px;
+    font-size:27px;font-weight:700;letter-spacing:.14em;
+    color:var(--sc-text,#ffe9a8);
+    text-shadow:0 2px 0 #000,0 0 22px var(--sc-soft,rgba(201,166,63,.2));
+  }
+  .skin-show__desc{
+    display:block;margin-top:8px;max-width:330px;
+    font-size:11px;line-height:1.8;letter-spacing:.02em;color:#a2967a;
+  }
+  .skin-show__state{
+    display:inline-flex;align-items:center;gap:6px;
+    margin-top:14px;padding:4px 12px;
+    font-size:10px;letter-spacing:.14em;
+    color:var(--sc-text,#ffe9a8);
+    background:rgba(0,0,0,.35);
+    border:1px solid currentColor;
+    opacity:.9;
+  }
+  .skin-show__state.is-done{color:#9fe3b0}
+  .skin-show__state.is-locked{color:#8d8165}
+  .skin-show__days{display:flex;align-items:center;gap:8px;margin-top:15px}
+  .skin-day{
+    width:7px;height:7px;
+    background:rgba(255,240,190,.13);
+    transform:rotate(45deg);
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.65);
+  }
+  .skin-day.is-on{
+    background:linear-gradient(135deg,#ffe8a6,#a1832c);
+    box-shadow:0 0 8px rgba(255,210,120,.5);
+  }
+  .skin-day.is-today{
+    background:linear-gradient(135deg,#c9ffe2,#2f9c68);
+    box-shadow:0 0 10px rgba(90,230,160,.75);
+    animation:pulseDot 1.6s ease-in-out infinite;
+  }
+  @keyframes pulseDot{
+    0%,100%{opacity:1;box-shadow:0 0 10px rgba(90,230,160,.75)}
+    50%{opacity:.45;box-shadow:0 0 3px rgba(90,230,160,.3)}
+  }
+
+  .skin-show__art{
+    position:absolute;right:30px;top:0;bottom:0;width:43%;
+    display:grid;place-items:center;pointer-events:none;
+  }
+  .skin-show__frame{
+    position:relative;display:grid;place-items:center;
+    width:172px;height:172px;
+    border:2px solid transparent;
+    background:
+      linear-gradient(180deg,rgba(34,30,22,.85),rgba(8,7,6,.92)) padding-box,
+      var(--sc,var(--q5)) border-box;
+    clip-path:polygon(24px 0,calc(100% - 24px) 0,100% 24px,100% calc(100% - 24px),calc(100% - 24px) 100%,24px 100%,0 calc(100% - 24px),0 24px);
+    box-shadow:inset 0 0 30px rgba(0,0,0,.85),0 0 34px var(--sc-soft,rgba(201,166,63,.2));
+  }
+  .skin-show__frame::after{
+    content:"";position:absolute;inset:8px;pointer-events:none;
+    border:1px solid rgba(255,255,255,.08);
+    clip-path:polygon(18px 0,calc(100% - 18px) 0,100% 18px,100% calc(100% - 18px),calc(100% - 18px) 100%,18px 100%,0 calc(100% - 18px),0 18px);
+  }
+  .skin-show__frame .glyph{
+    width:80px;height:80px;color:var(--sc-text,#ffe9a8);
+    filter:drop-shadow(0 0 18px var(--sc-soft,rgba(201,166,63,.25))) drop-shadow(0 3px 4px rgba(0,0,0,.9));
+  }
+  .skin-show__watermark{
+    position:absolute;right:22px;top:50%;
+    writing-mode:vertical-rl;transform:translateY(-50%);
+    font-family:"SimHei",sans-serif;font-size:44px;line-height:1;
+    letter-spacing:.3em;color:rgba(255,240,190,.05);
+    pointer-events:none;user-select:none;
+  }
+
+  .skin-dots{display:flex;justify-content:center;gap:9px;margin:10px 0 2px}
+  .skin-dot{
+    width:7px;height:7px;padding:0;border:0;cursor:pointer;
+    background:rgba(255,240,190,.16);
+    transform:rotate(45deg);
+    transition:background .2s,box-shadow .2s;
+  }
+  .skin-dot.is-on{
+    background:linear-gradient(135deg,#ffe8a6,#a1832c);
+    box-shadow:0 0 9px rgba(255,210,120,.65);
+  }
+
+  .milestone{
+    margin-top:10px;padding:11px 16px 13px;
+    background:rgba(0,0,0,.22);
+    border:1px solid rgba(201,170,80,.2);
+    clip-path:var(--cut-sm);
+  }
+  .milestone__cap{
+    display:flex;align-items:center;gap:10px;
+    font-size:9.5px;letter-spacing:.18em;color:#8d8165;
+  }
+  .milestone__cap i{
+    flex:1;height:1px;
+    background:linear-gradient(90deg,rgba(201,170,80,.35),transparent);
+  }
+  .milestone__cap b{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:10px;letter-spacing:.04em;color:#d8c79a;
+  }
+  .milestone__track{
+    position:relative;
+    display:flex;align-items:flex-start;justify-content:space-between;
+    margin-top:12px;padding:0 4px;
+  }
+  .milestone__line{
+    position:absolute;left:14px;right:14px;top:22px;height:2px;
+    background:linear-gradient(90deg,rgba(255,200,90,.5),rgba(255,200,90,.14));
+    box-shadow:0 0 8px rgba(255,200,90,.2);
+  }
+  .ms-group{
+    position:relative;z-index:1;
+    display:flex;align-items:flex-start;gap:4px;
+  }
+  .ms-tick{
+    width:7px;height:7px;margin-top:19px;padding:0;border:0;cursor:pointer;
+    background:rgba(255,240,190,.13);
+    transform:rotate(45deg);
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.6);
+    transition:background .2s,box-shadow .2s;
+  }
+  .ms-tick.is-on{
+    background:linear-gradient(135deg,#ffe8a6,#a1832c);
+    box-shadow:0 0 7px rgba(255,210,120,.45);
+  }
+  .ms-tick.is-today{
+    background:linear-gradient(135deg,#c9ffe2,#2f9c68);
+    box-shadow:0 0 9px rgba(90,230,160,.7);
+    animation:pulseDot 1.6s ease-in-out infinite;
+  }
+  .ms-tick:hover{filter:brightness(1.45)}
+  .ms-node{
+    position:relative;z-index:1;
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    padding:0;background:none;border:0;cursor:pointer;
+    font-family:inherit;
+  }
+  .ms-node__icon{
+    position:relative;display:grid;place-items:center;
+    width:46px;height:46px;
+    border:2px solid transparent;
+    background:
+      linear-gradient(180deg,#201d15,#0a0906) padding-box,
+      var(--mq,var(--q5)) border-box;
+    clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px);
+    color:var(--mtext,#f3dc9c);
+    box-shadow:inset 0 0 12px rgba(0,0,0,.75);
+    transition:filter .2s,box-shadow .2s,transform .18s;
+  }
+  .ms-node__icon .glyph{width:20px;height:20px}
+  .ms-node b{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:8.5px;font-weight:700;letter-spacing:.02em;color:#8d8165;
+  }
+  .ms-node__tag{
+    position:absolute;top:-9px;left:50%;transform:translateX(-50%);
+    padding:1px 6px;font-style:normal;
+    font-size:8.5px;letter-spacing:.1em;color:#201806;
+    background:linear-gradient(90deg,#f2d884,#b08a2c);
+    box-shadow:0 0 8px rgba(255,210,120,.5);
+    white-space:nowrap;
+  }
+  .ms-node.is-done .ms-node__icon{filter:drop-shadow(0 0 9px rgba(90,230,160,.25))}
+  .ms-node.is-done b{color:#b8ae92}
+  .ms-node.is-current .ms-node__icon{
+    box-shadow:inset 0 0 12px rgba(0,0,0,.75),0 0 18px rgba(255,200,90,.45);
+  }
+  .ms-node.is-current b{color:#ffe9a8}
+  .ms-node.is-locked .ms-node__icon{filter:grayscale(.65) brightness(.55)}
+  .ms-node.is-locked b{color:#6d6758}
+  .ms-node:hover .ms-node__icon{transform:translateY(-2px);filter:brightness(1.12)}
+  .milestone__ends{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-top:7px;padding:0 6px;
+    font-size:8.5px;letter-spacing:.1em;color:#6f6858;
+  }
+
+  .sign-slider{display:flex;align-items:center;gap:12px;margin-top:12px;padding:0 2px}
+  .sign-slider__cap{font-size:9.5px;letter-spacing:.12em;color:#8d8165;white-space:nowrap}
+  .sign-slider__track{
+    position:relative;flex:1;height:10px;cursor:pointer;
+    background:linear-gradient(180deg,#0b0a07,#1d1a12 45%,#090806);
+    border:1px solid #5b5038;
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px #050403,inset 0 0 10px rgba(0,0,0,.8);
+  }
+  .sign-slider__knob{
+    position:absolute;top:-4px;bottom:-4px;width:76px;
+    background:var(--metal);
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px rgba(255,247,208,.5),inset 0 0 0 2px rgba(0,0,0,.82);
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,.65));
+    cursor:grab;
+    transition:left .18s ease;
+  }
+  .sign-slider__knob:active{cursor:grabbing;transition:none}
+
+  /* ============================================================
+     03 通行证
+     ============================================================ */
+  .pass__top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .pass__badge{
+    display:grid;place-items:center;flex:none;
+    width:34px;height:34px;
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;font-size:13px;font-weight:700;color:#ffe9a8;
+    background:linear-gradient(180deg,#3d3216,#1a1508);
+    border:1px solid #a8852f;
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px #080705,inset 0 0 14px rgba(255,200,90,.14);
+  }
+  .bar{
+    position:relative;flex:1;height:24px;
+    background:linear-gradient(180deg,#0a0b08,#16140e);
+    border:1px solid #a8852f;
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px #050403,inset 0 4px 10px rgba(0,0,0,.85);
+  }
+  .bar__fill{
+    position:absolute;left:3px;top:3px;bottom:3px;
+    background:linear-gradient(180deg,#a7f7cc,#3dbd85 45%,#177a52);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -2px 6px rgba(0,0,0,.35),0 0 14px rgba(80,230,160,.3);
+    clip-path:var(--cut-xs,var(--cut-sm));
+  }
+  .bar__txt{
+    position:absolute;inset:0;display:grid;place-items:center;
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:11px;font-weight:700;letter-spacing:.1em;color:#fff6d4;
+    text-shadow:0 1px 2px #000,0 0 8px rgba(0,0,0,.9);
+  }
+  .pass__lv{flex:none;font-size:10px;letter-spacing:.08em;color:#8d8165}
+  .pass__lv b{font-family:Consolas,"Cascadia Mono","Courier New",monospace;color:#f0d38a;font-size:14px}
+  .pass__main{display:flex;gap:16px;align-items:flex-start}
+  .pass__center{flex:1;min-width:0;display:flex;flex-direction:column}
+  .pass__gridrow{display:flex;gap:16px;align-items:flex-start}
+  .pass__tracks{display:flex;flex-direction:column;gap:8px;width:54px;flex:none;padding-top:0}
+  .track{
+    height:46px;display:grid;place-items:center;
+    font-size:11px;font-weight:700;letter-spacing:.04em;
+    color:#c8b98f;
+    background:linear-gradient(180deg,#2c271c,#17140e);
+    border:1px solid #514830;
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px #080705;
+  }
+  .track--adv{color:#e0b6ff;border-color:#6f4f8a;background:linear-gradient(180deg,#2e2433,#17101c)}
+  .pass__cols{display:flex;flex:1;justify-content:space-between;gap:8px}
+  .pass__col{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .pass__cols .slot{--slot:46px}
+  .pass__lv--col{font-family:Consolas,"Cascadia Mono","Courier New",monospace;font-size:10px;letter-spacing:.06em;color:#94886c}
+  .tasks{width:246px;flex:none;margin-left:auto;padding-left:16px;border-left:1px solid rgba(201,170,80,.22)}
+  .tasks__head{
+    display:flex;align-items:center;justify-content:center;gap:9px;
+    font-size:12px;font-weight:700;letter-spacing:.18em;color:#e7d3a0;margin-bottom:8px;
+  }
+  .task{padding:6px 0 7px;border-bottom:1px dashed rgba(201,170,80,.14)}
+  .task:last-child{border-bottom:0}
+  .task__top{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:11px;color:#b0a488}
+  .task__val{font-family:Consolas,"Cascadia Mono","Courier New",monospace;font-size:11px;color:#d8c79a;white-space:nowrap}
+  .task__val.is-done{color:#9fe3b0}
+  .task__bar{height:3px;margin-top:5px;background:rgba(0,0,0,.55);box-shadow:inset 0 0 0 1px #1a1812}
+  .task__fill{display:block;height:100%;background:linear-gradient(90deg,#6a4d17,#d8bd6b);box-shadow:0 0 6px rgba(255,210,120,.3)}
+  .task__fill.is-done{background:linear-gradient(90deg,#1f6a4a,#7fe3b8);box-shadow:0 0 6px rgba(90,230,160,.3)}
+  .hscroll{
+    position:relative;height:10px;margin-top:10px;margin-left:70px;
+    background:linear-gradient(180deg,#0b0a07,#1d1a12 45%,#090806);
+    border:1px solid #5b5038;
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px #050403,inset 0 0 10px rgba(0,0,0,.8);
+  }
+  .hscroll__knob{
+    position:absolute;top:-3px;bottom:-3px;left:4%;
+    width:72px;
+    background:var(--metal);
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px rgba(255,247,208,.5),inset 0 0 0 2px rgba(0,0,0,.82);
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,.65));
+  }
+  .pass__foot-gap{height:2px}
+
+  /* ============================================================
+     05 宝库
+     ============================================================ */
+  .vault{display:flex;gap:14px;align-items:flex-start}
+  .vault__side{flex:1;min-width:0}
+  .accent{color:#9fe3b0;font-weight:700}
+
+  /* ============================================================
+     07 英雄三选一 · 命运牌面
+     ============================================================ */
+  .panel--hero,.panel--relic{--w:960px}
+
+  .draft__intro{position:relative;padding:20px 20px 2px;text-align:center}
+  .draft__kicker{
+    display:inline-flex;align-items:center;gap:10px;
+    font-size:10px;letter-spacing:.26em;color:#94886c;
+  }
+  .draft__kicker::before,.draft__kicker::after{
+    content:"";width:30px;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(201,170,80,.6));
+  }
+  .draft__kicker::after{transform:scaleX(-1)}
+  .draft__title{
+    margin:10px 0 0;font-size:21px;font-weight:700;letter-spacing:.26em;
+    color:#f4dfa6;
+    text-shadow:0 1px 0 #000,0 0 18px rgba(255,210,120,.3);
+  }
+  .draft__sub{
+    margin:8px auto 0;max-width:640px;
+    font-size:11.5px;line-height:1.9;letter-spacing:.04em;color:#9c9075;
+  }
+  .draft__sub b{color:#e8d3a0;font-weight:700}
+
+  .hero-row{
+    position:relative;
+    display:flex;justify-content:center;align-items:flex-end;gap:22px;
+    padding:28px 16px 12px;
+  }
+  .hero-row::before{
+    content:"";position:absolute;left:50%;bottom:10px;
+    width:min(660px,92%);height:1px;transform:translateX(-50%);
+    background:linear-gradient(90deg,transparent,rgba(201,170,80,.35),transparent);
+  }
+  .hero-card{
+    --hc:#c9a63f;
+    --hc-soft:rgba(201,166,63,.2);
+    --hc-text:#ffe9a8;
+    position:relative;width:262px;flex:none;padding:0;
+    font-family:inherit;text-align:left;color:inherit;cursor:pointer;
+    border:1px solid var(--hc);
+    background:linear-gradient(180deg,#1e1b14 0%,#12110c 55%,#080705 100%);
+    clip-path:polygon(16px 0,calc(100% - 16px) 0,100% 16px,100% calc(100% - 16px),calc(100% - 16px) 100%,16px 100%,0 calc(100% - 16px),0 16px);
+    filter:drop-shadow(0 8px 16px rgba(0,0,0,.55));
+    transition:transform .22s ease,filter .22s ease,border-color .22s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .hero-card--blade{--hc:#6fbf7e;--hc-soft:rgba(111,191,126,.2);--hc-text:#c9f6b8}
+  .hero-card--arcane{--hc:#a879d8;--hc-soft:rgba(168,121,216,.22);--hc-text:#e4c6ff}
+  .hero-card:hover{
+    transform:translateY(-6px);
+    filter:drop-shadow(0 14px 26px rgba(0,0,0,.55)) drop-shadow(0 0 20px var(--hc-soft));
+  }
+  .hero-card:focus-visible{outline:2px solid #ffd76a;outline-offset:4px}
+  .hero-card__caption{
+    display:block;margin-top:12px;
+    font-size:9.5px;letter-spacing:.2em;color:#8d8165;
+  }
+  .hero-card__skills{display:flex;gap:7px;margin-top:8px}
+  .hero-skill{
+    flex:1;min-width:0;
+    display:flex;flex-direction:column;align-items:center;gap:5px;
+    padding:8px 4px 7px;
+    background:rgba(0,0,0,.26);
+    border:1px solid rgba(201,170,80,.18);
+  }
+  .hero-skill__icon{
+    display:grid;place-items:center;
+    width:34px;height:34px;
+    border:1px solid transparent;
+    background:
+      radial-gradient(70% 70% at 50% 28%,var(--hc-soft),transparent 70%) padding-box,
+      linear-gradient(180deg,#26221a,#0b0a07) padding-box,
+      var(--hc) border-box;
+    color:var(--hc-text);
+  }
+  .hero-skill__icon .glyph{width:17px;height:17px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8))}
+  .hero-skill__name{
+    font-size:9px;line-height:1.3;letter-spacing:.02em;color:#a99d82;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
+    text-align:center;
+  }
+  .hero-card.is-picked{
+    border-color:#8fe0b0;
+    filter:drop-shadow(0 10px 22px rgba(0,0,0,.55)) drop-shadow(0 0 24px rgba(90,230,160,.4));
+  }
+  .hero-card__key{
+    position:absolute;left:12px;top:11px;z-index:3;
+    display:grid;place-items:center;width:18px;height:18px;
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:10px;color:#c6b68c;
+    background:rgba(0,0,0,.5);
+    border:1px solid rgba(201,170,80,.35);
+    clip-path:var(--cut-sm);
+  }
+  .hero-card__art{
+    position:relative;height:152px;margin:8px 8px 0;
+    display:grid;place-items:center;overflow:hidden;
+    background:
+      radial-gradient(75% 80% at 50% 34%,var(--hc-soft),transparent 72%),
+      linear-gradient(180deg,#232016,#0a0906);
+    box-shadow:inset 0 0 26px rgba(0,0,0,.78),inset 0 0 0 1px rgba(255,255,255,.05);
+  }
+  .hero-card__art::after{
+    content:"";position:absolute;left:0;right:0;bottom:0;height:48px;
+    background:linear-gradient(180deg,transparent,rgba(7,7,6,.88));
+  }
+  .hero-card__watermark{
+    position:absolute;right:14px;top:14px;
+    writing-mode:vertical-rl;
+    font-family:"SimHei",sans-serif;font-size:27px;line-height:1;
+    letter-spacing:.22em;color:rgba(255,240,190,.07);
+    pointer-events:none;user-select:none;
+  }
+  .hero-card__art .glyph{
+    position:relative;z-index:1;
+    width:62px;height:62px;color:var(--hc-text);
+    filter:drop-shadow(0 0 16px var(--hc-soft)) drop-shadow(0 2px 3px rgba(0,0,0,.85));
+  }
+  .hero-card__role{
+    position:absolute;left:10px;bottom:10px;z-index:2;
+    padding:3px 9px;
+    font-size:9.5px;letter-spacing:.16em;color:var(--hc-text);
+    background:rgba(0,0,0,.55);
+    border:1px solid rgba(255,255,255,.08);
+  }
+  .hero-card__body{position:relative;z-index:1;display:block;padding:13px 16px 16px}
+  .hero-card__name{
+    display:block;font-size:19px;font-weight:700;letter-spacing:.16em;
+    color:var(--hc-text);
+    text-shadow:0 1px 0 #000,0 0 14px var(--hc-soft);
+  }
+  .hero-card__line{
+    display:block;height:1px;margin:10px 0;
+    background:linear-gradient(90deg,var(--hc),rgba(255,255,255,.06) 60%,transparent);
+  }
+  .hero-card__desc{
+    display:block;min-height:42px;
+    font-size:11px;line-height:1.85;letter-spacing:.02em;color:#a99d82;
+  }
+  .hero-card__stats{display:flex;gap:8px;margin-top:12px}
+  .hero-card__stat{
+    flex:1;padding:6px 8px;
+    background:rgba(0,0,0,.3);
+    border:1px solid rgba(201,170,80,.16);
+  }
+  .hero-card__stat b{
+    display:block;
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:13px;line-height:1.2;color:var(--hc-text);
+  }
+  .hero-card__stat span{display:block;margin-top:2px;font-size:9.5px;letter-spacing:.06em;color:#8d8165}
+  .hero-card__pick{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    height:32px;margin-top:12px;
+    font-size:10.5px;font-weight:700;letter-spacing:.2em;color:#9a8e72;
+    border:1px solid rgba(201,170,80,.28);
+    background:rgba(255,235,170,.03);
+    transition:color .2s,border-color .2s,box-shadow .2s,background .2s;
+  }
+  .hero-card:hover .hero-card__pick{
+    color:#fff0c4;border-color:var(--hc);
+    background:linear-gradient(180deg,rgba(255,220,130,.14),rgba(255,200,90,.04));
+    box-shadow:0 0 14px var(--hc-soft);
+  }
+  .hero-card.is-picked .hero-card__pick{
+    color:#c9ffe2;border-color:#5cb98a;
+    background:linear-gradient(180deg,rgba(70,220,150,.14),rgba(20,90,60,.06));
+  }
+  .hero-card.is-picked .hero-card__pick::after{content:"✓";font-size:12px;color:#9fe3b0}
+
+  .draft__foot{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    margin:0 20px 16px;padding-top:13px;
+    border-top:1px solid rgba(201,170,80,.18);
+    font-size:11.5px;letter-spacing:.04em;color:#948a70;
+  }
+  .draft__foot b{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:13px;color:#f0d38a;
+  }
+
+  /* ============================================================
+     08 宝物三选一 · 遗物祭坛
+     ============================================================ */
+  .relic-row{
+    position:relative;
+    display:flex;justify-content:center;align-items:stretch;gap:22px;
+    padding:22px 16px 8px;
+  }
+  .relic-card{
+    position:relative;width:262px;flex:none;padding:0;
+    font-family:inherit;text-align:left;color:inherit;cursor:pointer;
+    border:2px solid transparent;
+    background:linear-gradient(180deg,#1d1a14,#0a0906) padding-box,var(--rq,var(--q5)) border-box;
+    clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px),0 14px);
+    filter:drop-shadow(0 8px 18px rgba(0,0,0,.55));
+    transition:transform .22s ease,filter .22s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .relic-card[data-q="q3"]{--rq:var(--q3);--rq-text:#bfe3ff;--rq-soft:rgba(110,190,255,.22)}
+  .relic-card[data-q="q4"]{--rq:var(--q4);--rq-text:#e4c6ff;--rq-soft:rgba(190,120,255,.22)}
+  .relic-card[data-q="q5"]{--rq:var(--q5);--rq-text:#f3dc9c;--rq-soft:rgba(255,210,120,.22)}
+  .relic-card:hover{
+    transform:translateY(-6px);
+    filter:drop-shadow(0 14px 26px rgba(0,0,0,.55)) drop-shadow(0 0 20px var(--rq-soft));
+  }
+  .relic-card:focus-visible{outline:2px solid #ffd76a;outline-offset:4px}
+  .relic-card.is-picked{
+    border-color:#8fe0b0;
+    filter:drop-shadow(0 10px 22px rgba(0,0,0,.55)) drop-shadow(0 0 24px rgba(90,230,160,.4));
+  }
+  .relic-card__head{
+    display:flex;flex-direction:column;align-items:center;
+    padding:20px 16px 14px;
+    background:radial-gradient(65% 55% at 50% 12%,var(--rq-soft),transparent 70%);
+  }
+  .relic-card__seal{
+    display:grid;place-items:center;
+    width:76px;height:76px;margin-bottom:12px;
+    border:2px solid transparent;
+    background:linear-gradient(180deg,#242016,#0a0906) padding-box,var(--rq) border-box;
+    clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px);
+    box-shadow:inset 0 0 18px rgba(0,0,0,.85);
+  }
+  .relic-card__seal .glyph{
+    width:38px;height:38px;color:var(--rq-text);
+    filter:drop-shadow(0 0 12px var(--rq-soft)) drop-shadow(0 2px 3px rgba(0,0,0,.85));
+  }
+  .relic-card__grade{
+    padding:3px 10px;margin-bottom:9px;
+    font-size:9.5px;letter-spacing:.18em;color:var(--rq-text);
+    background:rgba(0,0,0,.32);
+    border:1px solid rgba(255,255,255,.1);
+  }
+  .relic-card__name{
+    font-size:18px;font-weight:700;letter-spacing:.14em;color:var(--rq-text);
+    text-shadow:0 1px 0 #000,0 0 14px var(--rq-soft);
+  }
+  .relic-card__type{margin-top:5px;font-size:10px;letter-spacing:.2em;color:#8f836a}
+  .relic-card__rule{
+    display:block;height:1px;margin:0 18px;opacity:.55;
+    background:linear-gradient(90deg,transparent,var(--rq),transparent);
+  }
+  .relic-card__effects{display:block;padding:10px 18px 4px}
+  .relic-effect{
+    display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+    padding:7px 0;
+    font-size:11px;color:#a99d82;
+    border-bottom:1px dashed rgba(201,170,80,.14);
+  }
+  .relic-effect:last-child{border-bottom:0}
+  .relic-effect b{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:12.5px;color:var(--rq-text);
+    font-variant-numeric:tabular-nums;
+  }
+  .relic-card__flavor{
+    display:block;margin:4px 18px 0;padding-top:10px;
+    font-size:10.5px;line-height:1.85;color:#7f7561;font-style:italic;
+    border-top:1px solid rgba(255,255,255,.05);
+  }
+  .relic-card__base{display:block;margin-top:14px;padding:0 14px 14px}
+  .relic-card__pick{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    height:34px;
+    font-size:10.5px;font-weight:700;letter-spacing:.2em;color:#9a8e72;
+    border:1px solid rgba(201,170,80,.28);
+    background:rgba(255,235,170,.03);
+    transition:color .2s,border-color .2s,box-shadow .2s,background .2s;
+  }
+  .relic-card:hover .relic-card__pick{
+    color:#fff0c4;border-color:var(--rq);
+    background:linear-gradient(180deg,rgba(255,220,130,.12),rgba(255,200,90,.03));
+    box-shadow:0 0 14px var(--rq-soft);
+  }
+  .relic-card.is-picked .relic-card__pick{
+    color:#c9ffe2;border-color:#5cb98a;
+    background:linear-gradient(180deg,rgba(70,220,150,.14),rgba(20,90,60,.06));
+  }
+  .relic-card.is-picked .relic-card__pick::after{content:"✓";font-size:12px;color:#9fe3b0}
+
+  .relic__actions{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    margin:6px 20px 16px;padding-top:13px;
+    border-top:1px solid rgba(201,170,80,.18);
+  }
+  .relic__actions .foot-note{font-size:11.5px;color:#948a70}
+  .relic__actions .foot-note b{color:#f0d38a;font-family:Consolas,"Cascadia Mono","Courier New",monospace}
+  .relic__btns{display:flex;gap:10px}
+
+  /* ============================================================
+     09 已获取 · 收藏账簿
+     ============================================================ */
+  .panel--acq{--w:760px}
+  .acq{display:flex;gap:16px;align-items:flex-start}
+  .acq__side{width:128px;flex:none;display:flex;flex-direction:column;gap:6px}
+  .acq__side .side__count{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:10px;font-weight:700;color:#8b7f63;
+  }
+  .acq__side .side.is-on .side__count{color:#e2c98a}
+  .acq__note{
+    margin-top:6px;padding-top:10px;
+    font-size:9.5px;line-height:1.8;letter-spacing:.08em;color:#7f7460;
+    border-top:1px dashed rgba(201,170,80,.18);
+  }
+  .acq__main{flex:1;min-width:0}
+  .acq__top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+  .acq__stat{font-size:10.5px;letter-spacing:.04em;color:#8f846a;white-space:nowrap}
+  .acq__stat b{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:13px;color:#f0d38a;
+  }
+  .grid--acq{--cols:8;--slot:60px;--gap-x:6px;--gap-y:10px}
+  .grid--acq .cell__name{font-size:9.5px}
+
+  /* ============================================================
+     10 卡片合成
+     ============================================================ */
+  .panel--synth{--w:765px}
+  .panel__back{position:absolute;left:13px;top:50%;margin-top:-17px}
+
+  .synth{display:flex;gap:14px;align-items:flex-start}
+  .synth__left{flex:1;min-width:0}
+  .synth__cap{
+    display:flex;align-items:center;gap:10px;margin-bottom:8px;
+    font-size:9.5px;letter-spacing:.16em;color:#8d8165;white-space:nowrap;
+  }
+  .synth__cap b{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:10px;font-weight:700;letter-spacing:.04em;color:#cfc1a2;
+  }
+  .synth__cap i{flex:1;height:1px;background:linear-gradient(90deg,rgba(201,170,80,.38),transparent)}
+  .synth__cap span:last-child{letter-spacing:.06em;color:#7f7460}
+
+  /* 与图鉴卡片同比例(62×100 竖卡); 3 × 5 可视, 超出裁掉(游戏内由滚动条接管) */
+  .grid--synth{--cols:5;--slot:62px;--gap-x:8px;--gap-y:12px;max-height:423px;overflow:hidden}
+  .grid--synth .cell__name{font-size:10px;color:#cfc1a2}
+
+  .synth__right{width:340px;flex:none;display:flex;flex-direction:column;gap:10px}
+  .synth__rows{display:flex;flex-direction:column;gap:8px}
+  .synth-row{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    padding:4px 8px;
+    background:linear-gradient(180deg,rgba(28,25,18,.55),rgba(9,8,6,.55));
+    border:1px solid rgba(201,170,80,.14);
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.55);
+    clip-path:var(--cut-sm);
+  }
+  .synth-row.is-empty{background:linear-gradient(180deg,rgba(18,16,12,.35),rgba(7,6,5,.35))}
+  .synth-row .slot{--slot:40px;--slot-h:64px}
+  .synth-row__arrow{
+    flex:none;width:22px;text-align:center;
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:13px;color:#a8852f;text-shadow:0 1px 0 #000;
+  }
+  .synth-row__out{position:relative}
+
+  .slot--empty{cursor:default;filter:none}
+  .slot--empty .slot__art{
+    border:1px dashed rgba(201,170,80,.22)!important;
+    background:linear-gradient(180deg,#191712,#0b0a07) padding-box!important;
+    box-shadow:inset 0 0 0 1px #050403,inset 0 4px 12px rgba(0,0,0,.7)!important;
+    color:rgba(201,170,80,.32);
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:15px;line-height:1;
+  }
+  .slot--out .slot__art{box-shadow:inset 0 0 0 1px #000,inset 0 4px 12px rgba(0,0,0,.72),inset 0 0 22px rgba(255,200,90,.14)}
+
+  .synth__hint{
+    font-size:9.5px;line-height:1.7;letter-spacing:.04em;color:#7f7460;
+  }
+
+  /* ============================================================
+     悬浮提示
+     ============================================================ */
+  .tip{
+    position:fixed;left:0;top:0;z-index:90;
+    min-width:186px;max-width:270px;padding:10px 12px 11px;
+    transform:translate(-50%,-100%);
+    background:linear-gradient(180deg,rgba(24,22,16,.98),rgba(6,6,5,.98));
+    border:1px solid #b08c3a;
+    clip-path:var(--cut-md);
+    box-shadow:inset 0 0 0 1px #000,inset 0 0 0 3px rgba(180,145,70,.16),0 10px 24px rgba(0,0,0,.6);
+    opacity:0;pointer-events:none;transition:opacity .12s ease;
+  }
+  .tip.is-on{opacity:1}
+  .tip__name{font-size:12.5px;font-weight:700;letter-spacing:.04em;color:#ffe9a8;text-shadow:0 1px 0 #000}
+  .tip__grade{
+    margin-top:3px;font-size:10px;letter-spacing:.1em;color:#a8956a;
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+  }
+  .tip[data-q="q1"] .tip__grade{color:#dfe8ee}
+  .tip[data-q="q2"] .tip__grade{color:#a9e78f}
+  .tip[data-q="q3"] .tip__grade{color:#8ecbff}
+  .tip[data-q="q4"] .tip__grade{color:#d8b1f5}
+  .tip[data-q="q5"] .tip__grade{color:#f0d38a}
+  .tip__lines{margin-top:7px;padding-top:7px;border-top:1px dashed rgba(201,170,80,.22)}
+  .tip__lines span{display:block;font-size:11px;line-height:1.7;color:#b3a889}
+  .tip__lines span:first-child{color:#cfc1a0}
+
+  /* ============================================================
+     品质图例 / 页脚
+     ============================================================ */
+  .legend{
+    margin-top:50px;padding:18px 20px;
+    background:rgba(0,0,0,.24);
+    border:1px solid rgba(201,170,80,.18);
+    box-shadow:inset 0 0 0 1px #080705;
+  }
+  .legend__head{font-size:11px;letter-spacing:.24em;color:#8f8570;margin-bottom:14px}
+  .legend__row{display:flex;flex-wrap:wrap;gap:10px}
+  .legend__item{
+    display:flex;align-items:center;gap:10px;
+    padding:8px 14px 8px 8px;
+    background:linear-gradient(180deg,rgba(30,27,20,.7),rgba(14,13,10,.7));
+    border:1px solid #3f382a;
+  }
+  .legend__chip{
+    width:24px;height:24px;flex:none;
+    border:2px solid transparent;
+    clip-path:var(--cut-sm);
+    background:linear-gradient(180deg,#221e16,#0a0906) padding-box,var(--q) border-box;
+  }
+  .legend__text b{display:block;font-size:11.5px;letter-spacing:.06em;color:#d8caa4}
+  .legend__text span{display:block;font-size:10px;letter-spacing:.08em;color:#8d8165;margin-top:1px}
+
+  .foot{
+    margin-top:42px;padding-top:24px;
+    display:flex;justify-content:center;gap:12px;flex-wrap:wrap;
+    border-top:1px solid rgba(201,170,80,.16);
+    font-size:11.5px;letter-spacing:.06em;color:#8b8068;text-align:center;
+  }
+
+  @media (max-width:980px){
+    .pass__main{flex-wrap:wrap}
+    .tasks{width:100%;margin-left:0;padding-left:0;border-left:0;border-top:1px solid rgba(201,170,80,.22);padding-top:12px}
+    .stage{padding:26px 18px}
+  }
+  @media (max-width:760px){
+    .shell{padding:42px 16px 60px}
+    .nav{margin:26px -16px 0;padding:9px 16px}
+    .save{flex-wrap:wrap}
+    .save__side{width:100%;flex-direction:row;flex-wrap:wrap}
+    .save__side .side{width:auto;padding:0 14px}
+    .save__hint{width:100%}
+    .scroll{display:none}
+    .grid--save{--cols:8}
+    .typeRow,.tierRow,.tabs2{flex-wrap:wrap}
+    .grid--codex{--cols:8}
+    .vault .scroll{display:none}
+    .stage__mark{font-size:64px}
+    .hero-row,.relic-row{flex-wrap:wrap;align-items:stretch}
+    .hero-card,.relic-card{width:100%;max-width:340px}
+    .relic__actions,.draft__foot{flex-wrap:wrap}
+    .acq{flex-wrap:wrap}
+    .acq__side{width:100%;flex-direction:row;flex-wrap:wrap}
+    .acq__side .side{width:auto;padding:0 12px}
+    .acq .scroll{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{
+      animation-duration:.01ms !important;
+      animation-iteration-count:1 !important;
+      transition-duration:.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ 图标集合（内联 SVG，无外部图片） ============ -->
+<svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <symbol id="i-sword" viewBox="0 0 24 24">
+    <path d="M19 3l2 2-11 11-2-2z"/><path d="M6 13l5 5"/><path d="M7 17l-4 4"/><circle cx="3.5" cy="20.5" r="1"/>
+  </symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24">
+    <path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5z"/><path d="M12 6v11"/>
+  </symbol>
+  <symbol id="i-gem" viewBox="0 0 24 24">
+    <path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20"/><path d="M8 9l4 12 4-12"/><path d="M6 3l2 6M18 3l-2 6"/>
+  </symbol>
+  <symbol id="i-orb" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="8"/><path d="M5 10c3-2 11-2 14 0"/><path d="M5 14c3 2 11 2 14 0"/>
+  </symbol>
+  <symbol id="i-book" viewBox="0 0 24 24">
+    <path d="M4 4c3-1 5 0 8 2 3-2 5-3 8-2v14c-3-1-5 0-8 2-3-2-5-3-8-2z"/><path d="M12 6v14"/>
+  </symbol>
+  <symbol id="i-potion" viewBox="0 0 24 24">
+    <path d="M9 3h6"/><path d="M10 3v6L5 18a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3l-5-9V3"/><path d="M7 14h10"/>
+  </symbol>
+  <symbol id="i-helm" viewBox="0 0 24 24">
+    <path d="M5 12a7 7 0 0 1 14 0v7h-3v-4H8v4H5z"/><path d="M12 5V2M8 9h8"/>
+  </symbol>
+  <symbol id="i-wing" viewBox="0 0 24 24">
+    <path d="M20 4c-8 0-14 4-16 12 6-2 10-6 12-12-2 6-6 9-10 10"/><path d="M20 4l-8 12"/>
+  </symbol>
+  <symbol id="i-scroll" viewBox="0 0 24 24">
+    <path d="M7 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6"/>
+    <path d="M6 4a2 2 0 0 0 0 4h9"/><path d="M6 20a2 2 0 0 1 0-4h9"/>
+  </symbol>
+  <symbol id="i-skull" viewBox="0 0 24 24">
+    <path d="M12 3a7 7 0 0 0-7 7v4l2 1v3h10v-3l2-1v-4a7 7 0 0 0-7-7z"/>
+    <circle cx="9" cy="11" r="1.4"/><circle cx="15" cy="11" r="1.4"/><path d="M10 16v2M14 16v2"/>
+  </symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24">
+    <path d="M12 2c2 4 5 5 5 9a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-6 1-8z"/>
+  </symbol>
+  <symbol id="i-boot" viewBox="0 0 24 24">
+    <path d="M8 3h5v8l6 3v5H5v-5l3-2z"/><path d="M8 16h6"/>
+  </symbol>
+  <symbol id="i-staff" viewBox="0 0 24 24">
+    <path d="M6 21L17 5"/><circle cx="18" cy="4" r="2.5"/>
+  </symbol>
+  <symbol id="i-bow" viewBox="0 0 24 24">
+    <path d="M5 3c8 4 8 14 0 18z" fill="none"/><path d="M5 3v18M5 12h15"/><path d="M16 9l4 3-4 3"/>
+  </symbol>
+  <symbol id="i-coin" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.5 10h5M9.5 14h5"/>
+  </symbol>
+  <symbol id="i-star" viewBox="0 0 24 24">
+    <path d="M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6L3.4 9.4l6-.8z"/>
+  </symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24">
+    <rect x="5" y="10" width="14" height="10" rx="1"/><path d="M8 10V8a4 4 0 0 1 8 0v2"/><circle cx="12" cy="15" r="1.4"/>
+  </symbol>
+  <symbol id="i-gift" viewBox="0 0 24 24">
+    <rect x="4" y="10" width="16" height="10"/><path d="M12 10v10M3 6h18v4H3z"/>
+    <path d="M12 6c-1-4-6-3-6 0M12 6c1-4 6-3 6 0"/>
+  </symbol>
+  <symbol id="i-ticket" viewBox="0 0 24 24">
+    <path d="M3 7h18v4a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z"/><path d="M8 7v10M16 7v10"/>
+  </symbol>
+  <symbol id="i-chest" viewBox="0 0 24 24">
+    <path d="M3 10h18v10H3z"/><path d="M3 10l2-5h14l2 5"/><path d="M12 10v10"/><path d="M10 13h4v3h-4z"/>
+  </symbol>
+  <symbol id="i-card" viewBox="0 0 24 24">
+    <rect x="4" y="3" width="16" height="18" rx="1"/><path d="M8 8h8M8 12h8M8 16h5"/>
+  </symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24">
+    <path d="M8 4h8v6a4 4 0 0 1-8 0z"/><path d="M8 6H5v2a3 3 0 0 0 3 3M16 6h3v2a3 3 0 0 1-3 3"/>
+    <path d="M12 14v4M8 21h8M9 18h6"/>
+  </symbol>
+  <symbol id="i-horn" viewBox="0 0 24 24">
+    <path d="M5 18c2-8 8-12 15-13-3 6-7 9-12 10z"/><path d="M5 18l-2 3"/>
+  </symbol>
+  <symbol id="i-ring" viewBox="0 0 24 24">
+    <circle cx="12" cy="13" r="7"/><path d="M9 5h6l2 3-5 5-5-5z"/>
+  </symbol>
+  <symbol id="i-check" viewBox="0 0 24 24">
+    <path d="M4 12l5 5L20 6"/>
+  </symbol>
+</svg>
+
+<div class="shell">
+
+  <header class="hero">
+    <div class="hero__eyebrow"><span class="diamond"></span>XLIK JADE · PANEL DESIGN</div>
+    <h1>魔兽风格 · 功能面板</h1>
+    <p class="hero__lead">
+      沿用按钮边框的<b>黑铁外沿、青铜主体、内凹铭板</b>三段式语言，<br>
+      为九个功能界面建立同一套窗口骨架与格子体系。
+    </p>
+    <ul class="hero__meta">
+      <li>青铜重框</li>
+      <li>45° 切角</li>
+      <li>品质色阶</li>
+      <li>悬停 / 选中态</li>
+    </ul>
+  </header>
+
+  <nav class="nav" aria-label="面板导航">
+    <a href="#save" class="is-active"><span>01</span>存档</a>
+    <a href="#sign"><span>02</span>签到</a>
+    <a href="#pass"><span>03</span>通行证</a>
+    <a href="#wardrobe"><span>04</span>衣柜</a>
+    <a href="#vault"><span>05</span>宝库</a>
+    <a href="#codex"><span>06</span>图鉴</a>
+    <a href="#hero"><span>07</span>英雄</a>
+    <a href="#relic"><span>08</span>宝物</a>
+    <a href="#acquired"><span>09</span>已获取</a>
+    <a href="#synth"><span>10</span>卡片合成</a>
+  </nav>
+
+  <!-- ==================== 01 存档 ==================== -->
+  <section class="sec" id="save">
+    <div class="sec__head">
+      <span class="sec__idx">01</span><h2>存档</h2>
+      <span class="sec__en">ARCHIVE</span><span class="sec__rule"></span>
+    </div>
+    <div class="stage">
+      <span class="stage__mark">存</span>
+      <div class="panel panel--save">
+        <div class="panel__head">
+          <span class="head-line"></span><span class="diamond"></span>
+          <h3 class="panel__title">存档</h3>
+          <span class="diamond"></span><span class="head-line head-line--r"></span>
+          <button class="panel__close" type="button" aria-label="关闭"><i></i><i></i></button>
+        </div>
+        <div class="panel__body">
+          <div class="save">
+            <aside class="save__side">
+              <span class="save__hint">[ 滚轮滑动 ]</span>
+              <button class="side is-on" type="button">通关奖励</button>
+              <button class="side" type="button">装备图鉴</button>
+              <button class="side" type="button">技能图鉴</button>
+              <button class="side" type="button">地图等级</button>
+              <button class="side" type="button">挑战成就</button>
+              <button class="side" type="button">收集进度</button>
+              <button class="side" type="button">隐藏关卡</button>
+              <button class="side" type="button">传说事迹</button>
+              <button class="side" type="button">赛季档案</button>
+            </aside>
+            <div class="save__main">
+              <div class="subtabs">
+                <button class="subtab is-on" type="button">全部</button>
+                <button class="subtab" type="button">普通</button>
+                <button class="subtab" type="button">精英</button>
+                <button class="subtab" type="button">首领</button>
+                <button class="subtab" type="button">隐藏</button>
+                <button class="subtab" type="button">特殊</button>
+              </div>
+              <div class="grid grid--save" id="saveGrid"></div>
+            </div>
+            <div class="scroll"><span class="scroll__knob" style="height:32%"></span></div>
+          </div>
+        </div>
+        <div class="panel__foot">
+          <span class="foot-note">滚轮滑动查看 · 悬停格子查看收录详情</span>
+          <span class="foot-stat">已收录 <b>128</b> / 200</span>
+        </div>
+      </div>
+      <span class="stage__tag">UI SCALE · 1920 × 1080</span>
+    </div>
+    <ul class="chips">
+      <li>左侧主分类 · 滚轮滑动</li>
+      <li>子分类 ≤ 6 格</li>
+      <li>10 × 5 虚拟网格</li>
+      <li>未收录 · 暗色蒙版</li>
+    </ul>
+  </section>
+
+  <!-- ==================== 02 签到 ==================== -->
+  <section class="sec" id="sign">
+    <div class="sec__head">
+      <span class="sec__idx">02</span><h2>签到</h2>
+      <span class="sec__en">DAILY SIGN-IN</span><span class="sec__rule"></span>
+    </div>
+    <div class="stage">
+      <span class="stage__mark">签</span>
+      <div class="panel panel--sign">
+        <div class="panel__head">
+          <span class="head-line"></span><span class="diamond"></span>
+          <h3 class="panel__title">签到</h3>
+          <span class="diamond"></span><span class="head-line head-line--r"></span>
+          <button class="panel__close" type="button" aria-label="关闭"><i></i><i></i></button>
+        </div>
+        <div class="panel__body">
+          <div class="sign2__top">
+            <span class="sign2__round">当前 <b id="skinRound">第 4 轮</b> · <span id="skinDay">今日是第 7 天</span></span>
+            <span class="sign2__sum">已签到 <b>27</b> / 42 天</span>
+          </div>
+          <div class="sign2__stage">
+            <button class="sign2__arrow" type="button" id="skinPrev" aria-label="上一轮">‹</button>
+            <div class="skin-show" id="skinShow" data-q="q4">
+              <span class="skin-show__watermark" id="skinMark">星界</span>
+              <div class="skin-show__info">
+                <span class="skin-show__kicker" id="skinKicker">ROUND 04 · 累计 28 天解锁</span>
+                <span class="skin-show__name" id="skinName">星界旅者</span>
+                <span class="skin-show__desc" id="skinDesc">披星而行的旅人，脚步所至皆有微光。</span>
+                <span class="skin-show__state" id="skinState">今日签到解锁</span>
+                <span class="skin-show__days" id="skinDays"></span>
+              </div>
+              <div class="skin-show__art">
+                <div class="skin-show__frame">
+                  <svg class="glyph" id="skinIcon" aria-hidden="true"><use href="#i-star"/></svg>
+                </div>
+              </div>
+            </div>
+            <button class="sign2__arrow" type="button" id="skinNext" aria-label="下一轮">›</button>
+          </div>
+          <div class="skin-dots" id="skinDots"></div>
+          <div class="milestone">
+            <div class="milestone__cap">
+              <span>签到里程碑 · 每 7 天一款皮肤</span>
+              <i></i>
+              <b>27 / 42 天</b>
+            </div>
+            <div class="milestone__track" id="msTrack"></div>
+            <div class="milestone__ends"><span>第 1 天</span><span>第 42 天</span></div>
+          </div>
+          <div class="sign-slider">
+            <span class="sign-slider__cap">滑动查看</span>
+            <div class="sign-slider__track" id="signTrack">
+              <span class="sign-slider__knob" id="signKnob"></span>
+            </div>
+            <span class="sign-slider__cap">6 轮</span>
+          </div>
+        </div>
+        <div class="panel__foot">
+          <span class="foot-note">今日未签到 · 签到即可解锁「<b id="footSkin">星界旅者</b>」</span>
+          <button class="btn btn--sm" type="button"><span>签到 · F4</span></button>
+        </div>
+      </div>
+      <span class="stage__tag">6 SKINS · 6 ROUNDS</span>
+    </div>
+    <ul class="chips">
+      <li>皮肤轮播 · 左右切换</li>
+      <li>42 天逐日里程碑</li>
+      <li>滑动条选择轮次</li>
+      <li>签到按钮 · 今日解锁</li>
+    </ul>
+  </section>
+
+  <!-- ==================== 03 通行证 ==================== -->
+  <section class="sec" id="pass">
+    <div class="sec__head">
+      <span class="sec__idx">03</span><h2>通行证</h2>
+      <span class="sec__en">BATTLE PASS</span><span class="sec__rule"></span>
+    </div>
+    <div class="stage">
+      <span class="stage__mark">证</span>
+      <div class="panel panel--pass">
+        <div class="panel__head">
+          <span class="head-line"></span><span class="diamond"></span>
+          <h3 class="panel__title">S1 通行证</h3>
+          <span class="diamond"></span><span class="head-line head-line--r"></span>
+          <button class="panel__close" type="button" aria-label="关闭"><i></i><i></i></button>
+        </div>
+        <div class="panel__body">
+          <div class="pass__top">
+            <span class="pass__badge">S1</span>
+            <div class="bar">
+              <i class="bar__fill" style="width:84%"></i>
+              <span class="bar__txt">等级 12 · 168 / 200</span>
+            </div>
+            <span class="pass__lv">Lv<b>12</b></span>
+          </div>
+          <div class="pass__main">
+            <div class="pass__center">
+              <div class="pass__gridrow">
+                <div class="pass__tracks">
+                  <span class="track">普通版</span>
+                  <span class="track track--adv">进阶版</span>
+                </div>
+                <div class="pass__cols" id="passGrid"></div>
+              </div>
+              <div class="hscroll"><span class="hscroll__knob"></span></div>
+            </div>
+            <aside class="tasks">
+              <div class="tasks__head"><span class="diamond"></span>每日任务<span class="diamond"></span></div>
+              <div class="task">
+                <div class="task__top"><span>击杀 20 个敌人</span><span class="task__val">12 / 20</span></div>
+                <div class="task__bar"><i class="task__fill" style="width:60%"></i></div>
+              </div>
+              <div class="task">
+                <div class="task__top"><span>完成 3 次挑战</span><span class="task__val is-done">3 / 3 · 完成</span></div>
+                <div class="task__bar"><i class="task__fill is-done" style="width:100%"></i></div>
+              </div>
+              <div class="task">
+                <div class="task__top"><span>使用技能 30 次</span><span class="task__val is-done">30 / 30 · 完成</span></div>
+                <div class="task__bar"><i class="task__fill is-done" style="width:100%"></i></div>
+              </div>
+              <div class="task">
+                <div class="task__top"><span>收集 5 件装备</span><span class="task__val">4 / 5</span></div>
+                <div class="task__bar"><i class="task__fill" style="width:80%"></i></div>
+              </div>
+              <div class="task">
+                <div class="task__top"><span>存活 10 分钟</span><span class="task__val is-done">10 / 10 · 完成</span></div>
+                <div class="task__bar"><i class="task__fill is-done" style="width:100%"></i></div>
+              </div>
+              <div class="task">
+                <div class="task__top"><span>与队友并肩作战</span><span class="task__val">2 / 3</span></div>
+                <div class="task__bar"><i class="task__fill" style="width:66%"></i></div>
+              </div>
+            </aside>
+          </div>
+        </div>
+        <div class="panel__foot">
+          <span class="foot-note">普通版 已激活 <b>12</b>/30 · 进阶版 已激活 <b>4</b>/30</span>
+          <span class="foot-stat">滚轮 / 拖拽查看更多等级</span>
+        </div>
+      </div>
+      <span class="stage__tag">6 LEVELS PER SCREEN</span>
+    </div>
+    <ul class="chips">
+      <li>经验条 · 等级进度</li>
+      <li>普通 / 进阶双轨</li>
+      <li>横向滚动 6 级一屏</li>
+      <li>每日任务侧栏</li>
+    </ul>
+  </section>
+
+  <!-- ==================== 04 衣柜 ==================== -->
+  <section class="sec" id="wardrobe">
+    <div class="sec__head">
+      <span class="sec__idx">04</span><h2>衣柜</h2>
+      <span class="sec__en">WARDROBE</span><span class="sec__rule"></span>
+    </div>
+    <div class="stage">
+      <span class="stage__mark">衣</span>
+      <div class="panel panel--wardrobe">
+        <div class="panel__head">
+          <span class="head-line"></span><span class="diamond"></span>
+          <h3 class="panel__title">衣柜</h3>
+          <span class="diamond"></span><span class="head-line head-line--r"></span>
+          <button class="panel__close" type="button" aria-label="关闭"><i></i><i></i></button>
+        </div>
+        <div class="panel__body">
+          <div class="typeRow">
+            <button class="typebtn" type="button"><svg class="glyph"><use href="#i-orb"/></svg>光环</button>
+            <button class="typebtn" type="button"><svg class="glyph"><use href="#i-star"/></svg>称号</button>
+            <button class="typebtn is-on" type="button"><svg class="glyph"><use href="#i-sword"/></svg>武器</button>
+            <button class="typebtn" type="button"><svg class="glyph"><use href="#i-wing"/></svg>翅膀</button>
+            <button class="typebtn" type="button"><svg class="glyph"><use href="#i-flame"/></svg>周身</button>
+            <button class="typebtn" type="button"><svg class="glyph"><use href="#i-card"/></svg>皮肤</button>
+            <button class="typebtn" type="button"><svg class="glyph"><use href="#i-boot"/></svg>坐骑</button>
+          </div>
+          <div class="grid grid--wardrobe" id="wardrobeGrid"></div>
+        </div>
+        <div class="panel__foot">
+          <span class="foot-note">武器 · 已解锁 <b>11</b>/16 · 当前穿着：<b>灰烬使者</b></span>
+          <button class="btn btn--sm" type="button"><span>一键脱下</span></button>
+        </div>
+      </div>
+      <span class="stage__tag">8 × 2 CARDS</span>
+    </div>
+    <ul class="chips">
+      <li>7 类装扮页签</li>
+      <li>8 × 2 卡片网格</li>
+      <li>装备中 · 绿角标</li>
+      <li>一键脱下</li>
+    </ul>
+  </section>
+
+  <!-- ==================== 05 宝库 ==================== -->
+  <section class="sec" id="vault">
+    <div class="sec__head">
+      <span class="sec__idx">05</span><h2>宝库</h2>
+      <span class="sec__en">VAULT</span><span class="sec__rule"></span>
+    </div>
+    <div class="stage">
+      <span class="stage__mark">宝</span>
+      <div class="panel panel--vault">
+        <div class="panel__head">
+          <span class="head-line"></span><span class="diamond"></span>
+          <h3 class="panel__title panel__title--vault">宝库</h3>
+          <span class="diamond"></span><span class="head-line head-line--r"></span>
+          <button class="panel__close" type="button" aria-label="关闭"><i></i><i></i></button>
+        </div>
+        <div class="panel__body">
+          <div class="tierRow">
+            <button class="tier tier--n" type="button">N</button>
+            <button class="tier tier--r" type="button">R</button>
+            <button class="tier tier--sr" type="button">SR</button>
+            <button class="tier tier--ssr is-on" type="button">SSR</button>
+            <button class="tier tier--ur" type="button">UR</button>
+          </div>
+          <div class="vault">
+            <div class="vault__side">
+              <div class="grid grid--vault" id="vaultGrid"></div>
+            </div>
+            <div class="scroll"><span class="scroll__knob" style="height:30%"></span></div>
+          </div>
+        </div>
+        <div class="panel__foot">
+          <span class="foot-note">当前增幅 <b class="accent">+18%</b> · 宝库加成 <b class="accent">+6%</b></span>
+          <span class="foot-stat">已拥有 <b>31</b> / 60</span>
+        </div>
+      </div>
+      <span class="stage__tag">N · R · SR · SSR · UR</span>
+    </div>
+    <ul class="chips">
+      <li>N → UR 五档页签</li>
+      <li>10 × 4 可视网格</li>
+      <li>计数 n / 上限</li>
+      <li>增幅与加成结算</li>
+    </ul>
+  </section>
+
+  <!-- ==================== 06 图鉴 ==================== -->
+  <section class="sec" id="codex">
+    <div class="sec__head">
+      <span class="sec__idx">06</span><h2>图鉴</h2>
+      <span class="sec__en">CODEX</span><span class="sec__rule"></span>
+    </div>
+    <div class="stage">
+      <span class="stage__mark">鉴</span>
+      <div class="panel panel--codex">
+        <div class="panel__head">
+          <span class="head-line"></span><span class="diamond"></span>
+          <h3 class="panel__title">卡片图鉴</h3>
+          <span class="diamond"></span><span class="head-line head-line--r"></span>
+          <button class="panel__close" type="button" aria-label="关闭"><i></i><i></i></button>
+        </div>
+        <div class="panel__body">
+          <div class="tabRow">
+            <div class="tabs2">
+              <button class="tab is-on" type="button">卡片图鉴</button>
+              <button class="tab" type="button">羁绊图鉴</button>
+            </div>
+            <button class="btn btn--ghost" type="button"><span>卡片合成</span></button>
+          </div>
+          <div class="grid grid--codex" id="codexGrid"></div>
+        </div>
+        <div class="panel__foot">
+          <span class="foot-note">悬停卡片查看品质与参与羁绊 · 同一张卡只占一格</span>
+          <span class="foot-stat">收集进度 <b>84</b> / 132</span>
+        </div>
+      </div>
+      <span class="stage__tag">11 × 3 VERTICAL CARDS</span>
+    </div>
+    <ul class="chips">
+      <li>卡片 / 羁绊双页签</li>
+      <li>11 × 3 竖版卡</li>
+      <li>品质描边 + ×N</li>
+      <li>两行卡名</li>
+    </ul>
+  </section>
+
+  <!-- ==================== 07 英雄三选一 ==================== -->
+  <section class="sec" id="hero">
+    <div class="sec__head">
+      <span class="sec__idx">07</span><h2>英雄三选一</h2>
+      <span class="sec__en">HERO DRAFT</span><span class="sec__rule"></span>
+    </div>
+    <div class="stage">
+      <span class="stage__mark">雄</span>
+      <div class="panel panel--hero">
+        <div class="panel__head">
+          <span class="head-line"></span><span class="diamond"></span>
+          <h3 class="panel__title">英雄三选一</h3>
+          <span class="diamond"></span><span class="head-line head-line--r"></span>
+          <button class="panel__close" type="button" aria-label="关闭"><i></i><i></i></button>
+        </div>
+        <div class="panel__body">
+          <div class="draft__intro">
+            <span class="draft__kicker">AWAKENING · 第 3 次觉醒</span>
+            <h4 class="draft__title">选择你的化身</h4>
+            <p class="draft__sub">三张命运牌面只有一张能与你同行 · 点击卡片确认选择</p>
+          </div>
+          <div class="hero-row">
+            <button class="hero-card hero-card--blade" type="button">
+              <span class="hero-card__key">1</span>
+              <span class="hero-card__art">
+                <span class="hero-card__watermark">影刃</span>
+                <svg class="glyph" aria-hidden="true"><use href="#i-sword"/></svg>
+                <span class="hero-card__role">敏捷 · 刺客</span>
+              </span>
+              <span class="hero-card__body">
+                <span class="hero-card__name">影刃行者</span>
+                <span class="hero-card__line"></span>
+                <span class="hero-card__desc">每次暴击后获得一次瞬步；瞬步后的下一击必定暴击，并附加流血。</span>
+                <span class="hero-card__caption">技能组</span>
+                <span class="hero-card__skills">
+                  <span class="hero-skill"><span class="hero-skill__icon"><svg class="glyph" aria-hidden="true"><use href="#i-sword"/></svg></span><span class="hero-skill__name">疾影突袭</span></span>
+                  <span class="hero-skill"><span class="hero-skill__icon"><svg class="glyph" aria-hidden="true"><use href="#i-skull"/></svg></span><span class="hero-skill__name">影分身</span></span>
+                  <span class="hero-skill"><span class="hero-skill__icon"><svg class="glyph" aria-hidden="true"><use href="#i-boot"/></svg></span><span class="hero-skill__name">疾风步</span></span>
+                </span>
+                <span class="hero-card__stats">
+                  <span class="hero-card__stat"><b>+15%</b><span>暴击率</span></span>
+                  <span class="hero-card__stat"><b>+8%</b><span>移动速度</span></span>
+                </span>
+                <span class="hero-card__pick">选择此化身</span>
+              </span>
+            </button>
+            <button class="hero-card" type="button">
+              <span class="hero-card__key">2</span>
+              <span class="hero-card__art">
+                <span class="hero-card__watermark">山岭</span>
+                <svg class="glyph" aria-hidden="true"><use href="#i-shield"/></svg>
+                <span class="hero-card__role">力量 · 坦克</span>
+              </span>
+              <span class="hero-card__body">
+                <span class="hero-card__name">山岭之王</span>
+                <span class="hero-card__line"></span>
+                <span class="hero-card__desc">承受伤害时积攒怒气，怒气满值时释放山崩，击退周围敌人并回复生命。</span>
+                <span class="hero-card__caption">技能组</span>
+                <span class="hero-card__skills">
+                  <span class="hero-skill"><span class="hero-skill__icon"><svg class="glyph" aria-hidden="true"><use href="#i-gem"/></svg></span><span class="hero-skill__name">山崩</span></span>
+                  <span class="hero-skill"><span class="hero-skill__icon"><svg class="glyph" aria-hidden="true"><use href="#i-shield"/></svg></span><span class="hero-skill__name">大地壁垒</span></span>
+                  <span class="hero-skill"><span class="hero-skill__icon"><svg class="glyph" aria-hidden="true"><use href="#i-horn"/></svg></span><span class="hero-skill__name">战吼</span></span>
+                </span>
+                <span class="hero-card__stats">
+                  <span class="hero-card__stat"><b>+18%</b><span>护甲</span></span>
+                  <span class="hero-card__stat"><b>+12%</b><span>生命上限</span></span>
+                </span>
+                <span class="hero-card__pick">选择此化身</span>
+              </span>
+            </button>
+            <button class="hero-card hero-card--arcane" type="button">
+              <span class="hero-card__key">3</span>
+              <span class="hero-card__art">
+                <span class="hero-card__watermark">星界</span>
+                <svg class="glyph" aria-hidden="true"><use href="#i-orb"/></svg>
+                <span class="hero-card__role">智力 · 法师</span>
+              </span>
+              <span class="hero-card__body">
+                <span class="hero-card__name">星界织法者</span>
+                <span class="hero-card__line"></span>
+                <span class="hero-card__desc">法术命中叠加星辉，满 5 层后下一次技能造成额外范围伤害并冰冻目标。</span>
+                <span class="hero-card__caption">技能组</span>
+                <span class="hero-card__skills">
+                  <span class="hero-skill"><span class="hero-skill__icon"><svg class="glyph" aria-hidden="true"><use href="#i-star"/></svg></span><span class="hero-skill__name">星辉</span></span>
+                  <span class="hero-skill"><span class="hero-skill__icon"><svg class="glyph" aria-hidden="true"><use href="#i-orb"/></svg></span><span class="hero-skill__name">时空冻结</span></span>
+                  <span class="hero-skill"><span class="hero-skill__icon"><svg class="glyph" aria-hidden="true"><use href="#i-flame"/></svg></span><span class="hero-skill__name">陨星</span></span>
+                </span>
+                <span class="hero-card__stats">
+                  <span class="hero-card__stat"><b>+20%</b><span>法术强度</span></span>
+                  <span class="hero-card__stat"><b>-10%</b><span>冷却时间</span></span>
+                </span>
+                <span class="hero-card__pick">选择此化身</span>
+              </span>
+            </button>
+          </div>
+        </div>
+        <div class="draft__foot">
+          <span>点击卡片确认选择 · 本局仅可觉醒一次</span>
+          <span>剩余重置 <b>2</b> 次</span>
+        </div>
+      </div>
+      <span class="stage__tag">3 CARDS · ONE CHOICE</span>
+    </div>
+    <ul class="chips">
+      <li>三张等大牌面</li>
+      <li>技能组 · 三格预览</li>
+      <li>角色定位 / 属性</li>
+      <li>点击即确认 · 绿框选中</li>
+    </ul>
+  </section>
+
+  <!-- ==================== 08 宝物三选一 ==================== -->
+  <section class="sec" id="relic">
+    <div class="sec__head">
+      <span class="sec__idx">08</span><h2>宝物三选一</h2>
+      <span class="sec__en">RELIC OFFERING</span><span class="sec__rule"></span>
+    </div>
+    <div class="stage">
+      <span class="stage__mark">遗</span>
+      <div class="panel panel--relic">
+        <div class="panel__head">
+          <span class="head-line"></span><span class="diamond"></span>
+          <h3 class="panel__title">选择宝物</h3>
+          <span class="diamond"></span><span class="head-line head-line--r"></span>
+          <button class="panel__close" type="button" aria-label="关闭"><i></i><i></i></button>
+        </div>
+        <div class="panel__body">
+          <div class="draft__intro">
+            <span class="draft__kicker">RELIC OFFERING · 深渊献礼</span>
+            <h4 class="draft__title">选择一件遗物</h4>
+            <p class="draft__sub">三件遗物只能带走一件 · 点击立即生效，刷新可重新抽取</p>
+          </div>
+          <div class="relic-row">
+            <button class="relic-card" type="button" data-q="q5">
+              <span class="relic-card__head">
+                <span class="relic-card__seal"><svg class="glyph" aria-hidden="true"><use href="#i-gem"/></svg></span>
+                <span class="relic-card__grade">传说 · 遗物</span>
+                <span class="relic-card__name">血怒之牙</span>
+                <span class="relic-card__type">DEEP CROWN RELIC</span>
+              </span>
+              <span class="relic-card__rule"></span>
+              <span class="relic-card__effects">
+                <span class="relic-effect"><span>攻击力</span><b>+12%</b></span>
+                <span class="relic-effect"><span>暴击率</span><b>+8%</b></span>
+                <span class="relic-effect"><span>击杀回复</span><b>1% 生命</b></span>
+              </span>
+              <span class="relic-card__flavor">「从深渊领主的獠牙上剥落的猩红结晶，仍在低语。」</span>
+              <span class="relic-card__base"><span class="relic-card__pick">拾取遗物</span></span>
+            </button>
+            <button class="relic-card" type="button" data-q="q4">
+              <span class="relic-card__head">
+                <span class="relic-card__seal"><svg class="glyph" aria-hidden="true"><use href="#i-orb"/></svg></span>
+                <span class="relic-card__grade">史诗 · 遗物</span>
+                <span class="relic-card__name">星界棱镜</span>
+                <span class="relic-card__type">ASTRAL PRISM</span>
+              </span>
+              <span class="relic-card__rule"></span>
+              <span class="relic-card__effects">
+                <span class="relic-effect"><span>法术强度</span><b>+15%</b></span>
+                <span class="relic-effect"><span>冷却缩减</span><b>8%</b></span>
+                <span class="relic-effect"><span>星辉充能</span><b>每 10 秒 1 层</b></span>
+              </span>
+              <span class="relic-card__flavor">「折射星光的水晶，凝视过久会看见尚未发生的战斗。」</span>
+              <span class="relic-card__base"><span class="relic-card__pick">拾取遗物</span></span>
+            </button>
+            <button class="relic-card" type="button" data-q="q4">
+              <span class="relic-card__head">
+                <span class="relic-card__seal"><svg class="glyph" aria-hidden="true"><use href="#i-shield"/></svg></span>
+                <span class="relic-card__grade">史诗 · 遗物</span>
+                <span class="relic-card__name">不灭壁垒</span>
+                <span class="relic-card__type">UNDYING BULWARK</span>
+              </span>
+              <span class="relic-card__rule"></span>
+              <span class="relic-card__effects">
+                <span class="relic-effect"><span>护甲</span><b>+20%</b></span>
+                <span class="relic-effect"><span>暴击减伤</span><b>10%</b></span>
+                <span class="relic-effect"><span>濒死护盾</span><b>生命 &lt; 30% 触发</b></span>
+              </span>
+              <span class="relic-card__flavor">「远古守门人的残盾，仍记得它收到的最后一道命令。」</span>
+              <span class="relic-card__base"><span class="relic-card__pick">拾取遗物</span></span>
+            </button>
+          </div>
+        </div>
+        <div class="relic__actions">
+          <span class="foot-note">剩余刷新 <b>2</b> 次 · 放弃后本次献礼结束</span>
+          <div class="relic__btns">
+            <button class="btn btn--ghost btn--sm" type="button"><span>放弃</span></button>
+            <button class="btn btn--sm" type="button"><span>刷新 · 剩余 2</span></button>
+          </div>
+        </div>
+      </div>
+      <span class="stage__tag">3 RELICS · PICK ONE</span>
+    </div>
+    <ul class="chips">
+      <li>遗物三择其一</li>
+      <li>品质熔边 · 传说 / 史诗</li>
+      <li>效果逐条列出</li>
+      <li>刷新 / 放弃</li>
+    </ul>
+  </section>
+
+  <!-- ==================== 09 已获取 ==================== -->
+  <section class="sec" id="acquired">
+    <div class="sec__head">
+      <span class="sec__idx">09</span><h2>已获取</h2>
+      <span class="sec__en">ACQUIRED</span><span class="sec__rule"></span>
+    </div>
+    <div class="stage">
+      <span class="stage__mark">获</span>
+      <div class="panel panel--acq">
+        <div class="panel__head">
+          <span class="head-line"></span><span class="diamond"></span>
+          <h3 class="panel__title">已获取</h3>
+          <span class="diamond"></span><span class="head-line head-line--r"></span>
+          <button class="panel__close" type="button" aria-label="关闭"><i></i><i></i></button>
+        </div>
+        <div class="panel__body">
+          <div class="acq">
+            <aside class="acq__side">
+              <span class="save__hint">[ 3 个分类 ]</span>
+              <button class="side is-on" type="button">天赋<span class="side__count">34</span></button>
+              <button class="side" type="button">宝物<span class="side__count">14</span></button>
+              <button class="side" type="button">商品<span class="side__count">10</span></button>
+              <span class="acq__note">本局有效<br>每局重新获取</span>
+            </aside>
+            <div class="acq__main">
+              <div class="acq__top">
+                <div class="subtabs">
+                  <button class="subtab" type="button">已获取</button>
+                  <button class="subtab is-on" type="button">全部</button>
+                </div>
+                <span class="acq__stat">天赋 已获取 <b>34</b> / 40</span>
+              </div>
+              <div class="grid grid--acq" id="acqGrid"></div>
+            </div>
+            <div class="scroll"><span class="scroll__knob" style="height:34%"></span></div>
+          </div>
+        </div>
+        <div class="panel__foot">
+          <span class="foot-note">悬停格子查看获取来源 · 未获取项以暗色蒙版标记</span>
+          <span class="foot-stat">本局天赋 <b>34</b> 项</span>
+        </div>
+      </div>
+      <span class="stage__tag">8 × 5 COLLECTION GRID</span>
+    </div>
+    <ul class="chips">
+      <li>天赋 / 宝物 / 商品</li>
+      <li>分类计数与总完成度</li>
+      <li>已获取 / 全部</li>
+      <li>8 × 5 收藏网格</li>
+    </ul>
+  </section>
+
+  <!-- ==================== 10 卡片合成 ==================== -->
+  <section class="sec" id="synth">
+    <div class="sec__head">
+      <span class="sec__idx">10</span><h2>卡片合成</h2>
+      <span class="sec__en">CARD SYNTHESIS</span><span class="sec__rule"></span>
+    </div>
+    <div class="stage">
+      <span class="stage__mark">合</span>
+      <div class="panel panel--synth">
+        <div class="panel__head">
+          <button class="btn btn--ghost btn--sm panel__back" type="button"><span>← 返回图鉴</span></button>
+          <span class="head-line"></span><span class="diamond"></span>
+          <h3 class="panel__title">卡片合成</h3>
+          <span class="diamond"></span><span class="head-line head-line--r"></span>
+          <button class="panel__close" type="button" aria-label="关闭"><i></i><i></i></button>
+        </div>
+        <div class="panel__body">
+          <div class="synth">
+            <div class="synth__left">
+              <div class="synth__cap">
+                <span>持有卡片</span><b>15</b><i></i><span>点击卡片放入右侧合成槽</span>
+              </div>
+              <div class="grid grid--synth" id="synthList"></div>
+            </div>
+            <div class="scroll" style="margin-top:24px;height:423px">
+              <span class="scroll__knob" style="height:36%"></span>
+            </div>
+            <div class="synth__right">
+              <div class="synth__cap"><span>合成槽</span><b>同品质 3 → 1</b><i></i></div>
+              <div class="synth__rows" id="synthRows"></div>
+              <button class="btn" type="button"><span>开始合成</span></button>
+              <span class="synth__hint">每行填满 3 张同品质卡片即可合成，可一次处理多行</span>
+            </div>
+          </div>
+        </div>
+        <div class="panel__foot">
+          <span class="foot-note">3 张同品质卡片合成 1 张 · 品质越高产出概率越低</span>
+          <span class="foot-stat">已选 <b>5</b> / 15</span>
+        </div>
+      </div>
+      <span class="stage__tag">5 × 4 CARDS · 3 → 1</span>
+    </div>
+    <ul class="chips">
+      <li>5 × 4 持有卡片</li>
+      <li>5 行合成槽</li>
+      <li>同品质限制</li>
+      <li>结果框预览</li>
+    </ul>
+  </section>
+
+  <!-- ==================== 品质图例 ==================== -->
+  <aside class="legend">
+    <div class="legend__head">品质色阶 / QUALITY SCALE</div>
+    <div class="legend__row">
+      <div class="legend__item"><span class="legend__chip" style="--q:var(--q1)"></span><div class="legend__text"><b>N · 普通</b><span>#DFE8EE</span></div></div>
+      <div class="legend__item"><span class="legend__chip" style="--q:var(--q2)"></span><div class="legend__text"><b>R · 优秀</b><span>#A9E78F</span></div></div>
+      <div class="legend__item"><span class="legend__chip" style="--q:var(--q3)"></span><div class="legend__text"><b>SR · 稀有</b><span>#8ECBFF</span></div></div>
+      <div class="legend__item"><span class="legend__chip" style="--q:var(--q4)"></span><div class="legend__text"><b>SSR · 史诗</b><span>#D8B1F5</span></div></div>
+      <div class="legend__item"><span class="legend__chip" style="--q:var(--q5)"></span><div class="legend__text"><b>UR · 传说</b><span>#F0D38A</span></div></div>
+    </div>
+  </aside>
+
+  <footer class="foot">
+    <span>黑铁 / 青铜 / 陈年石料 · 与按钮边框同一套令牌</span>
+    <span class="diamond"></span>
+    <span>所有格子支持悬停、选中与未解锁蒙版</span>
+  </footer>
+</div>
+
+<div class="tip" id="tip" role="tooltip">
+  <div class="tip__name"></div>
+  <div class="tip__grade"></div>
+  <div class="tip__lines"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var Q = { q1:'普通', q2:'优秀', q3:'稀有', q4:'史诗', q5:'传说' };
+
+  function svg(id){
+    return '<svg class="glyph" aria-hidden="true"><use href="#' + id + '"></use></svg>';
+  }
+
+  function isFull(c){
+    if(!c){ return false; }
+    var p = String(c).split('/');
+    return p.length === 2 && Number(p[0]) === Number(p[1]);
+  }
+
+  function tipsFor(it, kind){
+    var q = Q[it.q || 'q3'];
+    if(kind === 'save'){
+      return [q + ' · 收藏品', it.lock ? '未收录 · 完成对应章节后解锁' : '已收录 · 进度 ' + (it.c || '—')];
+    }
+    if(kind === 'wardrobe'){
+      return [q + ' · 武器装扮', it.lock ? '未解锁 · 完成指定成就后开放' : (it.eq ? '当前穿戴中' : '点击可穿戴')];
+    }
+    if(kind === 'vault'){
+      return ['SSR · 宝库藏品', it.lock ? '尚未拥有 · 击杀团队首领获取' : '已拥有 ' + (it.c || '—')];
+    }
+    if(kind === 'codex'){
+      return [q + ' · 卡牌', '持有 ×' + (it.x || 0), '参与羁绊：龙骨遗愿 / 深渊回响'];
+    }
+    if(kind === 'pass'){
+      return ['战斗通行证奖励', it.lock ? '进阶版未激活' : '到达等级后可领取'];
+    }
+    if(kind === 'sign'){
+      return ['第 ' + it.d + ' 天奖励', it.done ? '已领取' : '未签到 · 明日开启'];
+    }
+    if(kind === 'acq'){
+      return [q + ' · 天赋', it.lock ? '未获取 · 完成对应成就解锁' : '已获取 · ' + (it.c || '—'), '来源：转生天赋池'];
+    }
+    return [q];
+  }
+
+  function slotHTML(it, kind){
+    var q = it.q || 'q3';
+    var cls = 'slot';
+    if(it.lock){ cls += ' is-locked'; }
+    if(it.eq){ cls += ' is-equipped'; }
+    if(it.today){ cls += ' is-today'; }
+    var count = it.c
+      ? '<span class="slot__count' + (isFull(it.c) ? ' is-full' : '') + '">' + it.c + '</span>'
+      : '';
+    var veil = it.lock ? '<span class="slot__veil">' + svg('i-lock') + '</span>' : '';
+    var tips = tipsFor(it, kind).join('|');
+    return '<button type="button" class="' + cls + '" data-q="' + q + '"' +
+      ' data-name="' + it.n + '" data-grade="' + Q[q] + '" data-tip="' + tips + '">' +
+      '<span class="slot__art">' + svg(it.i || 'i-gem') + '</span>' +
+      '<span class="slot__corners"></span>' + count + veil +
+    '</button>';
+  }
+
+  function cellHTML(it, kind){
+    var q = it.q || 'q3';
+    var nameCls = 'cell__name' + (it.lock ? ' is-locked' : '') + (it.eq ? ' is-equipped' : '');
+    return '<div class="cell" data-q="' + q + '">' + slotHTML(it, kind) +
+      '<span class="' + nameCls + '">' + it.n + '</span></div>';
+  }
+
+  /* ---------------- 存档 ---------------- */
+  var SAVE = [
+    {n:'巨魔村落',i:'i-trophy',q:'q2',c:'12/12'},
+    {n:'荒芜之地',i:'i-scroll',q:'q2',c:'8/8'},
+    {n:'冰封王座',i:'i-gem',q:'q5',c:'1/1'},
+    {n:'熔火之心',i:'i-flame',q:'q4',c:'3/5'},
+    {n:'暗影迷宫',i:'i-skull',q:'q3',c:'7/10'},
+    {n:'元素祭坛',i:'i-orb',q:'q3',c:'4/6'},
+    {n:'龙骨荒原',i:'i-skull',q:'q3',c:'2/4'},
+    {n:'海加尔山',i:'i-wing',q:'q4',lock:1,c:'0/1'},
+    {n:'时光之穴',i:'i-orb',q:'q5',lock:1,c:'0/1'},
+    {n:'翡翠梦境',i:'i-wing',q:'q4',c:'1/1'},
+    {n:'灰烬使者',i:'i-sword',q:'q5',lock:1,c:'0/1'},
+    {n:'霜之哀伤',i:'i-sword',q:'q5',lock:1,c:'0/1'},
+    {n:'埃辛诺斯战刃',i:'i-sword',q:'q4',c:'1/2'},
+    {n:'萨格拉斯之眼',i:'i-orb',q:'q5',lock:1,c:'0/1'},
+    {n:'泰坦之心',i:'i-gem',q:'q4',lock:1,c:'0/1'},
+    {n:'守望者之弓',i:'i-bow',q:'q4',c:'2/3'},
+    {n:'符文之刃',i:'i-sword',q:'q3',c:'5/5'},
+    {n:'圣光之锤',i:'i-helm',q:'q3',c:'3/3'},
+    {n:'冰霜法杖',i:'i-staff',q:'q3',c:'4/4'},
+    {n:'烈焰之心',i:'i-flame',q:'q3',c:'2/2'},
+    {n:'暗影斗篷',i:'i-helm',q:'q3',c:'2/5'},
+    {n:'龙鳞护甲',i:'i-shield',q:'q4',c:'1/1'},
+    {n:'迅捷之靴',i:'i-boot',q:'q2',c:'6/6'},
+    {n:'秘银腰带',i:'i-ring',q:'q2',c:'3/3'},
+    {n:'狮心王冠',i:'i-helm',q:'q4',c:'1/2'},
+    {n:'猎手徽记',i:'i-star',q:'q3',c:'4/8'},
+    {n:'远征军旗',i:'i-star',q:'q2',c:'2/2'},
+    {n:'兽人图腾',i:'i-gem',q:'q2',c:'3/3'},
+    {n:'精灵之泪',i:'i-gem',q:'q2',c:'5/5'},
+    {n:'虚空水晶',i:'i-gem',q:'q5',lock:1,c:'0/1'},
+    {n:'大地之环',i:'i-ring',q:'q3',c:'2/2'},
+    {n:'风暴号角',i:'i-horn',q:'q2',c:'1/1'},
+    {n:'星界罗盘',i:'i-orb',q:'q2',c:'1/1'},
+    {n:'贤者之书',i:'i-book',q:'q3',c:'4/4'},
+    {n:'炼金手册',i:'i-book',q:'q2',c:'2/3'},
+    {n:'龙火药剂',i:'i-potion',q:'q3',c:'7/9'},
+    {n:'月光药水',i:'i-potion',q:'q2',c:'6/6'},
+    {n:'铁匠工具箱',i:'i-chest',q:'q2',c:'1/1'},
+    {n:'古老卷轴',i:'i-scroll',q:'q2',c:'3/3'},
+    {n:'王者之剑',i:'i-sword',q:'q4',c:'1/1'},
+    {n:'游侠短弓',i:'i-bow',q:'q3',c:'5/7'},
+    {n:'圣骑士盾',i:'i-shield',q:'q3',c:'2/2'},
+    {n:'血精灵法杖',i:'i-staff',q:'q2',c:'2/2'},
+    {n:'巨魔战斧',i:'i-sword',q:'q2',c:'4/4'},
+    {n:'冰霜巨龙',i:'i-skull',q:'q4',c:'1/3'},
+    {n:'深渊领主',i:'i-flame',q:'q4',c:'2/4'},
+    {n:'巫妖王冠',i:'i-helm',q:'q5',lock:1,c:'0/1'},
+    {n:'时光沙漏',i:'i-orb',q:'q4',lock:1,c:'0/1'},
+    {n:'龙骨权杖',i:'i-staff',q:'q4',c:'1/2'},
+    {n:'荣耀勋章',i:'i-star',q:'q4',c:'3/3'}
+  ];
+
+  document.getElementById('saveGrid').innerHTML = SAVE.map(function(it){
+    return cellHTML(it, 'save');
+  }).join('');
+
+  /* ---------------- 签到 · 皮肤轮播 ---------------- */
+  var SKINS = [
+    {name:'荒野猎手', mark:'荒野', icon:'i-bow', q:'q2', day:7, progress:7, state:'done',
+     desc:'风从荒原吹来，她的箭比风更快。'},
+    {name:'霜语者', mark:'霜语', icon:'i-orb', q:'q3', day:14, progress:7, state:'done',
+     desc:'以霜为语、以冰为誓的北境法师。'},
+    {name:'熔火之刃', mark:'熔火', icon:'i-sword', q:'q3', day:21, progress:7, state:'done',
+     desc:'刀锋掠过之处，岩浆随之苏醒。'},
+    {name:'星界旅者', mark:'星界', icon:'i-star', q:'q4', day:28, progress:6, state:'current',
+     desc:'披星而行的旅人，脚步所至皆有微光。'},
+    {name:'深渊领主', mark:'深渊', icon:'i-skull', q:'q4', day:35, progress:0, state:'locked',
+     desc:'从裂谷深处归来的征服者，披风仍有硫火余温。'},
+    {name:'龙裔君王', mark:'龙裔', icon:'i-wing', q:'q5', day:42, progress:0, state:'locked',
+     desc:'龙血最后的继承者，王冠由六枚鳞片铸成。'}
+  ];
+  var QCOLOR = {q1:'#dfe8ee',q2:'#c9f6b8',q3:'#bfe3ff',q4:'#e4c6ff',q5:'#f3dc9c'};
+  var ROUND_LABEL = ['一','二','三','四','五','六'];
+
+  var skinShow = document.getElementById('skinShow');
+  var skinIconUse = document.getElementById('skinIcon').querySelector('use');
+  var skinMark = document.getElementById('skinMark');
+  var skinKicker = document.getElementById('skinKicker');
+  var skinName = document.getElementById('skinName');
+  var skinDesc = document.getElementById('skinDesc');
+  var skinState = document.getElementById('skinState');
+  var skinDays = document.getElementById('skinDays');
+  var skinRound = document.getElementById('skinRound');
+  var skinDayTxt = document.getElementById('skinDay');
+  var skinDots = document.getElementById('skinDots');
+  var msTrack = document.getElementById('msTrack');
+  var signKnob = document.getElementById('signKnob');
+  var signTrack = document.getElementById('signTrack');
+  var footSkin = document.getElementById('footSkin');
+  var skinIndex = 3;
+  var SIGNED_DAYS = 27;
+  var TODAY_DAY = 28;
+
+  function pad2(n){ return n < 10 ? '0' + n : '' + n; }
+
+  function renderSkin(i){
+    skinIndex = i;
+    var sk = SKINS[i];
+
+    skinShow.setAttribute('data-q', sk.q);
+    skinIconUse.setAttribute('href', '#' + sk.icon);
+    skinMark.textContent = sk.mark;
+    skinKicker.textContent = 'ROUND ' + pad2(i + 1) + ' · 累计 ' + sk.day + ' 天解锁';
+    skinName.textContent = sk.name;
+    skinDesc.textContent = sk.desc;
+    footSkin.textContent = sk.name;
+    skinRound.textContent = '第 ' + ROUND_LABEL[i] + ' 轮';
+
+    if(sk.state === 'done'){
+      skinDayTxt.textContent = '本轮已完成 7/7';
+    }else if(sk.state === 'current'){
+      skinDayTxt.textContent = '今日是第 ' + (sk.progress + 1) + ' 天';
+    }else{
+      skinDayTxt.textContent = '尚未开启';
+    }
+
+    skinState.className = 'skin-show__state' +
+      (sk.state === 'done' ? ' is-done' : sk.state === 'locked' ? ' is-locked' : '');
+    skinState.textContent = sk.state === 'done'
+      ? '已解锁 · 可在衣柜穿戴'
+      : sk.state === 'current' ? '今日签到解锁' : '累计 ' + sk.day + ' 天解锁';
+
+    var days = '';
+    for(var d = 0; d < 7; d++){
+      var on = d < sk.progress;
+      var today = sk.state === 'current' && d === sk.progress;
+      days += '<span class="skin-day' + (on ? ' is-on' : '') + (today ? ' is-today' : '') + '"></span>';
+    }
+    skinDays.innerHTML = days;
+
+    var dots = '';
+    for(var j = 0; j < SKINS.length; j++){
+      dots += '<button type="button" class="skin-dot' + (j === i ? ' is-on' : '') +
+        '" data-skin="' + j + '" aria-label="第' + (j + 1) + '轮"></button>';
+    }
+    skinDots.innerHTML = dots;
+
+    var nodes = '<i class="milestone__line"></i>';
+    for(var g = 0; g < SKINS.length; g++){
+      nodes += '<div class="ms-group">';
+      for(var d = 1; d <= 7; d++){
+        var day = g * 7 + d;
+        if(day % 7 === 0){
+          var s2 = SKINS[g];
+          var cls = 'ms-node';
+          if(s2.state === 'done'){ cls += ' is-done'; }
+          else if(s2.state === 'current'){ cls += ' is-current'; }
+          else { cls += ' is-locked'; }
+          nodes += '<button type="button" class="' + cls + '" data-skin="' + g + '">' +
+            (s2.state === 'current' ? '<i class="ms-node__tag">今日</i>' : '') +
+            '<span class="ms-node__icon" data-q="' + s2.q + '" style="--mq:var(--' + s2.q + ');--mtext:' + QCOLOR[s2.q] + '">' +
+              svg(s2.icon) +
+            '</span>' +
+            '<b>第' + s2.day + '天</b>' +
+          '</button>';
+        }else{
+          var tCls = 'ms-tick';
+          if(day <= SIGNED_DAYS){ tCls += ' is-on'; }
+          else if(day === TODAY_DAY){ tCls += ' is-today'; }
+          nodes += '<button type="button" class="' + tCls + '" data-skin="' + g + '" aria-label="第' + day + '天"></button>';
+        }
+      }
+      nodes += '</div>';
+    }
+    msTrack.innerHTML = nodes;
+
+    signKnob.style.left = 'calc((100% - 76px) * ' + (i / (SKINS.length - 1)) + ')';
+  }
+
+  renderSkin(skinIndex);
+
+  document.getElementById('skinPrev').addEventListener('click', function(){
+    renderSkin((skinIndex + SKINS.length - 1) % SKINS.length);
+  });
+  document.getElementById('skinNext').addEventListener('click', function(){
+    renderSkin((skinIndex + 1) % SKINS.length);
+  });
+  skinDots.addEventListener('click', function(e){
+    var b = e.target.closest('[data-skin]');
+    if(b){ renderSkin(Number(b.getAttribute('data-skin'))); }
+  });
+  msTrack.addEventListener('click', function(e){
+    var b = e.target.closest('[data-skin]');
+    if(b){ renderSkin(Number(b.getAttribute('data-skin'))); }
+  });
+
+  var skinDragging = false;
+  signKnob.addEventListener('mousedown', function(e){
+    skinDragging = true;
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', function(e){
+    if(!skinDragging){ return; }
+    var rect = signTrack.getBoundingClientRect();
+    var ratio = (e.clientX - rect.left - 38) / (rect.width - 76);
+    ratio = Math.max(0, Math.min(1, ratio));
+    var idx = Math.round(ratio * (SKINS.length - 1));
+    if(idx !== skinIndex){ renderSkin(idx); }
+  });
+  document.addEventListener('mouseup', function(){ skinDragging = false; });
+  signTrack.addEventListener('click', function(e){
+    if(e.target === signKnob){ return; }
+    var rect = signTrack.getBoundingClientRect();
+    var ratio = (e.clientX - rect.left - 38) / (rect.width - 76);
+    ratio = Math.max(0, Math.min(1, ratio));
+    renderSkin(Math.round(ratio * (SKINS.length - 1)));
+  });
+
+  /* ---------------- 通行证 ---------------- */
+  var PASS_N = [
+    {n:'金币袋 · 50',i:'i-coin',q:'q2'},
+    {n:'经验药水 · 2',i:'i-potion',q:'q2'},
+    {n:'强化石 · 3',i:'i-gem',q:'q3'},
+    {n:'卡牌包 · 1',i:'i-card',q:'q3'},
+    {n:'装备箱 · 1',i:'i-chest',q:'q4'},
+    {n:'声望徽记 · 100',i:'i-star',q:'q4'}
+  ];
+  var PASS_A = [
+    {n:'传说宝箱',i:'i-chest',q:'q5'},
+    {n:'坐骑 · 霜狼',i:'i-boot',q:'q4'},
+    {n:'皮肤 · 暗影',i:'i-card',q:'q4'},
+    {n:'称号 · 征服者',i:'i-star',q:'q5',lock:1},
+    {n:'宝石袋 · 5',i:'i-gem',q:'q5',lock:1},
+    {n:'限定坐骑 · 青龙',i:'i-wing',q:'q5',lock:1}
+  ];
+  var passCols = '';
+  for(var i = 0; i < 6; i++){
+    passCols += '<div class="pass__col">' +
+      slotHTML(PASS_N[i], 'pass') +
+      slotHTML(PASS_A[i], 'pass') +
+      '<span class="pass__lv--col">Lv ' + (7 + i) + '</span>' +
+    '</div>';
+  }
+  document.getElementById('passGrid').innerHTML = passCols;
+
+  /* ---------------- 衣柜 ---------------- */
+  var WARDROBE = [
+    {n:'灰烬使者',i:'i-sword',q:'q5',eq:1},
+    {n:'霜之哀伤',i:'i-sword',q:'q5',lock:1},
+    {n:'埃辛诺斯战刃',i:'i-sword',q:'q4'},
+    {n:'符文之刃',i:'i-sword',q:'q3'},
+    {n:'守望者之弓',i:'i-bow',q:'q4',lock:1},
+    {n:'圣光之锤',i:'i-helm',q:'q3'},
+    {n:'冰霜法杖',i:'i-staff',q:'q3'},
+    {n:'烈焰之心',i:'i-flame',q:'q3'},
+    {n:'龙骨权杖',i:'i-staff',q:'q4',lock:1},
+    {n:'王者之剑',i:'i-sword',q:'q4'},
+    {n:'巨魔战斧',i:'i-sword',q:'q2'},
+    {n:'游侠短弓',i:'i-bow',q:'q2'},
+    {n:'血精灵法杖',i:'i-staff',q:'q2'},
+    {n:'狮心重剑',i:'i-sword',q:'q4',lock:1},
+    {n:'秘银长剑',i:'i-sword',q:'q1'},
+    {n:'学徒木剑',i:'i-sword',q:'q1'}
+  ];
+  document.getElementById('wardrobeGrid').innerHTML = WARDROBE.map(function(it){
+    return cellHTML(it, 'wardrobe');
+  }).join('');
+
+  /* ---------------- 宝库 ---------------- */
+  var VAULT = [
+    ['龙鳞护符','i-ring',3,5],['秘银指环','i-ring',5,5],['狮心王冠','i-helm',2,5],['灰烬使者','i-sword',0,5],
+    ['霜之哀伤','i-sword',0,5],['埃辛诺斯战刃','i-sword',2,5],['萨格拉斯之眼','i-orb',0,3],['泰坦之心','i-gem',1,3],
+    ['虚空水晶','i-gem',0,3],['时光沙漏','i-orb',3,3],['龙骨权杖','i-staff',1,3],['守望者之弓','i-bow',2,5],
+    ['圣光之锤','i-helm',4,5],['冰霜法杖','i-staff',5,5],['烈焰之心','i-flame',0,5],['暗影斗篷','i-helm',2,5],
+    ['龙鳞护甲','i-shield',3,5],['迅捷之靴','i-boot',5,5],['猎手徽记','i-star',1,5],['远征军旗','i-star',0,5],
+    ['兽人图腾','i-gem',2,5],['精灵之泪','i-gem',4,5],['大地之环','i-ring',5,5],['星界罗盘','i-orb',1,5],
+    ['贤者之书','i-book',0,5],['炼金手册','i-book',3,5],['龙火药剂','i-potion',5,5],['月光药水','i-potion',2,5],
+    ['铁匠工具箱','i-chest',0,5],['古老卷轴','i-scroll',4,5],['王者之剑','i-sword',1,5],['游侠短弓','i-bow',2,5],
+    ['圣骑士盾','i-shield',0,5],['血精灵法杖','i-staff',3,5],['巨魔战斧','i-sword',5,5],['冰霜巨龙','i-skull',1,5],
+    ['深渊领主','i-flame',0,5],['巫妖王冠','i-helm',2,5],['龙骨荒原','i-scroll',4,5],['荣耀勋章','i-star',5,5]
+  ];
+  document.getElementById('vaultGrid').innerHTML = VAULT.map(function(v){
+    var it = {n:v[0], i:v[1], q:'q4', c:v[2] + '/' + v[3], lock: v[2] === 0};
+    return cellHTML(it, 'vault');
+  }).join('');
+
+  /* ---------------- 图鉴 ---------------- */
+  var CODEX = [
+    ['霜之哀伤','i-sword','q5',1],['灰烬使者','i-sword','q5',2],['时光沙漏','i-orb','q4',3],['虚空水晶','i-gem','q5',0],
+    ['泰坦之心','i-gem','q4',1],['龙骨权杖','i-staff','q4',2],['守望者之弓','i-bow','q3',3],['圣光之锤','i-helm','q3',2],
+    ['冰霜法杖','i-staff','q3',4],['烈焰之心','i-flame','q3',1],['暗影斗篷','i-helm','q2',3],['龙鳞护甲','i-shield','q4',1],
+    ['迅捷之靴','i-boot','q2',5],['狮心王冠','i-helm','q4',0],['猎手徽记','i-star','q3',2],['远征军旗','i-star','q2',4],
+    ['兽人图腾','i-gem','q2',1],['精灵之泪','i-gem','q3',3],['大地之环','i-ring','q3',2],['星界罗盘','i-orb','q2',1],
+    ['贤者之书','i-book','q2',2],['炼金手册','i-book','q1',4],['龙火药剂','i-potion','q2',3],['月光药水','i-potion','q1',2],
+    ['铁匠工具箱','i-chest','q1',1],['古老卷轴','i-scroll','q1',3],['王者之剑','i-sword','q4',1],['游侠短弓','i-bow','q3',2],
+    ['圣骑士盾','i-shield','q3',1],['血精灵杖','i-staff','q2',2],['巨魔战斧','i-sword','q1',4],['冰霜巨龙','i-skull','q5',0],
+    ['深渊领主','i-flame','q4',0]
+  ];
+  function cardHTML(c){
+    var name = c[0], icon = c[1], q = c[2], x = c[3];
+    var lock = x === 0;
+    var tips = tipsFor({q:q, x:x}, 'codex').join('|');
+    return '<div class="cell cell--card" data-q="' + q + '">' +
+      '<button type="button" class="slot card' + (lock ? ' is-locked' : '') + '" data-q="' + q + '"' +
+        ' data-name="' + name + '" data-grade="' + Q[q] + '" data-tip="' + tips + '">' +
+        '<span class="slot__art">' + svg(icon) + '</span>' +
+        '<span class="slot__corners"></span>' +
+        '<span class="slot__count' + (x ? ' is-full' : '') + '">×' + x + '</span>' +
+        (lock ? '<span class="slot__veil">' + svg('i-lock') + '</span>' : '') +
+      '</button>' +
+      '<span class="cell__name' + (lock ? ' is-locked' : '') + '">' + name + '</span>' +
+    '</div>';
+  }
+  document.getElementById('codexGrid').innerHTML = CODEX.map(cardHTML).join('');
+
+  /* ---------------- 已获取 ---------------- */
+  var ACQ = [
+    ['狂怒','i-flame','q3','Lv3'],['双持精通','i-sword','q3','Lv2'],['剑刃风暴','i-sword','q4','Lv1'],['破甲','i-shield','q3','Lv2'],
+    ['嗜血','i-flame','q2','Lv3'],['盾墙','i-shield','q3','Lv2'],['钢铁意志','i-shield','q2','Lv1'],['战斗怒吼','i-horn','q2','Lv2'],
+    ['元素精通','i-orb','q4','Lv3'],['烈焰掌握','i-flame','q3','Lv2'],['冰霜专注','i-orb','q3','Lv1'],['奥术洪流','i-orb','q4','Lv2'],
+    ['法术强化','i-gem','q3','Lv3'],['法力回复','i-potion','q2','Lv2'],['施法加速','i-orb','q3','Lv1'],['连锁闪电','i-star','q4','Lv2'],
+    ['治疗增效','i-potion','q3','Lv3'],['神圣之光','i-star','q4','Lv1'],['净化','i-orb','q3','Lv2'],['守护祝福','i-shield','q3','Lv1'],
+    ['疾风步','i-boot','q3','Lv3'],['暗影潜行','i-skull','q3','Lv2'],['毒药精通','i-potion','q2','Lv2'],['致命一击','i-sword','q4','Lv1'],
+    ['弓术专精','i-bow','q3','Lv3'],['弹幕','i-bow','q3','Lv1'],['追踪','i-orb','q2','Lv2'],['兽群','i-horn','q3','Lv1'],
+    ['图腾掌握','i-gem','q3','Lv2'],['召唤精通','i-book','q3','Lv1'],['采集精通','i-horn','q2','Lv3'],['炼金术','i-potion','q2','Lv2'],
+    ['附魔','i-gem','q3','Lv1'],['锻造','i-helm','q2','Lv2'],
+    ['幸运','i-star','q3'],['财富','i-coin','q2'],['洞察','i-book','q2'],['生存本能','i-shield','q2'],['韧性','i-shield','q3'],['不屈','i-trophy','q4']
+  ];
+  document.getElementById('acqGrid').innerHTML = ACQ.map(function(v){
+    var lock = v.length < 4;
+    var it = { n:v[0], i:v[1], q:v[2], c:lock ? '' : v[3], lock:lock };
+    return cellHTML(it, 'acq');
+  }).join('');
+
+  /* ---------------- 卡片合成 ---------------- */
+  var SYNTH_CARDS = [
+    ['守望者之弓','i-bow','q3',3],['圣光之锤','i-helm','q3',2],['冰霜法杖','i-staff','q3',4],['烈焰之心','i-flame','q3',1],
+    ['暗影斗篷','i-helm','q2',3],['迅捷之靴','i-boot','q2',5],['远征军旗','i-star','q2',4],['兽人图腾','i-gem','q2',1],
+    ['精灵之泪','i-gem','q3',3],['大地之环','i-ring','q3',2],['星界罗盘','i-orb','q2',1],['贤者之书','i-book','q2',2],
+    ['炼金手册','i-book','q1',4],['龙火药剂','i-potion','q2',3],['王者之剑','i-sword','q4',1]
+  ];
+  /* 与图鉴卡片同比例: 竖卡 62×100 + 两行卡名 */
+  function synthCardHTML(c){
+    var name = c[0], icon = c[1], q = c[2], x = c[3];
+    return '<div class="cell cell--card" data-q="' + q + '">' +
+      '<button type="button" class="slot card" data-q="' + q + '" data-name="' + name + '">' +
+        '<span class="slot__art">' + svg(icon) + '</span>' +
+        '<span class="slot__corners"></span>' +
+        '<span class="slot__count is-full">×' + x + '</span>' +
+      '</button>' +
+      '<span class="cell__name">' + name + '</span>' +
+    '</div>';
+  }
+  document.getElementById('synthList').innerHTML = SYNTH_CARDS.map(synthCardHTML).join('');
+
+  function synthSlot(c, kind){
+    if(!c){
+      return '<span class="slot slot--empty"><span class="slot__art">+</span></span>';
+    }
+    return '<span class="slot' + (kind === 'out' ? ' slot--out' : '') + '" data-q="' + c[2] + '">' +
+      '<span class="slot__art">' + svg(c[1]) + '</span>' +
+      '<span class="slot__corners"></span>' +
+    '</span>';
+  }
+  function synthRow(a, out){
+    var cells = '';
+    for(var i = 0; i < 3; i++){ cells += synthSlot(a[i], 'in'); }
+    return '<div class="synth-row' + (a.length ? '' : ' is-empty') + '">' +
+      cells +
+      '<span class="synth-row__arrow">→</span>' +
+      '<div class="synth-row__out">' + synthSlot(out, 'out') + '</div>' +
+    '</div>';
+  }
+  var SYNTH_ROWS = [
+    [['守望者之弓','i-bow','q3'],['圣光之锤','i-helm','q3'],['冰霜法杖','i-staff','q3']],
+    [['烈焰之心','i-flame','q3'],['猎手徽记','i-star','q3']],
+    [],
+    [],
+    []
+  ];
+  document.getElementById('synthRows').innerHTML = SYNTH_ROWS.map(function(a, i){
+    var out = (i === 0) ? ['时光沙漏','i-orb','q4'] : null;
+    return synthRow(a, out);
+  }).join('');
+
+  /* ---------------- 三选一卡片 ---------------- */
+  document.querySelectorAll('.hero-card, .relic-card').forEach(function(card){
+    card.addEventListener('click', function(){
+      var row = card.parentElement;
+      row.querySelectorAll('.is-picked').forEach(function(el){
+        el.classList.remove('is-picked');
+      });
+      card.classList.add('is-picked');
+    });
+  });
+
+  /* ---------------- 悬浮提示 ---------------- */
+  var tip = document.getElementById('tip');
+  var tipOn = false;
+
+  document.addEventListener('mouseover', function(e){
+    var s = e.target.closest('.slot');
+    if(!s){ return; }
+    var name = s.getAttribute('data-name');
+    if(!name){ return; }
+    tip.querySelector('.tip__name').textContent = name;
+    tip.querySelector('.tip__grade').textContent = '品质 · ' + (s.getAttribute('data-grade') || '');
+    tip.querySelector('.tip__lines').innerHTML = (s.getAttribute('data-tip') || '')
+      .split('|').filter(Boolean).map(function(t){ return '<span>' + t + '</span>'; }).join('');
+    tip.setAttribute('data-q', s.getAttribute('data-q') || 'q3');
+    tip.classList.add('is-on');
+    tipOn = true;
+  });
+
+  document.addEventListener('mousemove', function(e){
+    if(!tipOn){ return; }
+    var w = tip.offsetWidth;
+    var x = Math.min(Math.max(e.clientX, w / 2 + 10), window.innerWidth - w / 2 - 10);
+    tip.style.left = x + 'px';
+    tip.style.top = (e.clientY - 16) + 'px';
+  });
+
+  document.addEventListener('mouseout', function(e){
+    var s = e.target.closest('.slot');
+    if(!s){ return; }
+    var to = e.relatedTarget;
+    if(to && to.closest && to.closest('.slot') === s){ return; }
+    tip.classList.remove('is-on');
+    tipOn = false;
+  });
+
+  window.addEventListener('scroll', function(){
+    tip.classList.remove('is-on');
+    tipOn = false;
+  }, { passive: true });
+
+  /* ---------------- 点选 ---------------- */
+  document.addEventListener('click', function(e){
+    var s = e.target.closest('.slot');
+    if(!s || s.classList.contains('is-locked')){ return; }
+    var group = s.closest('.grid, .pass__cols');
+    if(group){
+      group.querySelectorAll('.slot.is-selected').forEach(function(el){
+        el.classList.remove('is-selected');
+      });
+    }
+    s.classList.toggle('is-selected');
+  });
+
+  /* ---------------- 导航高亮 ---------------- */
+  var links = Array.prototype.slice.call(document.querySelectorAll('.nav a'));
+  var sections = Array.prototype.slice.call(document.querySelectorAll('section.sec'));
+
+  if('IntersectionObserver' in window){
+    var obs = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(!en.isIntersecting){ return; }
+        links.forEach(function(a){
+          a.classList.toggle('is-active', a.getAttribute('href') === '#' + en.target.id);
+        });
+      });
+    }, { rootMargin:'-42% 0px -52% 0px' });
+    sections.forEach(function(sec){ obs.observe(sec); });
+  }
+})();
+</script>
+</body>
+</html>
