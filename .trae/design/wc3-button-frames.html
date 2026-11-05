@@ -554,7 +554,7 @@
     overflow:hidden;
   }
   .hud-stage__side{
-    width:min(340px,100%);
+    width:min(440px,100%);
     align-self:flex-end;
     display:flex; flex-direction:column; gap:14px;
   }
@@ -621,6 +621,7 @@
   }
 
   /* 侧边数据面板 */
+  .board-shell{position:relative;width:100%}
   .wc-board{
     position:relative;
     width:100%;
@@ -634,9 +635,33 @@
       inset 0 10px 26px rgba(0,0,0,.6);
     filter:drop-shadow(0 6px 16px rgba(0,0,0,.55));
     overflow:hidden;
+    transition:transform .34s cubic-bezier(.22,.8,.24,1),opacity .28s ease;
+  }
+  /* 收起态: 整板滑出右侧, 只留竖标签(与战功商店一致) */
+  .board-shell.is-collapsed .wc-board{
+    transform:translateX(calc(100% + 24px));
+    opacity:0; pointer-events:none;
+  }
+  .wc-board-tab{
+    position:absolute; right:-18px; top:0; bottom:0; z-index:6;
+    width:34px; display:grid; place-items:center;
+    appearance:none; -webkit-appearance:none;
+    margin:0; padding:0; cursor:pointer;
+    background:linear-gradient(90deg,#3b3324,#211d13 55%,#0d0b07);
+    border:1px solid #8d7230; border-right:0;
+    clip-path:polygon(8px 0,100% 0,100% 100%,8px 100%,0 calc(100% - 8px),0 8px);
+    box-shadow:inset 0 0 0 1px rgba(255,235,180,.08),inset 0 0 18px rgba(0,0,0,.6);
+    opacity:0; pointer-events:none; transform:translateX(12px);
+    transition:opacity .28s ease,transform .28s ease;
+  }
+  .board-shell.is-collapsed .wc-board-tab{opacity:1;pointer-events:auto;transform:translateX(0)}
+  .wc-board-tab span{
+    writing-mode:vertical-rl;
+    font-size:11.5px; font-weight:700; letter-spacing:.28em;
+    color:#f3dfa6; text-shadow:0 1px 0 #000;
   }
   .wc-board__head{
-    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    display:flex; align-items:center; gap:10px;
     padding:8px 12px;
     background:linear-gradient(180deg,#2b2410,#151106);
     border-bottom:1px solid #000;
@@ -647,38 +672,24 @@
     color:#e9cf85; white-space:nowrap;
     text-shadow:0 1px 0 #000;
   }
-  .wc-board__timer{
-    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
-    font-size:14px; font-weight:700; letter-spacing:.05em;
-    color:#ffd76a; font-variant-numeric:tabular-nums;
-    text-shadow:0 1px 2px #000,0 0 10px rgba(255,200,80,.35);
-  }
-  .wc-board__meta{
-    display:flex; flex-wrap:wrap; gap:3px 12px;
-    padding:6px 12px;
-    background:rgba(0,0,0,.28);
-    border-bottom:1px solid rgba(176,140,58,.28);
-    font-size:10.5px; letter-spacing:.03em; color:#93886f;
-  }
-  .wc-board__meta b{color:#cdbb8a;font-weight:700}
   .wc-board table{
     width:100%; border-collapse:collapse; table-layout:fixed;
     font-size:11.5px;
   }
   .wc-board th{
-    padding:7px 8px;
+    padding:7px 6px;
     font-size:10px; font-weight:700; letter-spacing:.1em; text-align:right;
     color:#a8956a;
     background:rgba(255,235,170,.04);
     border-bottom:1px solid rgba(201,170,80,.25);
   }
-  .wc-board th:first-child{text-align:left}
   .wc-board td{
-    padding:6px 8px; text-align:right;
+    padding:6px; text-align:right;
     color:#cfc3a4; font-variant-numeric:tabular-nums;
     border-bottom:1px solid rgba(201,170,80,.08);
   }
-  .wc-board td:first-child{text-align:left}
+  .wc-board th:nth-child(-n+2),
+  .wc-board td:nth-child(-n+2){text-align:left}
   .wc-board tbody tr:nth-child(even){background:rgba(255,240,190,.025)}
   .wc-board tbody tr.is-self{
     background:linear-gradient(90deg,rgba(127,227,184,.12),rgba(127,227,184,.015));
@@ -968,31 +979,38 @@
   /* ============================================================
      战功商店 · 商品条
      ============================================================ */
-  .shop-stage{display:grid;place-items:center;min-height:440px;padding:24px 18px}
+  /* 实机条宽 426px、商品格 60px；示意稿按 1.4× 绘制，格 84px */
+  .shop-stage{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:22px; min-height:620px; padding:150px 18px 30px;
+  }
+  .shop-live{position:relative;display:flex;justify-content:center;width:100%}
   .wc-shop{
     position:relative;
-    width:min(660px,100%);
-    background:linear-gradient(180deg,rgba(14,14,10,.94),rgba(4,5,4,.96));
-    border:2px solid #b08c3a;
-    clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px),0 12px);
+    width:600px; height:179px;
+    padding:18px 17px 0;
+    box-sizing:border-box;
+    background:
+      radial-gradient(130% 90% at 50% 0%,rgba(255,232,170,.10),transparent 60%),
+      repeating-linear-gradient(118deg,rgba(255,255,255,.035) 0 2px,transparent 2px 9px),
+      linear-gradient(180deg,#4b4330 0%,#2d281c 42%,#151208 100%);
+    border:2px solid #8d7230;
+    clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px),0 14px);
     box-shadow:
       inset 0 0 0 1px #050403,
-      inset 0 0 0 4px rgba(180,145,70,.2),
-      inset 0 12px 30px rgba(0,0,0,.58);
-    filter:drop-shadow(0 12px 28px rgba(0,0,0,.55));
+      inset 0 0 0 5px rgba(201,166,63,.14),
+      inset 0 16px 30px rgba(0,0,0,.5);
+    filter:drop-shadow(0 10px 22px rgba(0,0,0,.55));
   }
   .wc-shop__head{
-    display:flex; align-items:center; justify-content:space-between; gap:12px;
-    padding:9px 14px;
-    background:linear-gradient(180deg,#2b2410,#151106);
-    border-bottom:1px solid #000;
-    box-shadow:inset 0 1px 0 rgba(255,235,180,.16);
+    display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+    height:21px; padding:0 5px;
   }
   .wc-shop__title{
-    font-size:12px; font-weight:700; letter-spacing:.18em;
-    color:#eed894; text-shadow:0 1px 0 #000;
+    font-size:14px; font-weight:700; line-height:21px; letter-spacing:.16em;
+    color:#f3dfa6; text-shadow:0 1px 0 #000,0 0 10px rgba(255,210,120,.28);
   }
-  .wc-shop__wallet{font-size:10.5px;letter-spacing:.08em;color:#93886f}
+  .wc-shop__wallet{font-size:10px; line-height:21px; letter-spacing:.06em; color:#8d8268}
   .wc-shop__wallet b{
     font-family:Consolas,"Cascadia Mono","Courier New",monospace;
     font-size:12px; color:#f0d38a;
@@ -1000,92 +1018,188 @@
     text-shadow:0 1px 0 #000;
   }
   .wc-shop__offers{
-    display:grid; grid-template-columns:repeat(6,minmax(0,1fr));
-    gap:9px; padding:14px 14px 6px;
+    display:flex; align-items:flex-start; gap:9.6px; margin-top:7px;
   }
-  .offer{
+  /* ---------- 商品格 ---------- */
+  .shop-cell{
     appearance:none; -webkit-appearance:none;
-    position:relative;
-    display:flex; flex-direction:column; align-items:center; gap:6px;
+    position:relative; flex:0 0 84px; width:84px;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
     margin:0; padding:0; border:0; background:transparent;
-    font-family:inherit; color:inherit; text-align:center; cursor:pointer;
-    filter:drop-shadow(0 3px 6px rgba(0,0,0,.45));
+    font-family:inherit; color:var(--q,#e5ca7d); text-align:center; cursor:pointer;
     transition:transform .16s ease,filter .16s ease;
     -webkit-tap-highlight-color:transparent;
   }
-  .offer:hover{
-    transform:translateY(-2px);
-    filter:drop-shadow(0 8px 14px rgba(0,0,0,.5)) drop-shadow(0 0 10px var(--q-glow,rgba(255,200,90,.25)));
+  .shop-cell:hover{
+    transform:translateY(-4px);
+    filter:drop-shadow(0 8px 12px rgba(0,0,0,.5)) drop-shadow(0 0 10px var(--q-glow,rgba(255,200,90,.25)));
   }
-  .offer:focus-visible{outline:2px solid #ffd76a;outline-offset:3px}
-  .offer__figure{position:relative;width:100%;aspect-ratio:1}
-  .offer__icon{
-    position:absolute; inset:0;
+  .shop-cell:focus-visible{outline:2px solid #ffd76a;outline-offset:3px}
+  .shop-cell__icon{
+    position:relative; width:84px; height:84px;
     display:grid; place-items:center;
-    border:2px solid var(--q,#c2a03c);
+  }
+  /* 内层底板(切角) */
+  .shop-cell__icon::after{
+    content:""; position:absolute; inset:3px; z-index:0;
     background:
-      radial-gradient(80% 80% at 50% 36%,var(--q-glow,rgba(255,206,110,.18)),transparent 66%),
+      radial-gradient(82% 82% at 50% 34%,rgba(255,206,110,.12),transparent 66%),
       linear-gradient(180deg,#26221a,#0b0a07);
-    clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px);
+    clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px);
     box-shadow:
       inset 0 0 0 1px #000,
-      inset 0 4px 10px rgba(0,0,0,.8);
-    color:var(--q,#e5ca7d);
+      inset 0 5px 12px rgba(0,0,0,.8);
   }
-  .offer__icon svg{
-    width:52%; height:auto;
+  /* 品质边框 ui_zg_frame_lv1..lv5: 比图标外扩 2px */
+  .shop-cell__icon::before{
+    content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
+    border:2px solid var(--q,#c2a03c);
+    clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px);
+    box-shadow:
+      inset 0 0 10px var(--q-glow,rgba(255,200,90,.2)),
+      0 0 9px var(--q-glow,rgba(255,200,90,.2));
+  }
+  .shop-cell__icon svg{
+    position:relative; z-index:2;
+    width:44%; height:auto;
+    color:var(--q,#e5ca7d);
     filter:drop-shadow(0 2px 2px rgba(0,0,0,.85));
   }
-  .offer__badge{
-    position:absolute; top:-5px; left:-5px; z-index:2;
-    padding:1px 5px;
-    font-size:9.5px; font-weight:700; letter-spacing:.06em;
-    color:#ffe9a8;
+  /* 折扣角标: 左上 30×25, 不占格 */
+  .shop-cell__badge{
+    position:absolute; top:0; left:0; z-index:4;
+    width:42px; height:35px;
+    display:grid; place-items:center;
+    font-size:11px; font-weight:700; letter-spacing:.02em;
+    color:#ffa500;
     background:linear-gradient(180deg,#2a2410,#0c0a05);
     border:1px solid #c9a63f;
-    clip-path:polygon(4px 0,calc(100% - 4px) 0,100% 50%,calc(100% - 4px) 100%,4px 100%,0 50%);
+    clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 50%,calc(100% - 7px) 100%,7px 100%,0 50%);
     text-shadow:0 1px 0 #000;
-    box-shadow:0 1px 4px rgba(0,0,0,.6);
+    box-shadow:0 1px 5px rgba(0,0,0,.65);
   }
-  .offer__price{
-    position:absolute; right:5px; bottom:3px; z-index:2;
+  /* 价格铭文: 杀敌图标 + ×折后价, 贴右下 */
+  .shop-cell__price{
+    position:absolute; right:1px; bottom:0; z-index:3;
+    display:flex; align-items:center; gap:3px;
     font-family:Consolas,"Cascadia Mono","Courier New",monospace;
-    font-size:11px; font-weight:700; letter-spacing:.02em;
-    color:#ffe28f; font-variant-numeric:tabular-nums;
-    text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.8);
+    font-size:12px; font-weight:700; letter-spacing:0;
+    color:#ffe500; font-variant-numeric:tabular-nums;
+    text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.85);
+    pointer-events:none;
   }
-  .offer__name{
-    display:block; width:100%;
-    padding:3px 3px;
-    font-size:10px; font-weight:700; line-height:1.4;
+  .shop-cell__coin{
+    width:15px; height:15px;
+    background:repeating-linear-gradient(90deg,#ffe9a8 0 2px,transparent 2px 5px);
+    transform:skewX(-10deg);
+    filter:drop-shadow(0 1px 1px #000);
+  }
+  /* 名称铭牌 ui_zg_nameplate.tga */
+  .shop-cell__name{
+    display:block; width:84px; height:26px; line-height:26px;
+    box-sizing:border-box; padding:0 3px;
+    font-size:10px; font-weight:700; letter-spacing:.02em;
     color:var(--q,#e5ca7d);
-    background:linear-gradient(180deg,rgba(16,14,9,.92),rgba(4,4,3,.94));
-    border:1px solid rgba(0,0,0,.85);
-    box-shadow:inset 0 0 0 1px rgba(255,255,255,.03),0 1px 3px rgba(0,0,0,.5);
+    background:linear-gradient(180deg,#2f2a20,#16130c 52%,#090805);
+    border:1px solid rgba(0,0,0,.9);
+    box-shadow:inset 0 1px 0 rgba(255,235,180,.12),inset 0 -2px 0 rgba(0,0,0,.7);
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     text-shadow:0 1px 0 #000;
   }
-  .offer.is-selected{filter:drop-shadow(0 4px 10px rgba(0,0,0,.5)) drop-shadow(0 0 12px var(--q-glow,rgba(255,200,90,.3)))}
-  .offer.is-selected .offer__icon{
-    border-color:#ffe9a8;
-    box-shadow:
-      inset 0 0 0 1px #000,
-      inset 0 0 0 3px rgba(255,240,190,.25),
-      inset 0 4px 10px rgba(0,0,0,.8);
+  /* 空位(购买后): 暗色问号, 名称隐藏 */
+  .shop-cell__empty{
+    display:none; position:relative; z-index:2;
+    font-size:30px; font-weight:700; color:#6b6250;
+    opacity:.45; text-shadow:0 1px 0 #000;
   }
-  .offer.is-selected .offer__name{color:#fff0c4;border-color:#8f7420}
-  .offer--epic{--q:#b48cff;--q-glow:rgba(150,100,255,.35)}
-  .offer--rare{--q:#74b9ff;--q-glow:rgba(90,160,255,.35)}
-  .offer--uncommon{--q:#8fe08a;--q-glow:rgba(110,220,120,.32)}
-  .offer--legend{--q:#f3c95e;--q-glow:rgba(255,205,82,.4)}
-  .offer--refresh{--q:#f3c95e;--q-glow:rgba(255,205,82,.35)}
-  .offer--refresh .offer__icon{background:linear-gradient(180deg,#2f2814,#0e0b07);border-color:#d0ad4f}
-  .offer--refresh .offer__price{display:none}
-  .wc-shop__foot{
-    margin:0; padding:2px 16px 12px;
-    text-align:center; font-size:10.5px; letter-spacing:.06em; color:#8f8570;
+  .shop-cell.is-sold .shop-cell__empty{display:block}
+  .shop-cell.is-sold .shop-cell__icon svg,
+  .shop-cell.is-sold .shop-cell__price,
+  .shop-cell.is-sold .shop-cell__badge{display:none}
+  .shop-cell.is-sold .shop-cell__icon::after{
+    background:linear-gradient(180deg,#181611,#080705);
   }
-  .wc-shop.is-rolling .offer{animation:talentRoll .5s ease}
+  .shop-cell.is-sold .shop-cell__icon::before{
+    border-color:#c2a03c; box-shadow:none;
+  }
+  .shop-cell.is-sold .shop-cell__name{visibility:hidden}
+  /* 已购满: 图标变暗, 绿色「已满」 */
+  .shop-cell.is-full{cursor:default}
+  .shop-cell.is-full .shop-cell__icon svg{opacity:.42}
+  .shop-cell.is-full .shop-cell__price{color:#6dff1e}
+  .shop-cell.is-full .shop-cell__coin{display:none}
+  /* 五档品质(与服务端 QUALITY_COLOR 一致) */
+  .q1{--q:#ffffff;--q-glow:rgba(255,255,255,.22)}
+  .q2{--q:#00e000;--q-glow:rgba(0,224,0,.28)}
+  .q3{--q:#3399ff;--q-glow:rgba(51,153,255,.30)}
+  .q4{--q:#b040ff;--q-glow:rgba(176,64,255,.32)}
+  .q5{--q:#ffcc00;--q-glow:rgba(255,204,0,.34)}
+  /* ---------- 刷新格: 与商品格同尺寸, 左侧多留一个间距 ---------- */
+  .shop-cell--refresh{margin-left:9.6px}
+  .shop-cell--refresh .shop-cell__icon{
+    background:radial-gradient(75% 75% at 50% 45%,rgba(255,214,110,.14),transparent 70%),
+      linear-gradient(180deg,#2f2814,#0d0b06);
+  }
+  .shop-cell--refresh .shop-cell__icon::after{
+    inset:0; background:transparent; clip-path:none; border-radius:50%;
+    box-shadow:inset 0 0 12px rgba(0,0,0,.6);
+  }
+  .shop-cell--refresh .shop-cell__icon::before{
+    clip-path:none; border-radius:50%; border-color:#d0ad4f;
+    box-shadow:inset 0 0 10px rgba(255,205,82,.18),0 0 9px rgba(255,205,82,.18);
+  }
+  .shop-cell--refresh .shop-cell__icon svg{width:58%;color:#f3c95e}
+  .shop-cell--refresh .shop-cell__name{color:#ffcc00}
+  .shop-cell--refresh.is-poor .shop-cell__name{color:#8d8d8d}
+  .shop-cell--refresh.is-poor .shop-cell__icon svg{opacity:.42}
+  /* 悬停提示 */
+  .shop-tip{
+    position:absolute; left:0; bottom:calc(100% + 10px); z-index:30;
+    width:278px; padding:9px 11px 10px; box-sizing:border-box;
+    background:linear-gradient(180deg,rgba(12,11,8,.98),rgba(3,3,2,.98));
+    border:1px solid #8d7230;
+    clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);
+    box-shadow:inset 0 0 0 1px #050403,0 8px 20px rgba(0,0,0,.65);
+    font-size:11.5px; line-height:1.8; color:#c4b795;
+    opacity:0; transform:translateX(-50%) translateY(4px);
+    transition:opacity .14s ease,transform .14s ease;
+    pointer-events:none;
+  }
+  .shop-tip.is-show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .shop-tip b{display:block;font-size:12.5px;color:#ffe9a8;text-shadow:0 1px 0 #000}
+  .shop-tip .is-warn{color:#ef8a72}
+  .shop-tip .is-dim{color:#8d8471}
+  .shop-tip em{font-style:normal;color:#ffcc00;font-weight:700}
+  /* ---------- 状态预览: 已满 / 空位 / 收起标签 / 上架提示 ---------- */
+  .shop-states{
+    display:flex; align-items:flex-start; justify-content:center; flex-wrap:wrap;
+    gap:18px; width:100%;
+  }
+  .shop-state{display:flex; flex-direction:column; align-items:center; gap:8px}
+  .shop-state__label{font-size:9.5px; letter-spacing:.12em; color:#7f7864; text-align:center}
+  .shop-state .shop-cell{pointer-events:none}
+  .shop-tab{
+    width:48px; height:179px;
+    display:grid; place-items:center;
+    background:linear-gradient(90deg,#3b3324,#211d13 55%,#0d0b07);
+    border:1px solid #8d7230; border-right:0;
+    clip-path:polygon(10px 0,100% 0,100% 100%,10px 100%,0 calc(100% - 10px),0 10px);
+    box-shadow:inset 0 0 0 1px rgba(255,235,180,.08),inset 0 0 18px rgba(0,0,0,.6);
+  }
+  .shop-tab span{
+    writing-mode:vertical-rl;
+    font-size:12px; font-weight:700; letter-spacing:.32em;
+    color:#f3dfa6; text-shadow:0 1px 0 #000;
+  }
+  .shop-notice{
+    max-width:296px; padding:9px 14px; box-sizing:border-box;
+    background:rgba(0,0,0,.8);
+    border:1px solid rgba(201,166,63,.5);
+    clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);
+    font-size:12px; line-height:1.65; text-align:center;
+    color:#ffcc00; text-shadow:0 1px 0 #000;
+  }
+  .wc-shop.is-rolling .shop-cell{animation:talentRoll .5s ease}
 
   /* ============================================================
      响应式 / 动效偏好
@@ -1101,9 +1215,10 @@
     .talent-card__icon{width:46px;height:46px;margin:0}
     .talent-card__info{flex:1}
     .talent-card__desc{font-size:11px}
-    .shop-stage{padding:18px 12px;min-height:380px}
-    .wc-shop__offers{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-    .offer__name{font-size:10.5px}
+    .shop-stage{padding:24px 12px;min-height:0}
+    .shop-live{justify-content:flex-start;overflow-x:auto;padding-bottom:8px}
+    .wc-shop{flex:0 0 600px}
+    .shop-states{justify-content:flex-start}
   }
   @media (max-width:620px){
     .shell{padding:42px 18px 64px}
@@ -1113,6 +1228,7 @@
     .state-cell .wc-btn{min-width:136px}
     .hud-stage{padding:18px 12px 20px}
     .hud-stage__side{width:100%}
+    .board-shell .wc-board-tab{right:-12px}
     .wc-hud-bar__cell{padding:6px 8px 7px}
     .wc-hud-bar__cap{letter-spacing:.12em}
     .wc-hud-bar__val{font-size:15px}
@@ -1431,28 +1547,29 @@
               </div>
             </div>
             <div class="hud-stage__side">
-              <div class="wc-board">
-                <div class="wc-board__head">
-                  <span class="wc-board__title">玩家战绩</span>
-                  <span class="wc-board__timer">第 3 波</span>
+              <div class="board-shell" id="boardShell">
+                <div class="wc-board">
+                  <div class="wc-board__head">
+                    <span class="wc-board__title">玩家战绩</span>
+                  </div>
+                  <table>
+                    <colgroup>
+                      <col style="width:20%"><col style="width:27%"><col style="width:9%"><col style="width:15%"><col style="width:18%"><col style="width:11%">
+                    </colgroup>
+                    <thead>
+                      <tr><th>玩家</th><th>英雄</th><th>等级</th><th>战力</th><th>金币</th><th>杀敌</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td class="is-danger">红笔</td><td>剑圣</td><td>28</td><td>4,860</td><td class="is-gold">12,530</td><td>576</td></tr>
+                      <tr class="is-self"><td class="is-accent">白起</td><td class="is-accent">月之女祭司</td><td class="is-accent">22</td><td>3,910</td><td class="is-gold">8,640</td><td>45</td></tr>
+                      <tr><td>蓝月</td><td>恶魔猎手</td><td>19</td><td>2,740</td><td class="is-gold">4,210</td><td>128</td></tr>
+                      <tr><td class="is-dim">灰烬</td><td class="is-dim">山丘之王</td><td class="is-dim">12</td><td class="is-dim">1,050</td><td class="is-dim">0</td><td class="is-dim">0</td></tr>
+                    </tbody>
+                  </table>
                 </div>
-                <div class="wc-board__meta">
-                  <span>当前进展 <b>1290 / 1290</b></span>
-                </div>
-                <table>
-                  <colgroup>
-                    <col style="width:34%"><col style="width:15%"><col style="width:15%"><col style="width:15%"><col style="width:21%">
-                  </colgroup>
-                  <thead>
-                    <tr><th>玩家</th><th>击杀</th><th>死亡</th><th>摧毁</th><th>金币</th></tr>
-                  </thead>
-                  <tbody>
-                    <tr><td class="is-danger">红笔</td><td>576</td><td class="is-danger">2</td><td>12</td><td class="is-gold">12,530</td></tr>
-                    <tr class="is-self"><td class="is-accent">白起</td><td>35</td><td>0</td><td>0</td><td class="is-gold">8,640</td></tr>
-                    <tr><td>蓝月</td><td>128</td><td>1</td><td>3</td><td class="is-gold">4,210</td></tr>
-                    <tr><td class="is-dim">灰烬</td><td class="is-dim">0</td><td class="is-dim">0</td><td class="is-dim">0</td><td class="is-dim">0</td></tr>
-                  </tbody>
-                </table>
+                <button type="button" class="wc-board-tab" id="boardTab" aria-label="展开玩家战绩">
+                  <span>玩家战绩</span>
+                </button>
               </div>
               <div class="wc-dialog">
                 <div class="wc-dialog__head">使用一次天赋点</div>
@@ -1494,9 +1611,17 @@
           </div>
           <div class="layer">
             <span class="layer__swatch" style="background:linear-gradient(90deg,#9fe3b0,#ef8a72 55%,#f0d38a)"></span>
-            <div class="layer__text"><b>语义色分区</b><span>自身=翠绿、死亡=宝石红、击杀与金币=亮金，扫一眼就能读表</span></div>
+            <div class="layer__text"><b>语义色分区</b><span>自身=翠绿、离线=暗灰、金币=亮金，扫一眼就能读表</span></div>
           </div>
-          <p class="note"><b>布局规则：</b>顶部状态条分左中右三段（怪物数量 / 游戏时间+模式难度 / BOSS 倒计时），宽度占满、段间 1px 竖线分隔，数字使用等宽字形避免抖动；侧边面板固定右对齐、列宽不变。</p>
+          <div class="layer">
+            <span class="layer__swatch" style="background:linear-gradient(90deg,#b08c3a 0 25%,#4e4b42 25% 50%,#b08c3a 50% 75%,#4e4b42 75% 100%)"></span>
+            <div class="layer__text"><b>六列固定宽</b><span>玩家 20% / 英雄 27% / 等级 9% / 战力 15% / 金币 18% / 杀敌 11%，table-layout: fixed 防抖</span></div>
+          </div>
+          <div class="layer">
+            <span class="layer__swatch" style="background:linear-gradient(90deg,#3b3324,#211d13 55%,#0d0b07)"></span>
+            <div class="layer__text"><b>悬停展开 / 自动收起</b><span>与战功商店一致：鼠标离开 1 秒整板滑出右侧，只留竖标签；悬停或点击标签展开</span></div>
+          </div>
+          <p class="note"><b>布局规则：</b>顶部状态条分左中右三段（怪物数量 / 游戏时间+模式难度 / BOSS 倒计时），宽度占满；战绩面板固定右对齐，只保留六列数据，不显示波次与当前进展。</p>
         </div>
       </article>
 
@@ -1674,90 +1799,125 @@
         <div class="wc-window__bar">战功兑换</div>
         <div class="wc-window__body" style="padding:14px">
           <div class="hud-stage shop-stage">
-            <div class="wc-shop" id="shopPanel">
-              <div class="wc-shop__head">
-                <span class="wc-shop__title">战功商店</span>
-                <span class="wc-shop__wallet">战功 <b>3,260</b></span>
-              </div>
-              <div class="wc-shop__offers">
-                <button type="button" class="offer offer--epic" data-name="凌波微步" data-price="480">
-                  <span class="offer__figure">
-                    <span class="offer__icon">
+            <div class="shop-live">
+              <div class="wc-shop" id="shopPanel">
+                <div class="wc-shop__head">
+                  <span class="wc-shop__title">战功商店</span>
+                  <span class="wc-shop__wallet">杀敌: <b id="shopKill">3,260</b></span>
+                </div>
+                <div class="wc-shop__offers">
+                  <button type="button" class="shop-cell q5"
+                    data-name="赏金符" data-quality="传说" data-cost="720" data-base="800" data-off="9折"
+                    data-limit="2" data-left="1" data-desc="120 秒内 金币加成 +100%">
+                    <span class="shop-cell__icon">
                       <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
-                        <path d="M11 6h6v10l9 4c3 1.6 3 6 0 6H7v-7c0-3 3-5 4-8z"/>
-                        <path d="M6 22h20"/>
+                        <circle cx="16" cy="16" r="9"/>
+                        <path d="M16 9l2.4 5.2H11l2.6 5.4"/>
                       </svg>
+                      <span class="shop-cell__badge">9折</span>
+                      <span class="shop-cell__price"><i class="shop-cell__coin"></i>×720</span>
+                      <span class="shop-cell__empty">?</span>
                     </span>
-                    <span class="offer__badge">8折</span>
-                    <span class="offer__price">480</span>
-                  </span>
-                  <span class="offer__name">凌波微步</span>
-                </button>
-                <button type="button" class="offer offer--uncommon" data-name="回春药剂" data-price="280">
-                  <span class="offer__figure">
-                    <span class="offer__icon">
+                    <span class="shop-cell__name">赏金符</span>
+                  </button>
+                  <button type="button" class="shop-cell q1"
+                    data-name="回春药剂" data-quality="普通" data-cost="400" data-base="400" data-off=""
+                    data-limit="3" data-left="3" data-desc="60 秒内 每秒回复 2% 最大生命">
+                    <span class="shop-cell__icon">
                       <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
                         <path d="M12 4h8M13 4v8c0 2-6 5-6 11a9 9 0 0018 0c0-6-6-9-6-11V4"/>
                         <path d="M9 20h14"/>
                       </svg>
+                      <span class="shop-cell__price"><i class="shop-cell__coin"></i>×400</span>
+                      <span class="shop-cell__empty">?</span>
                     </span>
-                    <span class="offer__badge">7折</span>
-                    <span class="offer__price">280</span>
-                  </span>
-                  <span class="offer__name">回春药剂</span>
-                </button>
-                <button type="button" class="offer offer--rare" data-name="坐骑冲锋" data-price="500">
-                  <span class="offer__figure">
-                    <span class="offer__icon">
+                    <span class="shop-cell__name">回春药剂</span>
+                  </button>
+                  <button type="button" class="shop-cell q3"
+                    data-name="凌波微步·速度" data-quality="稀有" data-cost="400" data-base="500" data-off="8折"
+                    data-limit="5" data-left="5" data-desc="蛇行速度 +300 码/秒（当前 3000 → 下一级 3300）">
+                    <span class="shop-cell__icon">
+                      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                        <path d="M11 6h6v10l9 4c3 1.6 3 6 0 6H7v-7c0-3 3-5 4-8z"/>
+                        <path d="M6 22h20"/>
+                      </svg>
+                      <span class="shop-cell__badge">8折</span>
+                      <span class="shop-cell__price"><i class="shop-cell__coin"></i>×400</span>
+                      <span class="shop-cell__empty">?</span>
+                    </span>
+                    <span class="shop-cell__name">凌波微步·速度</span>
+                  </button>
+                  <button type="button" class="shop-cell q4"
+                    data-name="雷霆扑杀·持续" data-quality="史诗" data-cost="420" data-base="600" data-off="7折"
+                    data-limit="3" data-left="2" data-desc="持续时间 +5 秒（当前 30 秒 → 下一级 35 秒）">
+                    <span class="shop-cell__icon">
+                      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                        <path d="M18 3L8 18h7l-1 11 10-15h-7z"/>
+                      </svg>
+                      <span class="shop-cell__badge">7折</span>
+                      <span class="shop-cell__price"><i class="shop-cell__coin"></i>×420</span>
+                      <span class="shop-cell__empty">?</span>
+                    </span>
+                    <span class="shop-cell__name">雷霆扑杀·持续</span>
+                  </button>
+                  <button type="button" class="shop-cell q2"
+                    data-name="坐骑冲锋·速度" data-quality="优良" data-cost="500" data-base="500" data-off=""
+                    data-limit="5" data-left="4" data-desc="追击速度 +300 码/秒（当前 2000 → 下一级 2300）">
+                    <span class="shop-cell__icon">
                       <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
                         <path d="M7 8l7 8-7 8M17 8l7 8-7 8"/>
                         <path d="M26 16h1"/>
                       </svg>
+                      <span class="shop-cell__price"><i class="shop-cell__coin"></i>×500</span>
+                      <span class="shop-cell__empty">?</span>
                     </span>
-                    <span class="offer__badge">5折</span>
-                    <span class="offer__price">500</span>
-                  </span>
-                  <span class="offer__name">坐骑冲锋</span>
-                </button>
-                <button type="button" class="offer offer--rare" data-name="雷霆扑杀" data-price="360">
-                  <span class="offer__figure">
-                    <span class="offer__icon">
-                      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
-                        <path d="M18 3L8 18h7l-1 11 10-15h-7z"/>
-                      </svg>
-                    </span>
-                    <span class="offer__badge">9折</span>
-                    <span class="offer__price">360</span>
-                  </span>
-                  <span class="offer__name">雷霆扑杀</span>
-                </button>
-                <button type="button" class="offer offer--uncommon" data-name="疾风药剂" data-price="400">
-                  <span class="offer__figure">
-                    <span class="offer__icon">
-                      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
-                        <path d="M12 4h8M13 4v7c0 2-5 4-5 9a8 8 0 0016 0c0-5-5-7-5-9V4"/>
-                        <path d="M9 19c2-2 4 2 6 0s4 2 6 0"/>
-                      </svg>
-                    </span>
-                    <span class="offer__badge">8折</span>
-                    <span class="offer__price">400</span>
-                  </span>
-                  <span class="offer__name">疾风药剂</span>
-                </button>
-                <button type="button" class="offer offer--refresh" aria-label="刷新商品">
-                  <span class="offer__figure">
-                    <span class="offer__icon">
+                    <span class="shop-cell__name">坐骑冲锋·速度</span>
+                  </button>
+                  <button type="button" class="shop-cell shop-cell--refresh" aria-label="刷新商品">
+                    <span class="shop-cell__icon">
                       <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
                         <path d="M26 16a10 10 0 1 1-10-10c2.8 0 5.48 1.1 7.5 3.05"/>
                         <path d="M26 4v7h-7"/>
                       </svg>
                     </span>
-                    <span class="offer__badge">R</span>
-                  </span>
-                  <span class="offer__name">刷新</span>
-                </button>
+                    <span class="shop-cell__name">刷新</span>
+                  </button>
+                </div>
               </div>
-              <p class="wc-shop__foot" id="shopStatus" aria-live="polite">每次刷新随机 5 件 · 点击卡牌查看价格</p>
+              <div class="shop-tip" id="shopTip" aria-hidden="true"></div>
+            </div>
+
+            <div class="shop-states">
+              <div class="shop-state">
+                <span class="shop-state__label">已购满 · 绿色「已满」</span>
+                <div class="shop-cell q5 is-full">
+                  <span class="shop-cell__icon">
+                    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                      <circle cx="16" cy="16" r="9"/>
+                      <path d="M16 9l2.4 5.2H11l2.6 5.4"/>
+                    </svg>
+                    <span class="shop-cell__price">已满</span>
+                  </span>
+                  <span class="shop-cell__name">赏金符</span>
+                </div>
+              </div>
+              <div class="shop-state">
+                <span class="shop-state__label">购买后 · 清空为问号</span>
+                <div class="shop-cell q1 is-sold">
+                  <span class="shop-cell__icon">
+                    <span class="shop-cell__empty">?</span>
+                  </span>
+                  <span class="shop-cell__name">回春药剂</span>
+                </div>
+              </div>
+              <div class="shop-state">
+                <span class="shop-state__label">收起态 · 右侧竖标签</span>
+                <div class="shop-tab"><span>战功商店</span></div>
+              </div>
+              <div class="shop-state">
+                <span class="shop-state__label">首次上架 · 横条上方提示</span>
+                <div class="shop-notice">战功商店已开启！点击右侧刷新格可更换商品</div>
+              </div>
             </div>
           </div>
         </div>
@@ -1767,22 +1927,26 @@
         <div class="wc-window__bar">构造说明</div>
         <div class="wc-window__body">
           <div class="layer">
-            <span class="layer__swatch" style="background:linear-gradient(90deg,#b48cff,#74b9ff 34%,#8fe08a 67%,#f3c95e)"></span>
-            <div class="layer__text"><b>品质色边框</b><span>史诗紫 / 精良蓝 / 优秀绿 / 传说金，2px 描边 + 同色内辉光</span></div>
+            <span class="layer__swatch" style="background:linear-gradient(180deg,#4b4330,#2d281c 42%,#151208)"></span>
+            <div class="layer__text"><b>贴边常驻</b><span>实机 426×128px，贴屏幕右侧、技能栏上方 60px；开局隐藏，180 秒首次上架</span></div>
+          </div>
+          <div class="layer">
+            <span class="layer__swatch" style="background:linear-gradient(90deg,#ffffff,#00e000 26%,#3399ff 52%,#b040ff 76%,#ffcc00)"></span>
+            <div class="layer__text"><b>五档品质</b><span>名称与边框同色：普通白 / 优良绿 / 稀有蓝 / 史诗紫 / 传说金，边框 lv1–lv5 外扩 2px</span></div>
           </div>
           <div class="layer">
             <span class="layer__swatch" style="background:linear-gradient(180deg,#2a2410,#0c0a05)"></span>
-            <div class="layer__text"><b>折扣角标</b><span>左上悬浮不占格，8折 / 7折 / 9折 用金框黑底，一眼比价</span></div>
+            <div class="layer__text"><b>折扣角标</b><span>左上 30×25 黑底金框，橙色 9 / 8 / 7 / 6 / 5 折，悬浮不占格</span></div>
           </div>
           <div class="layer">
-            <span class="layer__swatch" style="background:linear-gradient(90deg,#ffe28f,#8a6c20)"></span>
-            <div class="layer__text"><b>价格铭文</b><span>右下等宽亮金 + 黑描边，直接压在图标上，不额外占一行</span></div>
+            <span class="layer__swatch" style="background:linear-gradient(90deg,#ffe9a8,#8a6c20)"></span>
+            <div class="layer__text"><b>价格铭文</b><span>右下「杀敌图标 + ×折后价」压在图标上，图标随位数左移，余额不足转红</span></div>
           </div>
           <div class="layer">
             <span class="layer__swatch" style="background:linear-gradient(135deg,#ffe9a8,#c9a63f 55%,#6d5416)"></span>
-            <div class="layer__text"><b>刷新卡</b><span>金框圆箭头 + 名称「刷新」，与商品同高；R 角标提示热键</span></div>
+            <div class="layer__text"><b>刷新与收起</b><span>刷新格与商品同尺寸、左侧多留 14px；鼠标离开 1 秒滑出屏幕，只留右侧竖标签</span></div>
           </div>
-          <p class="note"><b>密度控制：</b>商品卡整卡可点、不设底栏按钮；名称单独一条深色铭牌，长名自动省略，避免六列挤压时串行。</p>
+          <p class="note"><b>交互：</b>单击商品格即购买，按折后价扣杀敌数；购买后该格清空为暗色问号，直到下次刷新。首批前刷新格显示倒计时，之后「刷新 / 杀敌不足」；悬停提示含品质、原价折价、限购剩余与描述。</p>
         </div>
       </article>
 
@@ -1885,6 +2049,17 @@
     inset 0 0 0 1px #050403,
     inset 0 0 0 3px rgba(180,145,70,.18),
     inset 0 10px 26px rgba(0,0,0,.6);
+}
+
+/* 六列: 玩家/英雄/等级/战力/金币/杀敌, 固定列宽防抖 */
+.wc-board table{table-layout:fixed}
+.wc-board th:nth-child(-n+2),
+.wc-board td:nth-child(-n+2){text-align:left}
+
+/* 收起: 整板滑出右侧, 只留竖标签 */
+.board-shell.is-collapsed .wc-board{
+  transform:translateX(calc(100% + 24px));
+  opacity:0;
 }
 
 /* 顶部状态条：左中右三段等分，1px 竖线分隔，宽度占满 */
@@ -2027,51 +2202,42 @@
     inset 0 0 0 3px rgba(201,166,63,.28);
 }
 
-/* ---------- 战功商店 ---------- */
+/* ---------- 战功商店 · 商品条 ---------- */
 .wc-shop{
-  width:min(660px,100%);
-  border:2px solid #b08c3a;
-  background:linear-gradient(180deg,
-    rgba(14,14,10,.94),rgba(4,5,4,.96));
-  clip-path:polygon(12px 0,calc(100% - 12px) 0,
-    100% 12px,100% calc(100% - 12px),
-    calc(100% - 12px) 100%,12px 100%,
-    0 calc(100% - 12px),0 12px);
+  position:relative; width:426px; height:128px;
+  /* 青铜重框 + 石纹底: war3mapImage\ui_zg_bar_skin.tga */
+  background:url(ui_zg_bar_skin.tga) center/100% 100% no-repeat;
+  filter:drop-shadow(0 6px 16px rgba(0,0,0,.55));
 }
-.wc-shop__offers{
-  display:grid;
-  grid-template-columns:repeat(6,minmax(0,1fr));
-  gap:9px; padding:14px 14px 6px;
-}
-.offer{--q:#c2a03c;--q-glow:rgba(255,200,80,.25)}
-.offer__icon{
-  border:2px solid var(--q);
-  background:
-    radial-gradient(80% 80% at 50% 36%,
-      var(--q-glow),transparent 66%),
-    linear-gradient(180deg,#26221a,#0b0a07);
-  box-shadow:
-    inset 0 0 0 1px #000,
-    inset 0 4px 10px rgba(0,0,0,.8);
-}
-.offer--epic{--q:#b48cff}
-.offer--rare{--q:#74b9ff}
-.offer--uncommon{--q:#8fe08a}
-.offer--legend{--q:#f3c95e}
+.wc-shop__title{font-size:10px; color:#F3DFA6}
+.wc-shop__wallet{font-size:7px; color:#F0D38A}
 
-/* 折扣角标 / 价格铭文 */
-.offer__badge{
-  position:absolute; top:-5px; left:-5px; z-index:2;
-  padding:1px 5px; font-size:9.5px; font-weight:700;
-  color:#ffe9a8; border:1px solid #c9a63f;
-  background:linear-gradient(180deg,#2a2410,#0c0a05);
+/* 5 商品格 + 刷新格: 60px 方框, 间距 7px, 刷新左侧多留 14px */
+.shop-cell{flex:0 0 60px; width:60px}
+.shop-cell__icon{width:60px; height:60px}
+.shop-cell__name{height:18px; font-size:7px}
+
+/* 品质: 名称与边框同色(边框 ui_zg_frame_lv1..lv5, 外扩 2px) */
+.q1{--q:#FFFFFF} .q2{--q:#00E000}
+.q3{--q:#3399FF} .q4{--q:#B040FF}
+.q5{--q:#FFCC00}
+
+/* 折扣角标 30×25 / 价格铭文: 杀敌图标 + ×折后价 */
+.shop-cell__badge{
+  position:absolute; top:0; left:0;
+  width:30px; height:25px; font-size:8px;
+  color:#FFA500; background:#0c0a05;
+  border:1px solid #c9a63f;
 }
-.offer__price{
-  position:absolute; right:5px; bottom:3px; z-index:2;
-  font-family:Consolas,monospace;
-  font-size:11px; font-weight:700;
-  color:#ffe28f; text-shadow:0 1px 2px #000;
-}</code></pre>
+.shop-cell__price{
+  position:absolute; right:1px; bottom:0;
+  font:700 8px Consolas,monospace;
+  color:#FFE500; text-shadow:0 1px 2px #000;
+}
+
+/* 购买后该格清空 / 限购已满 */
+.shop-cell.is-sold .shop-cell__icon{opacity:.35}
+.shop-cell.is-full .shop-cell__price{color:#6DFF1E}</code></pre>
         </div>
       </article>
 
@@ -2204,32 +2370,143 @@
   (function(){
     var shop = document.getElementById('shopPanel');
     if(!shop){ return; }
-    var status = document.getElementById('shopStatus');
-    var offers = Array.prototype.slice.call(shop.querySelectorAll('.offer:not(.offer--refresh)'));
-    var hintText = '每次刷新随机 5 件 · 点击卡牌查看价格';
+    var killEl = document.getElementById('shopKill');
+    var kill = 3260;
+    var refreshCost = 200;
+    var cells = Array.prototype.slice.call(shop.querySelectorAll('.shop-cell:not(.shop-cell--refresh)'));
+    var refresh = shop.querySelector('.shop-cell--refresh');
+    var tip = document.getElementById('shopTip');
+    var host = shop.parentNode;
 
-    offers.forEach(function(offer){
-      offer.addEventListener('click', function(){
-        var wasSelected = offer.classList.contains('is-selected');
-        offers.forEach(function(o){ o.classList.remove('is-selected'); });
-        if(!wasSelected){
-          offer.classList.add('is-selected');
-          status.textContent = '已选中：' + offer.getAttribute('data-name') + ' · ' + offer.getAttribute('data-price') + ' 战功';
-        }else{
-          status.textContent = hintText;
-        }
+    cells.forEach(function(c){
+      c.setAttribute('data-left-max', c.getAttribute('data-left'));
+    });
+
+    function fmt(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+
+    function syncKill(){
+      if(killEl){ killEl.textContent = fmt(kill); }
+      if(refresh){
+        var poor = kill < refreshCost;
+        refresh.classList.toggle('is-poor', poor);
+        var label = refresh.querySelector('.shop-cell__name');
+        if(label){ label.textContent = poor ? '杀敌不足' : '刷新'; }
+      }
+    }
+
+    function hideTip(){
+      if(!tip){ return; }
+      tip.classList.remove('is-show');
+      tip.setAttribute('aria-hidden','true');
+    }
+
+    function showTip(cell){
+      if(!tip){ return; }
+      var name = cell.getAttribute('data-name') || '';
+      var qname = cell.getAttribute('data-quality') || '';
+      var cost = parseInt(cell.getAttribute('data-cost'),10) || 0;
+      var base = parseInt(cell.getAttribute('data-base'),10) || cost;
+      var off = cell.getAttribute('data-off') || '';
+      var limit = parseInt(cell.getAttribute('data-limit'),10) || 0;
+      var left = parseInt(cell.getAttribute('data-left'),10) || 0;
+      var desc = cell.getAttribute('data-desc') || '';
+      var q = getComputedStyle(cell).getPropertyValue('--q').trim() || '#ffcc00';
+      var lines = [];
+      lines.push('<b style="color:' + q + '">' + name + '</b>');
+      lines.push('<span style="color:' + q + '">品质：' + qname + '</span>');
+      if(off){
+        lines.push('价格：<em>' + cost + '</em> 杀敌数（原价 ' + base + '，' + off + '）');
+      }else{
+        lines.push('价格：<em>' + cost + '</em> 杀敌数');
+      }
+      lines.push('限购 ' + limit + '，剩余 ' + left);
+      lines.push(desc);
+      if(left <= 0){
+        lines.push('<span class="is-warn">本局已购满</span>');
+      }else if(kill < cost){
+        lines.push('<span class="is-warn">杀敌数不足</span>');
+      }
+      tip.innerHTML = lines.join('<br>');
+      var half = (tip.offsetWidth || 278) / 2;
+      var hostRect = host.getBoundingClientRect();
+      var cellRect = cell.getBoundingClientRect();
+      var center = cellRect.left + cellRect.width / 2 - hostRect.left;
+      center = Math.max(half, Math.min(host.clientWidth - half, center));
+      tip.style.left = center + 'px';
+      tip.classList.add('is-show');
+      tip.setAttribute('aria-hidden','false');
+    }
+
+    cells.forEach(function(cell){
+      cell.addEventListener('mouseenter', function(){
+        if(!cell.classList.contains('is-sold')){ showTip(cell); }
+      });
+      cell.addEventListener('mouseleave', hideTip);
+      cell.addEventListener('focus', function(){
+        if(!cell.classList.contains('is-sold')){ showTip(cell); }
+      });
+      cell.addEventListener('blur', hideTip);
+      cell.addEventListener('click', function(){
+        if(cell.classList.contains('is-sold')){ return; }
+        var cost = parseInt(cell.getAttribute('data-cost'),10) || 0;
+        var left = parseInt(cell.getAttribute('data-left'),10) || 0;
+        if(left <= 0 || kill < cost){ showTip(cell); return; }
+        kill -= cost;
+        cell.setAttribute('data-left','0');
+        cell.classList.add('is-sold');
+        hideTip();
+        syncKill();
       });
     });
 
-    var refresh = shop.querySelector('.offer--refresh');
     if(refresh){
       refresh.addEventListener('click', function(){
-        offers.forEach(function(o){ o.classList.remove('is-selected'); });
-        status.textContent = '商品已刷新：5 件新货已上架。';
+        if(kill < refreshCost){ return; }
+        kill -= refreshCost;
+        cells.forEach(function(c){
+          c.classList.remove('is-sold');
+          c.setAttribute('data-left', c.getAttribute('data-left-max'));
+        });
+        hideTip();
+        syncKill();
         shop.classList.remove('is-rolling');
         void shop.offsetWidth;
         shop.classList.add('is-rolling');
         setTimeout(function(){ shop.classList.remove('is-rolling'); }, 520);
+      });
+    }
+
+    syncKill();
+  })();
+
+  (function(){
+    var shell = document.getElementById('boardShell');
+    if(!shell){ return; }
+    var tab = document.getElementById('boardTab');
+    var timer = 0;
+
+    function open(){
+      if(timer){ clearTimeout(timer); timer = 0; }
+      shell.classList.remove('is-collapsed');
+    }
+    function schedule(){
+      if(timer){ clearTimeout(timer); }
+      timer = setTimeout(function(){
+        timer = 0;
+        shell.classList.add('is-collapsed');
+      }, 1000);
+    }
+
+    shell.addEventListener('mouseenter', open);
+    shell.addEventListener('mouseleave', schedule);
+    shell.addEventListener('focusin', open);
+    shell.addEventListener('focusout', function(e){
+      if(!shell.contains(e.relatedTarget)){ schedule(); }
+    });
+    if(tab){
+      tab.addEventListener('click', function(e){
+        e.preventDefault();
+        open();
       });
     }
   })();
