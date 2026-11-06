@@ -933,7 +933,7 @@
      ============================================================ */
   .panel--hero,.panel--relic{--w:960px}
 
-  .draft__intro{position:relative;padding:20px 20px 2px;text-align:center}
+  .draft__intro{position:relative;padding:14px 20px 2px;text-align:center}
   .draft__kicker{
     display:inline-flex;align-items:center;gap:10px;
     font-size:10px;letter-spacing:.26em;color:#94886c;
@@ -943,16 +943,6 @@
     background:linear-gradient(90deg,transparent,rgba(201,170,80,.6));
   }
   .draft__kicker::after{transform:scaleX(-1)}
-  .draft__title{
-    margin:10px 0 0;font-size:21px;font-weight:700;letter-spacing:.26em;
-    color:#f4dfa6;
-    text-shadow:0 1px 0 #000,0 0 18px rgba(255,210,120,.3);
-  }
-  .draft__sub{
-    margin:8px auto 0;max-width:640px;
-    font-size:11.5px;line-height:1.9;letter-spacing:.04em;color:#9c9075;
-  }
-  .draft__sub b{color:#e8d3a0;font-weight:700}
 
   .hero-row{
     position:relative;
@@ -974,14 +964,29 @@
     background:linear-gradient(180deg,#1e1b14 0%,#12110c 55%,#080705 100%);
     clip-path:polygon(16px 0,calc(100% - 16px) 0,100% 16px,100% calc(100% - 16px),calc(100% - 16px) 100%,16px 100%,0 calc(100% - 16px),0 16px);
     filter:drop-shadow(0 8px 16px rgba(0,0,0,.55));
-    transition:transform .22s ease,filter .22s ease,border-color .22s ease;
+    transition:transform .22s ease,filter .22s ease,border-color .22s ease,box-shadow .22s ease;
     -webkit-tap-highlight-color:transparent;
   }
   .hero-card--blade{--hc:#6fbf7e;--hc-soft:rgba(111,191,126,.2);--hc-text:#c9f6b8}
   .hero-card--arcane{--hc:#a879d8;--hc-soft:rgba(168,121,216,.22);--hc-text:#e4c6ff}
   .hero-card:hover{
-    transform:translateY(-6px);
-    filter:drop-shadow(0 14px 26px rgba(0,0,0,.55)) drop-shadow(0 0 20px var(--hc-soft));
+    transform:translateY(-10px) scale(1.015);
+    border-color:#fff3c9;
+    box-shadow:inset 0 0 0 3px var(--hc),inset 0 0 26px rgba(255,228,160,.14);
+    filter:drop-shadow(0 16px 30px rgba(0,0,0,.62)) drop-shadow(0 0 28px var(--hc-soft));
+  }
+  .hero-card::after{
+    content:"";position:absolute;inset:0;z-index:4;pointer-events:none;
+    background:linear-gradient(105deg,transparent 22%,rgba(255,242,210,.02) 34%,rgba(255,242,210,.06) 43%,rgba(255,250,235,.13) 50%,rgba(255,242,210,.06) 57%,rgba(255,242,210,.02) 66%,transparent 78%);
+    transform:translateX(-130%);
+    opacity:0;
+  }
+  .hero-card:hover::after{animation:cardSweep .85s cubic-bezier(.35,0,.25,1) .04s}
+  @keyframes cardSweep{
+    0%{opacity:0;transform:translateX(-130%)}
+    8%{opacity:1}
+    78%{opacity:1}
+    100%{opacity:0;transform:translateX(130%)}
   }
   .hero-card:focus-visible{outline:2px solid #ffd76a;outline-offset:4px}
   .hero-card__caption{
@@ -1070,36 +1075,6 @@
     display:block;min-height:42px;
     font-size:11px;line-height:1.85;letter-spacing:.02em;color:#a99d82;
   }
-  .hero-card__stats{display:flex;gap:8px;margin-top:12px}
-  .hero-card__stat{
-    flex:1;padding:6px 8px;
-    background:rgba(0,0,0,.3);
-    border:1px solid rgba(201,170,80,.16);
-  }
-  .hero-card__stat b{
-    display:block;
-    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
-    font-size:13px;line-height:1.2;color:var(--hc-text);
-  }
-  .hero-card__stat span{display:block;margin-top:2px;font-size:9.5px;letter-spacing:.06em;color:#8d8165}
-  .hero-card__pick{
-    display:flex;align-items:center;justify-content:center;gap:6px;
-    height:32px;margin-top:12px;
-    font-size:10.5px;font-weight:700;letter-spacing:.2em;color:#9a8e72;
-    border:1px solid rgba(201,170,80,.28);
-    background:rgba(255,235,170,.03);
-    transition:color .2s,border-color .2s,box-shadow .2s,background .2s;
-  }
-  .hero-card:hover .hero-card__pick{
-    color:#fff0c4;border-color:var(--hc);
-    background:linear-gradient(180deg,rgba(255,220,130,.14),rgba(255,200,90,.04));
-    box-shadow:0 0 14px var(--hc-soft);
-  }
-  .hero-card.is-picked .hero-card__pick{
-    color:#c9ffe2;border-color:#5cb98a;
-    background:linear-gradient(180deg,rgba(70,220,150,.14),rgba(20,90,60,.06));
-  }
-  .hero-card.is-picked .hero-card__pick::after{content:"✓";font-size:12px;color:#9fe3b0}
 
   .draft__foot{
     display:flex;align-items:center;justify-content:space-between;gap:16px;
@@ -1127,16 +1102,25 @@
     background:linear-gradient(180deg,#1d1a14,#0a0906) padding-box,var(--rq,var(--q5)) border-box;
     clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px),0 14px);
     filter:drop-shadow(0 8px 18px rgba(0,0,0,.55));
-    transition:transform .22s ease,filter .22s ease;
+    transition:transform .22s ease,filter .22s ease,box-shadow .22s ease;
     -webkit-tap-highlight-color:transparent;
   }
   .relic-card[data-q="q3"]{--rq:var(--q3);--rq-text:#bfe3ff;--rq-soft:rgba(110,190,255,.22)}
   .relic-card[data-q="q4"]{--rq:var(--q4);--rq-text:#e4c6ff;--rq-soft:rgba(190,120,255,.22)}
   .relic-card[data-q="q5"]{--rq:var(--q5);--rq-text:#f3dc9c;--rq-soft:rgba(255,210,120,.22)}
   .relic-card:hover{
-    transform:translateY(-6px);
-    filter:drop-shadow(0 14px 26px rgba(0,0,0,.55)) drop-shadow(0 0 20px var(--rq-soft));
+    transform:translateY(-10px) scale(1.015);
+    border-width:3px;
+    box-shadow:inset 0 0 0 1px var(--rq-text),inset 0 0 26px rgba(255,228,160,.14);
+    filter:drop-shadow(0 16px 30px rgba(0,0,0,.62)) drop-shadow(0 0 28px var(--rq-soft));
   }
+  .relic-card::after{
+    content:"";position:absolute;inset:0;z-index:4;pointer-events:none;
+    background:linear-gradient(105deg,transparent 22%,rgba(255,242,210,.02) 34%,rgba(255,242,210,.06) 43%,rgba(255,250,235,.13) 50%,rgba(255,242,210,.06) 57%,rgba(255,242,210,.02) 66%,transparent 78%);
+    transform:translateX(-130%);
+    opacity:0;
+  }
+  .relic-card:hover::after{animation:cardSweep .85s cubic-bezier(.35,0,.25,1) .04s}
   .relic-card:focus-visible{outline:2px solid #ffd76a;outline-offset:4px}
   .relic-card.is-picked{
     border-color:#8fe0b0;
@@ -1188,29 +1172,10 @@
     font-variant-numeric:tabular-nums;
   }
   .relic-card__flavor{
-    display:block;margin:4px 18px 0;padding-top:10px;
+    display:block;margin:4px 18px 18px;padding-top:10px;
     font-size:10.5px;line-height:1.85;color:#7f7561;font-style:italic;
     border-top:1px solid rgba(255,255,255,.05);
   }
-  .relic-card__base{display:block;margin-top:14px;padding:0 14px 14px}
-  .relic-card__pick{
-    display:flex;align-items:center;justify-content:center;gap:6px;
-    height:34px;
-    font-size:10.5px;font-weight:700;letter-spacing:.2em;color:#9a8e72;
-    border:1px solid rgba(201,170,80,.28);
-    background:rgba(255,235,170,.03);
-    transition:color .2s,border-color .2s,box-shadow .2s,background .2s;
-  }
-  .relic-card:hover .relic-card__pick{
-    color:#fff0c4;border-color:var(--rq);
-    background:linear-gradient(180deg,rgba(255,220,130,.12),rgba(255,200,90,.03));
-    box-shadow:0 0 14px var(--rq-soft);
-  }
-  .relic-card.is-picked .relic-card__pick{
-    color:#c9ffe2;border-color:#5cb98a;
-    background:linear-gradient(180deg,rgba(70,220,150,.14),rgba(20,90,60,.06));
-  }
-  .relic-card.is-picked .relic-card__pick::after{content:"✓";font-size:12px;color:#9fe3b0}
 
   .relic__actions{
     display:flex;align-items:center;justify-content:space-between;gap:16px;
@@ -1868,9 +1833,7 @@
         </div>
         <div class="panel__body">
           <div class="draft__intro">
-            <span class="draft__kicker">AWAKENING · 第 3 次觉醒</span>
-            <h4 class="draft__title">选择你的化身</h4>
-            <p class="draft__sub">三张命运牌面只有一张能与你同行 · 点击卡片确认选择</p>
+            <span class="draft__kicker">AWAKENING · 第 3 次觉醒 · 点击卡片确认选择</span>
           </div>
           <div class="hero-row">
             <button class="hero-card hero-card--blade" type="button">
@@ -1890,11 +1853,6 @@
                   <span class="hero-skill"><span class="hero-skill__icon"><svg class="glyph" aria-hidden="true"><use href="#i-skull"/></svg></span><span class="hero-skill__name">影分身</span></span>
                   <span class="hero-skill"><span class="hero-skill__icon"><svg class="glyph" aria-hidden="true"><use href="#i-boot"/></svg></span><span class="hero-skill__name">疾风步</span></span>
                 </span>
-                <span class="hero-card__stats">
-                  <span class="hero-card__stat"><b>+15%</b><span>暴击率</span></span>
-                  <span class="hero-card__stat"><b>+8%</b><span>移动速度</span></span>
-                </span>
-                <span class="hero-card__pick">选择此化身</span>
               </span>
             </button>
             <button class="hero-card" type="button">
@@ -1914,11 +1872,6 @@
                   <span class="hero-skill"><span class="hero-skill__icon"><svg class="glyph" aria-hidden="true"><use href="#i-shield"/></svg></span><span class="hero-skill__name">大地壁垒</span></span>
                   <span class="hero-skill"><span class="hero-skill__icon"><svg class="glyph" aria-hidden="true"><use href="#i-horn"/></svg></span><span class="hero-skill__name">战吼</span></span>
                 </span>
-                <span class="hero-card__stats">
-                  <span class="hero-card__stat"><b>+18%</b><span>护甲</span></span>
-                  <span class="hero-card__stat"><b>+12%</b><span>生命上限</span></span>
-                </span>
-                <span class="hero-card__pick">选择此化身</span>
               </span>
             </button>
             <button class="hero-card hero-card--arcane" type="button">
@@ -1938,18 +1891,13 @@
                   <span class="hero-skill"><span class="hero-skill__icon"><svg class="glyph" aria-hidden="true"><use href="#i-orb"/></svg></span><span class="hero-skill__name">时空冻结</span></span>
                   <span class="hero-skill"><span class="hero-skill__icon"><svg class="glyph" aria-hidden="true"><use href="#i-flame"/></svg></span><span class="hero-skill__name">陨星</span></span>
                 </span>
-                <span class="hero-card__stats">
-                  <span class="hero-card__stat"><b>+20%</b><span>法术强度</span></span>
-                  <span class="hero-card__stat"><b>-10%</b><span>冷却时间</span></span>
-                </span>
-                <span class="hero-card__pick">选择此化身</span>
               </span>
             </button>
           </div>
         </div>
         <div class="draft__foot">
-          <span>点击卡片确认选择 · 本局仅可觉醒一次</span>
-          <span>剩余重置 <b>2</b> 次</span>
+          <span>点击卡片确认选择 · 本局可多次觉醒</span>
+          <span>选定后不可重置</span>
         </div>
       </div>
       <span class="stage__tag">3 CARDS · ONE CHOICE</span>
@@ -1957,7 +1905,7 @@
     <ul class="chips">
       <li>三张等大牌面</li>
       <li>技能组 · 三格预览</li>
-      <li>角色定位 / 属性</li>
+      <li>角色定位角标</li>
       <li>点击即确认 · 绿框选中</li>
     </ul>
   </section>
@@ -1979,9 +1927,7 @@
         </div>
         <div class="panel__body">
           <div class="draft__intro">
-            <span class="draft__kicker">RELIC OFFERING · 深渊献礼</span>
-            <h4 class="draft__title">选择一件遗物</h4>
-            <p class="draft__sub">三件遗物只能带走一件 · 点击立即生效，刷新可重新抽取</p>
+            <span class="draft__kicker">RELIC OFFERING · 深渊献礼 · 点击立即生效</span>
           </div>
           <div class="relic-row">
             <button class="relic-card" type="button" data-q="q5">
@@ -1998,7 +1944,6 @@
                 <span class="relic-effect"><span>击杀回复</span><b>1% 生命</b></span>
               </span>
               <span class="relic-card__flavor">「从深渊领主的獠牙上剥落的猩红结晶，仍在低语。」</span>
-              <span class="relic-card__base"><span class="relic-card__pick">拾取遗物</span></span>
             </button>
             <button class="relic-card" type="button" data-q="q4">
               <span class="relic-card__head">
@@ -2014,7 +1959,6 @@
                 <span class="relic-effect"><span>星辉充能</span><b>每 10 秒 1 层</b></span>
               </span>
               <span class="relic-card__flavor">「折射星光的水晶，凝视过久会看见尚未发生的战斗。」</span>
-              <span class="relic-card__base"><span class="relic-card__pick">拾取遗物</span></span>
             </button>
             <button class="relic-card" type="button" data-q="q4">
               <span class="relic-card__head">
@@ -2030,14 +1974,12 @@
                 <span class="relic-effect"><span>濒死护盾</span><b>生命 &lt; 30% 触发</b></span>
               </span>
               <span class="relic-card__flavor">「远古守门人的残盾，仍记得它收到的最后一道命令。」</span>
-              <span class="relic-card__base"><span class="relic-card__pick">拾取遗物</span></span>
             </button>
           </div>
         </div>
         <div class="relic__actions">
-          <span class="foot-note">剩余刷新 <b>2</b> 次 · 放弃后本次献礼结束</span>
+          <span class="foot-note">剩余刷新 <b>2</b> 次</span>
           <div class="relic__btns">
-            <button class="btn btn--ghost btn--sm" type="button"><span>放弃</span></button>
             <button class="btn btn--sm" type="button"><span>刷新 · 剩余 2</span></button>
           </div>
         </div>
@@ -2048,7 +1990,7 @@
       <li>遗物三择其一</li>
       <li>品质熔边 · 传说 / 史诗</li>
       <li>效果逐条列出</li>
-      <li>刷新 / 放弃</li>
+      <li>可刷新卡池</li>
     </ul>
   </section>
 
