@@ -933,6 +933,29 @@
      ============================================================ */
   .panel--hero,.panel--relic{--w:960px}
 
+  /* 与游戏内实现一致: 宝物面板无底色, 标题/副题直接浮于场景之上, 无关闭按钮 */
+  .panel--relic{background:none;border:0;clip-path:none;box-shadow:none;filter:none}
+  .panel--relic .panel__head{height:40px;background:none;border-bottom:0;box-shadow:none}
+  .panel--relic .draft__intro{padding:2px 20px 0}
+
+  /* 英雄三选一: 与游戏一致 —— 无面板底/关闭键, 标题+副题浮于场景, 卡片统一金色 */
+  .panel--hero{background:none;border:0;clip-path:none;box-shadow:none;filter:none}
+  .panel--hero .panel__head{height:40px;background:none;border-bottom:0;box-shadow:none}
+  .panel--hero .panel__close{display:none}
+  .panel--hero .draft__intro{padding:2px 20px 0}
+  .hero-card--blade,.hero-card--arcane{--hc:#c9a63f;--hc-soft:rgba(201,166,63,.2);--hc-text:#ffe9a8}
+  .hero-card:hover{transform:translateY(-6px);border-color:#fff3c9;box-shadow:inset 0 0 0 3px var(--hc),inset 0 0 26px rgba(255,228,160,.14);filter:drop-shadow(0 12px 22px rgba(0,0,0,.62))}
+  .draft__keep{width:max-content;margin:10px auto 0;padding:6px 14px 8px;text-align:center;background:linear-gradient(180deg,#26211a,#14110c);border:1px solid rgba(201,166,63,.45)}
+  .draft__keep-title{font-size:11px;letter-spacing:.16em;color:var(--gold-soft);margin-bottom:6px}
+  .draft__keep-row{display:flex;gap:10px;justify-content:center}
+  .draft__keep-cell{display:flex;flex-direction:column;align-items:center;gap:3px;width:56px}
+  .draft__keep-icon{display:grid;place-items:center;width:30px;height:30px;border:2px solid var(--gold);background:#14110d;overflow:hidden}
+  .draft__keep-icon img{width:100%;height:100%;object-fit:cover}
+  .draft__keep-icon--cancel{color:#c66;font-size:15px;background:#1a1510}
+  .draft__keep-name{font-size:9px;color:var(--ink-dim);letter-spacing:.05em}
+  .draft__actions{display:inline-flex;gap:10px}
+  .panel--hero .draft__foot{justify-content:center}
+
   .draft__intro{position:relative;padding:14px 20px 2px;text-align:center}
   .draft__kicker{
     display:inline-flex;align-items:center;gap:10px;
@@ -1096,23 +1119,22 @@
     padding:22px 16px 8px;
   }
   .relic-card{
+    --rq:#c9a63f;--rq-text:#f3dc9c;--rq-soft:rgba(255,210,120,.22);
     position:relative;width:262px;flex:none;padding:0;
+    display:flex;flex-direction:column;
     font-family:inherit;text-align:left;color:inherit;cursor:pointer;
-    border:2px solid transparent;
-    background:linear-gradient(180deg,#1d1a14,#0a0906) padding-box,var(--rq,var(--q5)) border-box;
+    border:2px solid var(--rq);
+    background:linear-gradient(180deg,#1d1a14,#0a0906);
     clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px),0 14px);
     filter:drop-shadow(0 8px 18px rgba(0,0,0,.55));
-    transition:transform .22s ease,filter .22s ease,box-shadow .22s ease;
+    transition:transform .22s ease,filter .22s ease,border-color .22s ease,box-shadow .22s ease;
     -webkit-tap-highlight-color:transparent;
   }
-  .relic-card[data-q="q3"]{--rq:var(--q3);--rq-text:#bfe3ff;--rq-soft:rgba(110,190,255,.22)}
-  .relic-card[data-q="q4"]{--rq:var(--q4);--rq-text:#e4c6ff;--rq-soft:rgba(190,120,255,.22)}
-  .relic-card[data-q="q5"]{--rq:var(--q5);--rq-text:#f3dc9c;--rq-soft:rgba(255,210,120,.22)}
   .relic-card:hover{
-    transform:translateY(-10px) scale(1.015);
-    border-width:3px;
-    box-shadow:inset 0 0 0 1px var(--rq-text),inset 0 0 26px rgba(255,228,160,.14);
-    filter:drop-shadow(0 16px 30px rgba(0,0,0,.62)) drop-shadow(0 0 28px var(--rq-soft));
+    transform:translateY(-6px);
+    border-color:#ffe9a8;
+    box-shadow:inset 0 0 0 1px rgba(255,228,160,.3),inset 0 0 26px rgba(255,228,160,.12);
+    filter:drop-shadow(0 12px 24px rgba(0,0,0,.6)) drop-shadow(0 0 20px var(--rq-soft));
   }
   .relic-card::after{
     content:"";position:absolute;inset:0;z-index:4;pointer-events:none;
@@ -1122,20 +1144,16 @@
   }
   .relic-card:hover::after{animation:cardSweep .85s cubic-bezier(.35,0,.25,1) .04s}
   .relic-card:focus-visible{outline:2px solid #ffd76a;outline-offset:4px}
-  .relic-card.is-picked{
-    border-color:#8fe0b0;
-    filter:drop-shadow(0 10px 22px rgba(0,0,0,.55)) drop-shadow(0 0 24px rgba(90,230,160,.4));
-  }
   .relic-card__head{
     display:flex;flex-direction:column;align-items:center;
-    padding:20px 16px 14px;
+    padding:20px 16px 12px;
     background:radial-gradient(65% 55% at 50% 12%,var(--rq-soft),transparent 70%);
   }
   .relic-card__seal{
     display:grid;place-items:center;
     width:76px;height:76px;margin-bottom:12px;
-    border:2px solid transparent;
-    background:linear-gradient(180deg,#242016,#0a0906) padding-box,var(--rq) border-box;
+    border:2px solid var(--rq);
+    background:linear-gradient(180deg,#242016,#0a0906);
     clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px);
     box-shadow:inset 0 0 18px rgba(0,0,0,.85);
   }
@@ -1143,51 +1161,61 @@
     width:38px;height:38px;color:var(--rq-text);
     filter:drop-shadow(0 0 12px var(--rq-soft)) drop-shadow(0 2px 3px rgba(0,0,0,.85));
   }
-  .relic-card__grade{
-    padding:3px 10px;margin-bottom:9px;
-    font-size:9.5px;letter-spacing:.18em;color:var(--rq-text);
+  .relic-card__tag{
+    padding:3px 12px 3px 14px;margin-bottom:9px;
+    font-size:9.5px;letter-spacing:.3em;color:var(--rq-text);
     background:rgba(0,0,0,.32);
-    border:1px solid rgba(255,255,255,.1);
+    border:1px solid rgba(201,170,80,.35);
   }
   .relic-card__name{
-    font-size:18px;font-weight:700;letter-spacing:.14em;color:var(--rq-text);
+    font-size:17px;font-weight:700;letter-spacing:.14em;color:var(--rq-text);
     text-shadow:0 1px 0 #000,0 0 14px var(--rq-soft);
   }
-  .relic-card__type{margin-top:5px;font-size:10px;letter-spacing:.2em;color:#8f836a}
   .relic-card__rule{
     display:block;height:1px;margin:0 18px;opacity:.55;
     background:linear-gradient(90deg,transparent,var(--rq),transparent);
   }
-  .relic-card__effects{display:block;padding:10px 18px 4px}
+  .relic-card__effects{display:block;flex:1;padding:8px 20px 4px}
   .relic-effect{
-    display:flex;align-items:baseline;justify-content:space-between;gap:10px;
-    padding:7px 0;
-    font-size:11px;color:#a99d82;
-    border-bottom:1px dashed rgba(201,170,80,.14);
+    display:flex;align-items:center;gap:8px;
+    padding:5px 0;
+    font-size:11.5px;color:#b8ad94;
   }
-  .relic-effect:last-child{border-bottom:0}
+  .relic-effect i{
+    width:6px;height:6px;flex:none;transform:rotate(45deg);
+    background:linear-gradient(135deg,#ffe9a8,#c9a63f);
+    box-shadow:0 0 6px rgba(255,210,120,.4);
+  }
   .relic-effect b{
     font-family:Consolas,"Cascadia Mono","Courier New",monospace;
-    font-size:12.5px;color:var(--rq-text);
+    font-size:12px;color:#ffd76a;font-weight:700;
     font-variant-numeric:tabular-nums;
   }
-  .relic-card__flavor{
-    display:block;margin:4px 18px 18px;padding-top:10px;
-    font-size:10.5px;line-height:1.85;color:#7f7561;font-style:italic;
-    border-top:1px solid rgba(255,255,255,.05);
+  .relic-card__hint{
+    display:block;padding:8px 0 14px;text-align:center;
+    font-size:10px;letter-spacing:.42em;color:#8d7d55;
   }
 
   .relic__actions{
-    display:flex;align-items:center;justify-content:space-between;gap:16px;
-    margin:6px 20px 16px;padding-top:13px;
-    border-top:1px solid rgba(201,170,80,.18);
+    display:flex;align-items:center;justify-content:flex-end;
+    margin:4px 20px 14px;
   }
-  .relic__actions .foot-note{font-size:11.5px;color:#948a70}
-  .relic__actions .foot-note b{color:#f0d38a;font-family:Consolas,"Cascadia Mono","Courier New",monospace}
-  .relic__btns{display:flex;gap:10px}
 
   /* ============================================================
-     09 已获取 · 收藏账簿
+     09 天赋三选一 · 星辉启迪(结构与宝物一致, 主色换星辉青)
+     ============================================================ */
+  .panel--talent .panel__title{color:#c8ecff;text-shadow:0 1px 0 #000,0 0 16px rgba(110,200,240,.4)}
+  .relic-card--talent{--rq:#5fb7d4;--rq-text:#c8ecff;--rq-soft:rgba(110,200,240,.22)}
+  .relic-card--talent:hover{border-color:#d8f4ff}
+  .relic-card--talent .relic-card__tag{border-color:rgba(110,200,240,.35)}
+  .relic-card--talent .relic-effect i{
+    background:linear-gradient(135deg,#d8f4ff,#5fb7d4);
+    box-shadow:0 0 6px rgba(110,200,240,.4);
+  }
+  .relic-card--talent .relic-effect b{color:#8fd8f4}
+
+  /* ============================================================
+     10 已获取 · 收藏账簿
      ============================================================ */
   .panel--acq{--w:760px}
   .acq{display:flex;gap:16px;align-items:flex-start}
@@ -1213,7 +1241,7 @@
   .grid--acq .cell__name{font-size:9.5px}
 
   /* ============================================================
-     10 卡片合成
+     11 卡片合成
      ============================================================ */
   .panel--synth{--w:765px}
   .panel__back{position:absolute;left:13px;top:50%;margin-top:-17px}
@@ -1476,8 +1504,9 @@
     <a href="#codex"><span>06</span>图鉴</a>
     <a href="#hero"><span>07</span>英雄</a>
     <a href="#relic"><span>08</span>宝物</a>
-    <a href="#acquired"><span>09</span>已获取</a>
-    <a href="#synth"><span>10</span>卡片合成</a>
+    <a href="#talent"><span>09</span>天赋</a>
+    <a href="#acquired"><span>10</span>已获取</a>
+    <a href="#synth"><span>11</span>卡片合成</a>
   </nav>
 
   <!-- ==================== 01 存档 ==================== -->
@@ -1829,11 +1858,10 @@
           <span class="head-line"></span><span class="diamond"></span>
           <h3 class="panel__title">英雄三选一</h3>
           <span class="diamond"></span><span class="head-line head-line--r"></span>
-          <button class="panel__close" type="button" aria-label="关闭"><i></i><i></i></button>
         </div>
         <div class="panel__body">
           <div class="draft__intro">
-            <span class="draft__kicker">AWAKENING · 第 3 次觉醒 · 点击卡片确认选择</span>
+            <span class="draft__kicker">AWAKENING · 点击卡片确认选择 · 超时自动选择第一个</span>
           </div>
           <div class="hero-row">
             <button class="hero-card hero-card--blade" type="button">
@@ -1846,7 +1874,6 @@
               <span class="hero-card__body">
                 <span class="hero-card__name">影刃行者</span>
                 <span class="hero-card__line"></span>
-                <span class="hero-card__desc">每次暴击后获得一次瞬步；瞬步后的下一击必定暴击，并附加流血。</span>
                 <span class="hero-card__caption">技能组</span>
                 <span class="hero-card__skills">
                   <span class="hero-skill"><span class="hero-skill__icon"><svg class="glyph" aria-hidden="true"><use href="#i-sword"/></svg></span><span class="hero-skill__name">疾影突袭</span></span>
@@ -1865,7 +1892,6 @@
               <span class="hero-card__body">
                 <span class="hero-card__name">山岭之王</span>
                 <span class="hero-card__line"></span>
-                <span class="hero-card__desc">承受伤害时积攒怒气，怒气满值时释放山崩，击退周围敌人并回复生命。</span>
                 <span class="hero-card__caption">技能组</span>
                 <span class="hero-card__skills">
                   <span class="hero-skill"><span class="hero-skill__icon"><svg class="glyph" aria-hidden="true"><use href="#i-gem"/></svg></span><span class="hero-skill__name">山崩</span></span>
@@ -1884,7 +1910,6 @@
               <span class="hero-card__body">
                 <span class="hero-card__name">星界织法者</span>
                 <span class="hero-card__line"></span>
-                <span class="hero-card__desc">法术命中叠加星辉，满 5 层后下一次技能造成额外范围伤害并冰冻目标。</span>
                 <span class="hero-card__caption">技能组</span>
                 <span class="hero-card__skills">
                   <span class="hero-skill"><span class="hero-skill__icon"><svg class="glyph" aria-hidden="true"><use href="#i-star"/></svg></span><span class="hero-skill__name">星辉</span></span>
@@ -1894,19 +1919,30 @@
               </span>
             </button>
           </div>
+          <div class="draft__keep">
+            <div class="draft__keep-title">技能继承 · 点 W/E 保留或「不保留」</div>
+            <div class="draft__keep-row">
+              <span class="draft__keep-cell"><span class="draft__keep-icon"><img src="assets/img/btnskill01.jpg" alt="秘术盾墙" loading="lazy"></span><span class="draft__keep-name">秘术盾墙 W</span></span>
+              <span class="draft__keep-cell"><span class="draft__keep-icon"><img src="assets/img/btnskill07.jpg" alt="命令光环" loading="lazy"></span><span class="draft__keep-name">命令光环 E</span></span>
+              <span class="draft__keep-cell"><span class="draft__keep-icon draft__keep-icon--cancel">✕</span><span class="draft__keep-name">不保留</span></span>
+            </div>
+          </div>
         </div>
         <div class="draft__foot">
-          <span>点击卡片确认选择 · 本局可多次觉醒</span>
-          <span>选定后不可重置</span>
+          <span class="draft__actions">
+            <button class="btn btn--sm" type="button">放弃进化</button>
+            <button class="btn btn--sm" type="button">不再进化</button>
+          </span>
         </div>
       </div>
       <span class="stage__tag">3 CARDS · ONE CHOICE</span>
     </div>
     <ul class="chips">
-      <li>三张等大牌面</li>
+      <li>无面板底 · 金色大卡</li>
       <li>技能组 · 三格预览</li>
-      <li>角色定位角标</li>
-      <li>点击即确认 · 绿框选中</li>
+      <li>技能继承区 · W/E/不保留</li>
+      <li>悬停上移 · 扫光 · 亮框</li>
+      <li>放弃进化 / 不再进化</li>
     </ul>
   </section>
 
@@ -1923,81 +1959,151 @@
           <span class="head-line"></span><span class="diamond"></span>
           <h3 class="panel__title">选择宝物</h3>
           <span class="diamond"></span><span class="head-line head-line--r"></span>
-          <button class="panel__close" type="button" aria-label="关闭"><i></i><i></i></button>
         </div>
         <div class="panel__body">
           <div class="draft__intro">
             <span class="draft__kicker">RELIC OFFERING · 深渊献礼 · 点击立即生效</span>
           </div>
           <div class="relic-row">
-            <button class="relic-card" type="button" data-q="q5">
+            <button class="relic-card" type="button">
               <span class="relic-card__head">
                 <span class="relic-card__seal"><svg class="glyph" aria-hidden="true"><use href="#i-gem"/></svg></span>
-                <span class="relic-card__grade">传说 · 遗物</span>
+                <span class="relic-card__tag">遗 物</span>
                 <span class="relic-card__name">血怒之牙</span>
-                <span class="relic-card__type">DEEP CROWN RELIC</span>
               </span>
               <span class="relic-card__rule"></span>
               <span class="relic-card__effects">
-                <span class="relic-effect"><span>攻击力</span><b>+12%</b></span>
-                <span class="relic-effect"><span>暴击率</span><b>+8%</b></span>
-                <span class="relic-effect"><span>击杀回复</span><b>1% 生命</b></span>
+                <span class="relic-effect"><i></i>攻击力提高 <b>12%</b></span>
+                <span class="relic-effect"><i></i>暴击率提高 <b>8%</b></span>
+                <span class="relic-effect"><i></i>击杀回复 <b>1%</b> 生命</span>
               </span>
-              <span class="relic-card__flavor">「从深渊领主的獠牙上剥落的猩红结晶，仍在低语。」</span>
+              <span class="relic-card__hint">点 击 拾 取</span>
             </button>
-            <button class="relic-card" type="button" data-q="q4">
+            <button class="relic-card" type="button">
               <span class="relic-card__head">
                 <span class="relic-card__seal"><svg class="glyph" aria-hidden="true"><use href="#i-orb"/></svg></span>
-                <span class="relic-card__grade">史诗 · 遗物</span>
+                <span class="relic-card__tag">遗 物</span>
                 <span class="relic-card__name">星界棱镜</span>
-                <span class="relic-card__type">ASTRAL PRISM</span>
               </span>
               <span class="relic-card__rule"></span>
               <span class="relic-card__effects">
-                <span class="relic-effect"><span>法术强度</span><b>+15%</b></span>
-                <span class="relic-effect"><span>冷却缩减</span><b>8%</b></span>
-                <span class="relic-effect"><span>星辉充能</span><b>每 10 秒 1 层</b></span>
+                <span class="relic-effect"><i></i>法术强度提高 <b>15%</b></span>
+                <span class="relic-effect"><i></i>冷却缩减 <b>8%</b></span>
+                <span class="relic-effect"><i></i>每 <b>10</b> 秒获得 1 层星辉</span>
               </span>
-              <span class="relic-card__flavor">「折射星光的水晶，凝视过久会看见尚未发生的战斗。」</span>
+              <span class="relic-card__hint">点 击 拾 取</span>
             </button>
-            <button class="relic-card" type="button" data-q="q4">
+            <button class="relic-card" type="button">
               <span class="relic-card__head">
                 <span class="relic-card__seal"><svg class="glyph" aria-hidden="true"><use href="#i-shield"/></svg></span>
-                <span class="relic-card__grade">史诗 · 遗物</span>
+                <span class="relic-card__tag">遗 物</span>
                 <span class="relic-card__name">不灭壁垒</span>
-                <span class="relic-card__type">UNDYING BULWARK</span>
               </span>
               <span class="relic-card__rule"></span>
               <span class="relic-card__effects">
-                <span class="relic-effect"><span>护甲</span><b>+20%</b></span>
-                <span class="relic-effect"><span>暴击减伤</span><b>10%</b></span>
-                <span class="relic-effect"><span>濒死护盾</span><b>生命 &lt; 30% 触发</b></span>
+                <span class="relic-effect"><i></i>护甲提高 <b>20%</b></span>
+                <span class="relic-effect"><i></i>暴击减伤 <b>10%</b></span>
+                <span class="relic-effect"><i></i>生命低于 <b>30%</b> 时获得护盾</span>
               </span>
-              <span class="relic-card__flavor">「远古守门人的残盾，仍记得它收到的最后一道命令。」</span>
+              <span class="relic-card__hint">点 击 拾 取</span>
             </button>
           </div>
         </div>
         <div class="relic__actions">
-          <span class="foot-note">剩余刷新 <b>2</b> 次</span>
-          <div class="relic__btns">
-            <button class="btn btn--sm" type="button"><span>刷新 · 剩余 2</span></button>
-          </div>
+          <button class="btn btn--sm" type="button"><span>刷新 · 剩余 2</span></button>
         </div>
       </div>
       <span class="stage__tag">3 RELICS · PICK ONE</span>
     </div>
     <ul class="chips">
       <li>遗物三择其一</li>
-      <li>品质熔边 · 传说 / 史诗</li>
-      <li>效果逐条列出</li>
-      <li>可刷新卡池</li>
+      <li>无面板底 · 切角金框卡</li>
+      <li>效果逐条 · 数值高亮</li>
+      <li>悬停上移 · 扫光 · 亮框</li>
     </ul>
   </section>
 
-  <!-- ==================== 09 已获取 ==================== -->
+  <!-- ==================== 09 天赋三选一 ==================== -->
+  <section class="sec" id="talent">
+    <div class="sec__head">
+      <span class="sec__idx">09</span><h2>天赋三选一</h2>
+      <span class="sec__en">TALENT OFFERING</span><span class="sec__rule"></span>
+    </div>
+    <div class="stage">
+      <span class="stage__mark">赋</span>
+      <div class="panel panel--relic panel--talent">
+        <div class="panel__head">
+          <span class="head-line"></span><span class="diamond"></span>
+          <h3 class="panel__title">选择天赋</h3>
+          <span class="diamond"></span><span class="head-line head-line--r"></span>
+        </div>
+        <div class="panel__body">
+          <div class="draft__intro">
+            <span class="draft__kicker">TALENT OFFERING · 星辉启迪 · 点击立即领悟</span>
+          </div>
+          <div class="relic-row">
+            <button class="relic-card relic-card--talent" type="button">
+              <span class="relic-card__head">
+                <span class="relic-card__seal"><svg class="glyph" aria-hidden="true"><use href="#i-wing"/></svg></span>
+                <span class="relic-card__tag">天 赋</span>
+                <span class="relic-card__name">风暴之心</span>
+              </span>
+              <span class="relic-card__rule"></span>
+              <span class="relic-card__effects">
+                <span class="relic-effect"><i></i>攻击速度提高 <b>15%</b></span>
+                <span class="relic-effect"><i></i>移动速度提高 <b>10%</b></span>
+                <span class="relic-effect"><i></i>攻击 <b>20%</b> 概率释放闪电链</span>
+              </span>
+              <span class="relic-card__hint">点 击 领 悟</span>
+            </button>
+            <button class="relic-card relic-card--talent" type="button">
+              <span class="relic-card__head">
+                <span class="relic-card__seal"><svg class="glyph" aria-hidden="true"><use href="#i-flame"/></svg></span>
+                <span class="relic-card__tag">天 赋</span>
+                <span class="relic-card__name">烈焰之魂</span>
+              </span>
+              <span class="relic-card__rule"></span>
+              <span class="relic-card__effects">
+                <span class="relic-effect"><i></i>法术强度提高 <b>12%</b></span>
+                <span class="relic-effect"><i></i>技能命中附加 <b>3</b> 秒灼烧</span>
+                <span class="relic-effect"><i></i>灼烧伤害提高 <b>25%</b></span>
+              </span>
+              <span class="relic-card__hint">点 击 领 悟</span>
+            </button>
+            <button class="relic-card relic-card--talent" type="button">
+              <span class="relic-card__head">
+                <span class="relic-card__seal"><svg class="glyph" aria-hidden="true"><use href="#i-star"/></svg></span>
+                <span class="relic-card__tag">天 赋</span>
+                <span class="relic-card__name">星辰回响</span>
+              </span>
+              <span class="relic-card__rule"></span>
+              <span class="relic-card__effects">
+                <span class="relic-effect"><i></i>冷却缩减 <b>10%</b></span>
+                <span class="relic-effect"><i></i>每 <b>12</b> 秒回复 <b>5%</b> 法力</span>
+                <span class="relic-effect"><i></i>技能暴击率提高 <b>8%</b></span>
+              </span>
+              <span class="relic-card__hint">点 击 领 悟</span>
+            </button>
+          </div>
+        </div>
+        <div class="relic__actions">
+          <button class="btn btn--sm" type="button"><span>刷新 · 剩余 2</span></button>
+        </div>
+      </div>
+      <span class="stage__tag">3 TALENTS · PICK ONE</span>
+    </div>
+    <ul class="chips">
+      <li>天赋三择其一</li>
+      <li>与宝物同构 · 星辉青主色</li>
+      <li>效果逐条 · 数值高亮</li>
+      <li>悬停上移 · 扫光 · 亮框 · 可刷新</li>
+    </ul>
+  </section>
+
+  <!-- ==================== 10 已获取 ==================== -->
   <section class="sec" id="acquired">
     <div class="sec__head">
-      <span class="sec__idx">09</span><h2>已获取</h2>
+      <span class="sec__idx">10</span><h2>已获取</h2>
       <span class="sec__en">ACQUIRED</span><span class="sec__rule"></span>
     </div>
     <div class="stage">
@@ -2046,10 +2152,10 @@
     </ul>
   </section>
 
-  <!-- ==================== 10 卡片合成 ==================== -->
+  <!-- ==================== 11 卡片合成 ==================== -->
   <section class="sec" id="synth">
     <div class="sec__head">
-      <span class="sec__idx">10</span><h2>卡片合成</h2>
+      <span class="sec__idx">11</span><h2>卡片合成</h2>
       <span class="sec__en">CARD SYNTHESIS</span><span class="sec__rule"></span>
     </div>
     <div class="stage">
