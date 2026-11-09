@@ -1282,9 +1282,10 @@
   }
   .synth-row__out{position:relative}
 
+  /* 空槽: 用游戏内通用边框(降低亮度), 不自造新边框 */
   .slot--empty{cursor:default;filter:none}
   .slot--empty .slot__art{
-    border:1px dashed rgba(201,170,80,.22)!important;
+    border:2px solid rgba(201,170,80,.26)!important;
     background:linear-gradient(180deg,#191712,#0b0a07) padding-box!important;
     box-shadow:inset 0 0 0 1px #050403,inset 0 4px 12px rgba(0,0,0,.7)!important;
     color:rgba(201,170,80,.32);
@@ -1301,29 +1302,284 @@
      悬浮提示
      ============================================================ */
   .tip{
+    --tqc:#cfc1a0;
+    --tq-soft:rgba(201,170,80,.18);
     position:fixed;left:0;top:0;z-index:90;
-    min-width:186px;max-width:270px;padding:10px 12px 11px;
+    min-width:196px;max-width:286px;
+    padding:0 0 9px;
     transform:translate(-50%,-100%);
-    background:linear-gradient(180deg,rgba(24,22,16,.98),rgba(6,6,5,.98));
-    border:1px solid #b08c3a;
-    clip-path:var(--cut-md);
-    box-shadow:inset 0 0 0 1px #000,inset 0 0 0 3px rgba(180,145,70,.16),0 10px 24px rgba(0,0,0,.6);
-    opacity:0;pointer-events:none;transition:opacity .12s ease;
+    opacity:0;pointer-events:none;isolation:isolate;
+    transition:opacity .13s ease;
   }
   .tip.is-on{opacity:1}
-  .tip__name{font-size:12.5px;font-weight:700;letter-spacing:.04em;color:#ffe9a8;text-shadow:0 1px 0 #000}
-  .tip__grade{
-    margin-top:3px;font-size:10px;letter-spacing:.1em;color:#a8956a;
-    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+
+  /* 面板本体(独立一层: 直角矩形, 与游戏内切图一致；不做切角避免缺角) */
+  .tip__frame{
+    position:absolute;inset:0;z-index:-1;
+    background:
+      var(--noise) repeat 0 0/160px 160px,
+      linear-gradient(180deg,#26221a 0%,#171410 52%,#0a0907 100%);
+    background-blend-mode:overlay,normal;
+    border:1px solid #9a7c33;
+    box-shadow:
+      inset 0 0 0 1px #050403,
+      inset 0 0 0 3px rgba(205,170,74,.10),
+      inset 0 14px 30px rgba(0,0,0,.55),
+      0 12px 26px rgba(0,0,0,.62);
   }
-  .tip[data-q="q1"] .tip__grade{color:#dfe8ee}
-  .tip[data-q="q2"] .tip__grade{color:#a9e78f}
-  .tip[data-q="q3"] .tip__grade{color:#8ecbff}
-  .tip[data-q="q4"] .tip__grade{color:#d8b1f5}
-  .tip[data-q="q5"] .tip__grade{color:#f0d38a}
-  .tip__lines{margin-top:7px;padding-top:7px;border-top:1px dashed rgba(201,170,80,.22)}
-  .tip__lines span{display:block;font-size:11px;line-height:1.7;color:#b3a889}
-  .tip__lines span:first-child{color:#cfc1a0}
+  /* 四角包角 */
+  .tip__frame::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:
+      linear-gradient(#c9aa50,#c9aa50) left top/14px 1px no-repeat,
+      linear-gradient(#c9aa50,#c9aa50) left top/1px 14px no-repeat,
+      linear-gradient(#c9aa50,#c9aa50) right top/14px 1px no-repeat,
+      linear-gradient(#c9aa50,#c9aa50) right top/1px 14px no-repeat,
+      linear-gradient(#c9aa50,#c9aa50) left bottom/14px 1px no-repeat,
+      linear-gradient(#c9aa50,#c9aa50) left bottom/1px 14px no-repeat,
+      linear-gradient(#c9aa50,#c9aa50) right bottom/14px 1px no-repeat,
+      linear-gradient(#c9aa50,#c9aa50) right bottom/1px 14px no-repeat;
+  }
+  /* 左侧品质光条(按品质染色) */
+  .tip__frame::before{
+    content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;
+    background:linear-gradient(180deg,transparent,var(--tqc) 18%,var(--tqc) 82%,transparent);
+    box-shadow:0 0 10px var(--tqc),inset 0 0 0 1px rgba(0,0,0,.5);
+  }
+  /* 顶部品质光晕 */
+  .tip__frame::after{
+    content:"";position:absolute;left:0;right:0;top:0;height:58px;pointer-events:none;
+    background:radial-gradient(90% 130% at 18% 0%,var(--tq-soft),transparent 72%);
+  }
+
+  /* 指向锚点的下箭头 */
+  .tip__caret{
+    position:absolute;left:50%;bottom:-5px;width:9px;height:9px;margin-left:-4.5px;
+    background:#0a0907;
+    border-right:1px solid #9a7c33;border-bottom:1px solid #9a7c33;
+    transform:rotate(45deg);
+    box-shadow:2px 2px 0 rgba(0,0,0,.5);
+  }
+
+  .tip__head{
+    position:relative;z-index:1;
+    display:flex;align-items:center;gap:7px;
+    padding:9px 12px 8px 11px;
+    background:linear-gradient(180deg,rgba(255,225,150,.07),transparent 92%);
+  }
+  .tip__gem{
+    flex:none;width:7px;height:7px;
+    background:linear-gradient(135deg,#fff3cf,var(--tqc) 55%,#5f4a14);
+    transform:rotate(45deg);
+    box-shadow:0 0 0 1px #000,0 0 8px var(--tq-soft);
+  }
+  .tip__name{
+    flex:1;min-width:0;
+    font-size:12.5px;font-weight:700;letter-spacing:.05em;line-height:1.3;
+    color:#ffeeb8;
+    text-shadow:0 1px 0 #000,0 0 12px var(--tq-soft);
+  }
+  .tip__grade{
+    flex:none;padding:2px 7px;
+    font-size:9.5px;font-weight:700;letter-spacing:.08em;
+    color:var(--tqc);
+    background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(0,0,0,.42));
+    border:1px solid rgba(255,255,255,.14);
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.7),0 0 8px var(--tq-soft);
+    white-space:nowrap;
+  }
+
+  /* 分隔线: 细金线 + 中央菱形 */
+  .tip__rule{position:relative;height:1px;margin:0 11px;background:linear-gradient(90deg,transparent,rgba(201,170,80,.45) 18%,rgba(201,170,80,.45) 82%,transparent)}
+  .tip__rule i{
+    position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;
+    background:linear-gradient(135deg,#ffe8a6,#a1832c);
+    transform:rotate(45deg);
+    box-shadow:0 0 0 1px #000,0 0 7px rgba(255,210,120,.5);
+  }
+
+  .tip__lines{position:relative;z-index:1;display:block;padding:8px 12px 0 11px}
+  .tip__lines span{
+    display:block;position:relative;
+    padding-left:11px;
+    font-size:11px;line-height:1.75;color:#a99d82;
+  }
+  .tip__lines span::before{
+    content:"";position:absolute;left:2px;top:.72em;
+    width:4px;height:4px;
+    background:linear-gradient(135deg,#e2cf95,#7d6524);
+    transform:rotate(45deg);
+    opacity:.85;
+  }
+  /* 首行作为主信息: 高亮且无点标 */
+  .tip__lines span:first-child{
+    padding-left:0;
+    color:#dcd0b0;
+  }
+  .tip__lines span:first-child::before{display:none}
+
+  /* 品质染色(与格子同一套色阶) */
+  .tip[data-q="q1"]{--tqc:#dfe8ee;--tq-soft:rgba(200,216,226,.16)}
+  .tip[data-q="q2"]{--tqc:#a9e78f;--tq-soft:rgba(120,230,110,.16)}
+  .tip[data-q="q3"]{--tqc:#8ecbff;--tq-soft:rgba(110,190,255,.18)}
+  .tip[data-q="q4"]{--tqc:#d8b1f5;--tq-soft:rgba(190,120,255,.18)}
+  .tip[data-q="q5"]{--tqc:#f0d38a;--tq-soft:rgba(255,210,120,.2)}
+
+  /* 静态展示用(章节里并排摆放, 不跟随鼠标) */
+  .tip--static{
+    position:relative;left:auto;top:auto;
+    transform:none;opacity:1;pointer-events:none;
+    display:inline-block;vertical-align:top;
+    transition:none;
+  }
+  .tip--static .tip__caret{display:none}
+  .tip-demo{display:flex;flex-wrap:wrap;gap:18px;padding:6px 0 2px;align-items:flex-start}
+  .tip-demo__item{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+  .tip-demo__cap{font-size:9.5px;letter-spacing:.14em;color:#6d6758;padding-left:2px}
+
+  /* ---------- 通用部件: 图标 / 标题 / 数值 / 描述 / 页脚 ---------- */
+  .tip__head--art{padding-top:8px;padding-bottom:8px;align-items:flex-start}
+  /* 图标块: 直接复用格子那套(图标 + 品质边框), 不另做描边 */
+  .tip__art{flex:none;--slot:34px;--slot-h:34px}
+  .tip__art .slot__art{border-width:2px;clip-path:var(--cut-sm)}
+  .tip__art .slot__art .glyph{width:56%;height:56%}
+  .tip__title{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+  .tip__sub{font-size:9.5px;letter-spacing:.06em;line-height:1.3;color:#8d8165}
+
+  .tip__body{position:relative;z-index:1;padding:3px 12px 0 11px}
+  .tip__stat{
+    display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+    padding:3px 0;font-size:10.5px;color:#a99d82;
+    border-bottom:1px dashed rgba(201,170,80,.12);
+  }
+  .tip__stat:last-child{border-bottom:0}
+  .tip__stat b{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:11px;font-weight:700;color:#e8d3a0;white-space:nowrap;
+  }
+  .tip__stat b.is-buff{color:#9fe3b0}
+  .tip__stat b.is-weak{color:#e0664f}
+  .tip__desc{display:block;margin:6px 0 0;font-size:10.5px;line-height:1.8;color:#9c9075}
+  .tip__desc em{font-style:normal;color:#d8caa4}
+
+  .tip__foot{
+    position:relative;z-index:1;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    margin:8px 11px 0;padding-top:7px;
+    border-top:1px solid rgba(201,170,80,.18);
+    font-size:9.5px;letter-spacing:.04em;color:#7f7460;
+  }
+  .tip__foot b{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:10.5px;color:#f0d38a;
+  }
+  .tip__foot .is-ok{color:#9fe3b0}
+  .tip__foot .is-warn{color:#e0664f}
+  .tip__chip{
+    padding:1px 6px;font-size:9px;letter-spacing:.08em;
+    color:var(--tqc);
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.14);
+  }
+
+  /* 简版(属性图标 / BUFF 这类只有一行信息的) */
+  .tip--mini{min-width:0;max-width:260px;padding-bottom:8px}
+  .tip--mini .tip__head{padding:7px 11px 6px}
+  .tip--mini .tip__name{font-size:11.5px}
+  .tip--mini .tip__rule{display:none}
+  .tip--mini .tip__lines{padding-top:0}
+
+  /* 品质渐变(供图标块描边使用) */
+  .tip[data-q="q1"]{--tq:var(--q1)}
+  .tip[data-q="q2"]{--tq:var(--q2)}
+  .tip[data-q="q3"]{--tq:var(--q3)}
+  .tip[data-q="q4"]{--tq:var(--q4)}
+  .tip[data-q="q5"]{--tq:var(--q5)}
+
+  /* ---------- 骨架标注(12.1) ---------- */
+  .tip-anatomy{display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap}
+  .tip-anatomy__list{list-style:none;margin:0;padding:0;flex:1;min-width:240px}
+  .tip-anatomy__list li{
+    display:flex;gap:10px;align-items:flex-start;
+    padding:7px 0;font-size:11px;line-height:1.75;color:#a99d82;
+    border-bottom:1px dashed rgba(201,170,80,.12);
+  }
+  .tip-anatomy__list li:last-child{border-bottom:0}
+  .tip-anatomy__no{
+    flex:none;width:16px;height:16px;margin-top:1px;
+    display:grid;place-items:center;
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:9px;font-weight:700;color:#201806;
+    background:linear-gradient(180deg,#f2d884,#b08a2c);
+    clip-path:var(--cut-sm);
+  }
+  .tip-anatomy__list b{color:#e2d3a6;font-weight:700}
+
+  /* ---------- 网格规范表(13) ---------- */
+  .spec-table{width:100%;border-collapse:collapse;font-size:11px;color:#a99d82}
+  .spec-table th{
+    padding:0 10px 8px;text-align:left;font-weight:700;
+    font-size:9.5px;letter-spacing:.16em;color:#8b7f63;
+    border-bottom:1px solid rgba(201,170,80,.28);
+  }
+  .spec-table td{
+    padding:8px 10px;border-bottom:1px dashed rgba(201,170,80,.13);
+    vertical-align:middle;
+  }
+  .spec-table tr:last-child td{border-bottom:0}
+  .spec-table td:first-child{color:#d8caa4;font-weight:700;white-space:nowrap}
+  .spec-table code{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:10.5px;color:#f0d38a;
+  }
+  .spec-table .spec-dim{color:#7f7460}
+  .spec-cell{display:inline-block;vertical-align:middle;margin-right:6px;
+    border:2px solid transparent;
+    background:linear-gradient(180deg,#221e16,#0a0906) padding-box,var(--q5) border-box;
+    clip-path:var(--cut-sm)}
+
+  /* ---------- 12.3 背景框方案(A/B/C/D) ---------- */
+  .tip--vB .tip__frame{
+    border:1px solid #f7e9ac;
+    background:linear-gradient(180deg,#1e1b14,#0b0906);
+    box-shadow:
+      inset 0 0 0 1px #6d5416,
+      inset 0 0 0 3px #b8942f,
+      inset 0 0 0 4px #2a2008,
+      inset 0 0 0 7px rgba(0,0,0,.55),
+      0 12px 26px rgba(0,0,0,.6);
+  }
+  .tip--vB .tip__frame::after{display:none}
+
+  .tip--vC .tip__frame{
+    border:1px solid #7d6a34;
+    background:linear-gradient(180deg,#241f16,#0d0b08);
+    box-shadow:inset 0 0 0 1px #060504,0 12px 26px rgba(0,0,0,.6);
+  }
+  .tip--vC .tip__frame::after{
+    /* 顶部金属横条 */
+    left:0;right:0;top:0;height:22px;inset:auto 0 auto 0;
+    background:linear-gradient(180deg,#4a3f28,#2b2419 62%,#1a160e);
+    box-shadow:inset 0 1px 0 rgba(255,240,190,.18),inset 0 -1px 0 rgba(0,0,0,.85);
+  }
+
+  .tip--vD .tip__frame{
+    border:1px solid rgba(201,170,80,.55);
+    background:linear-gradient(180deg,rgba(28,25,18,.96),rgba(8,7,6,.97));
+    box-shadow:inset 0 0 0 1px #050403,inset 0 0 0 5px rgba(255,240,190,.05),0 10px 24px rgba(0,0,0,.55);
+  }
+  .tip--vD .tip__frame::after{
+    inset:4px;
+    background:
+      linear-gradient(rgba(201,170,80,.35),rgba(201,170,80,.35)) left top/1px 8px no-repeat,
+      linear-gradient(rgba(201,170,80,.35),rgba(201,170,80,.35)) left top/8px 1px no-repeat,
+      linear-gradient(rgba(201,170,80,.35),rgba(201,170,80,.35)) right top/1px 8px no-repeat,
+      linear-gradient(rgba(201,170,80,.35),rgba(201,170,80,.35)) right top/8px 1px no-repeat,
+      linear-gradient(rgba(201,170,80,.35),rgba(201,170,80,.35)) left bottom/1px 8px no-repeat,
+      linear-gradient(rgba(201,170,80,.35),rgba(201,170,80,.35)) left bottom/8px 1px no-repeat,
+      linear-gradient(rgba(201,170,80,.35),rgba(201,170,80,.35)) right bottom/1px 8px no-repeat,
+      linear-gradient(rgba(201,170,80,.35),rgba(201,170,80,.35)) right bottom/8px 1px no-repeat;
+  }
 
   /* ============================================================
      品质图例 / 页脚
@@ -1507,6 +1763,8 @@
     <a href="#talent"><span>09</span>天赋</a>
     <a href="#acquired"><span>10</span>已获取</a>
     <a href="#synth"><span>11</span>卡片合成</a>
+    <a href="#tooltip"><span>12</span>悬浮提示</a>
+    <a href="#grid-spec"><span>13</span>网格规范</a>
   </nav>
 
   <!-- ==================== 01 存档 ==================== -->
@@ -2202,6 +2460,324 @@
     </ul>
   </section>
 
+  <!-- ==================== 12 悬浮提示 ==================== -->
+  <section class="sec" id="tooltip">
+    <div class="sec__head">
+      <span class="sec__idx">12</span><h2>悬浮提示体系</h2>
+      <span class="sec__en">TOOLTIP SYSTEM</span><span class="sec__rule"></span>
+    </div>
+
+    <!-- 12.1 统一骨架 -->
+    <div class="stage">
+      <span class="stage__mark">示</span>
+      <div class="tip-anatomy">
+        <div class="tip tip--static tip--wide" data-q="q4">
+          <span class="tip__frame"></span>
+          <div class="tip__head tip__head--art">
+            <span class="tip__art slot" data-q="q4"><span class="slot__art"><svg class="glyph" aria-hidden="true"><use href="#i-sword"/></svg></span></span>
+            <span class="tip__title">
+              <span class="tip__name">剑刃风暴</span>
+              <span class="tip__sub">史诗 · 主动技能 · 等级 3</span>
+            </span>
+            <span class="tip__grade">技能</span>
+          </div>
+          <div class="tip__rule"><i></i></div>
+          <div class="tip__body">
+            <div class="tip__stat"><span>消耗法力</span><b>120</b></div>
+            <div class="tip__stat"><span>造成伤害</span><b class="is-buff">320 / 秒</b></div>
+            <div class="tip__stat"><span>作用范围</span><b>400</b></div>
+            <span class="tip__desc">旋转刀刃，持续 <em>5 秒</em>，对周围敌人每秒造成物理伤害；期间免疫控制。</span>
+          </div>
+          <div class="tip__foot"><span>冷却 <b>18s</b></span><span class="is-ok">可学习</span></div>
+        </div>
+
+        <ul class="tip-anatomy__list">
+          <li><span class="tip-anatomy__no">1</span><span><b>品质光条 + 顶部光晕</b>：左侧 3px 竖条按品质染色，是判断稀有度的第一眼线索。</span></li>
+          <li><span class="tip-anatomy__no">2</span><span><b>图标块</b>：34×34，直接用网格里同一张图标 + 同款品质边框（<code>边框_lv*.tga</code>），不另做描边。</span></li>
+          <li><span class="tip-anatomy__no">3</span><span><b>名称 + 副标题</b>：名称 12.5px 金色；副标题写「品质 · 类型 · 限制」。</span></li>
+          <li><span class="tip-anatomy__no">4</span><span><b>分隔线</b>：细金线 + 中央菱形，切分标题区与内容区。</span></li>
+          <li><span class="tip-anatomy__no">5</span><span><b>数值行</b>：左标签右数值（等宽字体）；加成绿、减益红。</span></li>
+          <li><span class="tip-anatomy__no">6</span><span><b>描述</b>：玩法说明，最多 3 行，超出省略。</span></li>
+          <li><span class="tip-anatomy__no">7</span><span><b>页脚</b>：价格 / 限购 / 剩余 / 来源，弱化处理。</span></li>
+          <li><span class="tip-anatomy__no">8</span><span><b>下箭头</b>：指向锚点，悬停位置偏上时自动翻转。</span></li>
+        </ul>
+      </div>
+      <span class="stage__tag">ANATOMY · 8 PARTS</span>
+    </div>
+
+    <!-- 12.2 变体 -->
+    <div class="stage" style="margin-top:18px">
+      <span class="stage__mark">型</span>
+      <div class="tip-demo">
+
+        <div class="tip-demo__item">
+          <div class="tip tip--static tip--mini" data-q="q3">
+            <span class="tip__frame"></span>
+            <div class="tip__head">
+              <span class="tip__gem"></span>
+              <span class="tip__name">攻击力</span>
+              <span class="tip__grade">+128</span>
+            </div>
+            <div class="tip__lines"><span>基础 96 + 装备 32</span></div>
+          </div>
+          <span class="tip-demo__cap">简版 · 属性图标</span>
+        </div>
+
+        <div class="tip-demo__item">
+          <div class="tip tip--static tip--mini" data-q="q2">
+            <span class="tip__frame"></span>
+            <div class="tip__head">
+              <span class="tip__gem"></span>
+              <span class="tip__name">嗜血</span>
+              <span class="tip__grade">12.4s</span>
+            </div>
+            <div class="tip__lines">
+              <span>攻击速度 +25%</span>
+              <span>层数 3 · 最长 15s</span>
+            </div>
+          </div>
+          <span class="tip-demo__cap">BUFF · 剩余时间</span>
+        </div>
+
+        <div class="tip-demo__item">
+          <div class="tip tip--static" data-q="q5">
+            <span class="tip__frame"></span>
+            <div class="tip__head tip__head--art">
+              <span class="tip__art slot" data-q="q5"><span class="slot__art"><svg class="glyph" aria-hidden="true"><use href="#i-gem"/></svg></span></span>
+              <span class="tip__title">
+                <span class="tip__name">泰坦之心</span>
+                <span class="tip__sub">传说 · 宝库藏品</span>
+              </span>
+              <span class="tip__grade">传说</span>
+            </div>
+            <div class="tip__rule"><i></i></div>
+            <div class="tip__lines">
+              <span>已拥有 1/3</span>
+              <span>参与羁绊：龙骨遗愿</span>
+            </div>
+            <div class="tip__foot"><span>来源 团队首领</span><span class="is-ok">已解锁</span></div>
+          </div>
+          <span class="tip-demo__cap">网格格子 · 存档/宝库/图鉴</span>
+        </div>
+
+        <div class="tip-demo__item">
+          <div class="tip tip--static tip--wide" data-q="q5">
+            <span class="tip__frame"></span>
+            <div class="tip__head tip__head--art">
+              <span class="tip__art slot" data-q="q5"><span class="slot__art"><svg class="glyph" aria-hidden="true"><use href="#i-sword"/></svg></span></span>
+              <span class="tip__title">
+                <span class="tip__name">霜之哀伤</span>
+                <span class="tip__sub">传说 · 双手剑 · 唯一</span>
+              </span>
+              <span class="tip__grade">传说</span>
+            </div>
+            <div class="tip__rule"><i></i></div>
+            <div class="tip__body">
+              <div class="tip__stat"><span>攻击力</span><b class="is-buff">+128</b></div>
+              <div class="tip__stat"><span>力量</span><b class="is-buff">+24</b></div>
+              <div class="tip__stat"><span>攻击速度</span><b class="is-weak">-5%</b></div>
+              <span class="tip__desc">每次攻击附带霜冻，使目标减速；对精英额外造成 <em>15%</em> 真实伤害。</span>
+            </div>
+            <div class="tip__foot"><span>售价 <b>1,200</b> 金</span><span>耐久 <b>82%</b></span></div>
+          </div>
+          <span class="tip-demo__cap">物品 · 属性 + 描述</span>
+        </div>
+
+        <div class="tip-demo__item">
+          <div class="tip tip--static" data-q="q3">
+            <span class="tip__frame"></span>
+            <div class="tip__head tip__head--art">
+              <span class="tip__art slot" data-q="q3"><span class="slot__art"><svg class="glyph" aria-hidden="true"><use href="#i-gem"/></svg></span></span>
+              <span class="tip__title">
+                <span class="tip__name">强化石 ×5</span>
+                <span class="tip__sub">战功商店 · 本期限购 3 次</span>
+              </span>
+              <span class="tip__grade">商品</span>
+            </div>
+            <div class="tip__rule"><i></i></div>
+            <div class="tip__body">
+              <span class="tip__desc">用于装备强化，每次消耗 1 枚，成功率随等级递减。</span>
+            </div>
+            <div class="tip__foot"><span>价格 <b>240</b> 战功</span><span class="is-ok">库存 3/3</span></div>
+          </div>
+          <span class="tip-demo__cap">商店商品 · 价格 + 库存</span>
+        </div>
+
+      </div>
+      <span class="stage__tag">VARIANTS · MINI / BUFF / CELL / ITEM / SKILL / SHOP</span>
+    </div>
+
+    <ul class="chips">
+      <li>一套骨架，六种变体</li>
+      <li>图标 / 名称 / 副标题 / 数值 / 描述 / 页脚 可选组合</li>
+      <li>品质色统一取自品质色阶</li>
+      <li>图标边框一律复用游戏内 边框_lv*.tga / 通用边框.tga</li>
+    </ul>
+
+    <!-- 12.3 背景框方案 -->
+    <div class="stage" style="margin-top:18px">
+      <span class="stage__mark">框</span>
+      <div class="tip-demo">
+
+        <div class="tip-demo__item">
+          <div class="tip tip--static tip--wide" data-q="q4">
+            <span class="tip__frame"></span>
+            <div class="tip__head tip__head--art">
+              <span class="tip__art slot" data-q="q4"><span class="slot__art"><svg class="glyph" aria-hidden="true"><use href="#i-sword"/></svg></span></span>
+              <span class="tip__title">
+                <span class="tip__name">剑刃风暴</span>
+                <span class="tip__sub">史诗 · 主动技能 · 等级 3</span>
+              </span>
+              <span class="tip__grade">技能</span>
+            </div>
+            <div class="tip__rule"><i></i></div>
+            <div class="tip__body">
+              <div class="tip__stat"><span>消耗法力</span><b>120</b></div>
+              <div class="tip__stat"><span>造成伤害</span><b class="is-buff">320 / 秒</b></div>
+              <span class="tip__desc">旋转刀刃，持续 5 秒，对周围敌人每秒造成物理伤害。</span>
+            </div>
+            <div class="tip__foot"><span>冷却 <b>18s</b></span><span class="is-ok">可学习</span></div>
+          </div>
+          <span class="tip-demo__cap">A · 双线金边 + 四角包角</span>
+        </div>
+
+        <div class="tip-demo__item">
+          <div class="tip tip--static tip--wide tip--vB" data-q="q4">
+            <span class="tip__frame"></span>
+            <div class="tip__head tip__head--art">
+              <span class="tip__art slot" data-q="q4"><span class="slot__art"><svg class="glyph" aria-hidden="true"><use href="#i-sword"/></svg></span></span>
+              <span class="tip__title">
+                <span class="tip__name">剑刃风暴</span>
+                <span class="tip__sub">史诗 · 主动技能 · 等级 3</span>
+              </span>
+              <span class="tip__grade">技能</span>
+            </div>
+            <div class="tip__rule"><i></i></div>
+            <div class="tip__body">
+              <div class="tip__stat"><span>消耗法力</span><b>120</b></div>
+              <div class="tip__stat"><span>造成伤害</span><b class="is-buff">320 / 秒</b></div>
+              <span class="tip__desc">旋转刀刃，持续 5 秒，对周围敌人每秒造成物理伤害。</span>
+            </div>
+            <div class="tip__foot"><span>冷却 <b>18s</b></span><span class="is-ok">可学习</span></div>
+          </div>
+          <span class="tip-demo__cap">B · 青铜浮雕重框</span>
+        </div>
+
+        <div class="tip-demo__item">
+          <div class="tip tip--static tip--wide tip--vC" data-q="q4">
+            <span class="tip__frame"></span>
+            <div class="tip__head tip__head--art">
+              <span class="tip__art slot" data-q="q4"><span class="slot__art"><svg class="glyph" aria-hidden="true"><use href="#i-sword"/></svg></span></span>
+              <span class="tip__title">
+                <span class="tip__name">剑刃风暴</span>
+                <span class="tip__sub">史诗 · 主动技能 · 等级 3</span>
+              </span>
+              <span class="tip__grade">技能</span>
+            </div>
+            <div class="tip__rule"><i></i></div>
+            <div class="tip__body">
+              <div class="tip__stat"><span>消耗法力</span><b>120</b></div>
+              <div class="tip__stat"><span>造成伤害</span><b class="is-buff">320 / 秒</b></div>
+              <span class="tip__desc">旋转刀刃，持续 5 秒，对周围敌人每秒造成物理伤害。</span>
+            </div>
+            <div class="tip__foot"><span>冷却 <b>18s</b></span><span class="is-ok">可学习</span></div>
+          </div>
+          <span class="tip-demo__cap">C · 顶栏金属条(魔兽味)</span>
+        </div>
+
+        <div class="tip-demo__item">
+          <div class="tip tip--static tip--wide tip--vD" data-q="q4">
+            <span class="tip__frame"></span>
+            <div class="tip__head tip__head--art">
+              <span class="tip__art slot" data-q="q4"><span class="slot__art"><svg class="glyph" aria-hidden="true"><use href="#i-sword"/></svg></span></span>
+              <span class="tip__title">
+                <span class="tip__name">剑刃风暴</span>
+                <span class="tip__sub">史诗 · 主动技能 · 等级 3</span>
+              </span>
+              <span class="tip__grade">技能</span>
+            </div>
+            <div class="tip__rule"><i></i></div>
+            <div class="tip__body">
+              <div class="tip__stat"><span>消耗法力</span><b>120</b></div>
+              <div class="tip__stat"><span>造成伤害</span><b class="is-buff">320 / 秒</b></div>
+              <span class="tip__desc">旋转刀刃，持续 5 秒，对周围敌人每秒造成物理伤害。</span>
+            </div>
+            <div class="tip__foot"><span>冷却 <b>18s</b></span><span class="is-ok">可学习</span></div>
+          </div>
+          <span class="tip-demo__cap">D · 内嵌细线(极简)</span>
+        </div>
+
+      </div>
+      <span class="stage__tag">FRAME OPTIONS · A / B / C / D</span>
+    </div>
+  </section>
+
+  <!-- ==================== 13 网格规范 ==================== -->
+  <section class="sec" id="grid-spec">
+    <div class="sec__head">
+      <span class="sec__idx">13</span><h2>网格规范</h2>
+      <span class="sec__en">GRID SPEC</span><span class="sec__rule"></span>
+    </div>
+    <div class="stage" style="display:block;padding:26px 30px">
+      <table class="spec-table">
+        <thead>
+          <tr>
+            <th>用途</th><th>卡面</th><th>列 × 可视行</th><th>列距 / 行距</th><th>名称区</th><th>品质框</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="spec-cell" style="width:15px;height:24px"></span>图鉴 / 卡片合成</td>
+            <td><code>62 × 100</code> 竖卡</td>
+            <td><code>10 / 5</code> 列 × <code>3</code> 行</td>
+            <td><code>8 / 12</code></td>
+            <td>28（两行，字号 8）</td>
+            <td>3px</td>
+          </tr>
+          <tr>
+            <td><span class="spec-cell" style="width:22px;height:22px"></span>宝库 / 存档 / 已获取</td>
+            <td><code>60 × 60</code> 方卡</td>
+            <td><code>10 / 8</code> 列 × <code>4</code> 行</td>
+            <td><code>8 / 10</code></td>
+            <td>14（一行，字号 9）</td>
+            <td>3px</td>
+          </tr>
+          <tr>
+            <td><span class="spec-cell" style="width:22px;height:22px"></span>衣柜</td>
+            <td><code>64 × 64</code> 方卡</td>
+            <td><code>8</code> 列 × <code>2</code> 行</td>
+            <td><code>10 / 12</code></td>
+            <td>14（一行，字号 10）</td>
+            <td>3px</td>
+          </tr>
+          <tr>
+            <td><span class="spec-cell" style="width:16px;height:16px"></span>通行证</td>
+            <td><code>46 × 46</code> 小方卡</td>
+            <td><code>6</code> 列 × <code>2</code> 轨</td>
+            <td><code>—</code></td>
+            <td>无名称（悬停看提示）</td>
+            <td>2px</td>
+          </tr>
+          <tr>
+            <td><span class="spec-cell" style="width:14px;height:22px"></span>羁绊配方 / 合成槽</td>
+            <td><code>0.618:1</code> 小竖卡</td>
+            <td>行内横排</td>
+            <td><code>3</code></td>
+            <td>无名称（悬停看提示）</td>
+            <td>2px</td>
+          </tr>
+        </tbody>
+      </table>
+      <ul class="chips" style="margin-top:16px">
+        <li>未拥有统一用「存档禁用蒙版」</li>
+        <li>数量统一右下角 ×N</li>
+        <li>图标边框统一用现有 边框_lv*.tga / 通用边框.tga</li>
+        <li>点击 / 悬停热区覆盖整格（含名称区）</li>
+      </ul>
+    </div>
+    <span class="stage__tag">UNIFIED CELL · 5 SIZES</span>
+  </section>
+
   <!-- ==================== 品质图例 ==================== -->
   <aside class="legend">
     <div class="legend__head">品质色阶 / QUALITY SCALE</div>
@@ -2222,9 +2798,15 @@
 </div>
 
 <div class="tip" id="tip" role="tooltip">
-  <div class="tip__name"></div>
-  <div class="tip__grade"></div>
+  <span class="tip__frame"></span>
+  <div class="tip__head">
+    <span class="tip__gem"></span>
+    <span class="tip__name"></span>
+    <span class="tip__grade"></span>
+  </div>
+  <div class="tip__rule"><i></i></div>
   <div class="tip__lines"></div>
+  <span class="tip__caret"></span>
 </div>
 
 <script>
@@ -2692,7 +3274,7 @@
     var name = s.getAttribute('data-name');
     if(!name){ return; }
     tip.querySelector('.tip__name').textContent = name;
-    tip.querySelector('.tip__grade').textContent = '品质 · ' + (s.getAttribute('data-grade') || '');
+    tip.querySelector('.tip__grade').textContent = s.getAttribute('data-grade') || '';
     tip.querySelector('.tip__lines').innerHTML = (s.getAttribute('data-tip') || '')
       .split('|').filter(Boolean).map(function(t){ return '<span>' + t + '</span>'; }).join('');
     tip.setAttribute('data-q', s.getAttribute('data-q') || 'q3');
