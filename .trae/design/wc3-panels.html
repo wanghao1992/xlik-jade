@@ -1745,6 +1745,334 @@
   .q-pink   {--qt:#ff69b4;  --qbg:rgba(255,105,180,.24);}
 
   /* ============================================================
+     14 选择奥义 · 五择其一(第 4 次进化)
+     ============================================================ */
+  .stage--ult{
+    background:
+      var(--noise) repeat 0 0/320px 320px,
+      radial-gradient(56% 50% at 50% 44%,rgba(255,168,58,.13),transparent 68%),
+      radial-gradient(84% 76% at 50% 50%,rgba(32,27,18,.55),rgba(8,7,5,.95));
+    background-blend-mode:overlay,normal,normal;
+  }
+  /* 无背景框: 只有标题行与卡片行, 直接浮在场景上 */
+  .ult-wrap{
+    position:relative;width:min(1000px,100%);
+    display:flex;flex-direction:column;align-items:center;gap:10px;
+    padding:6px 0 0;
+  }
+  .ult-head{
+    position:relative;align-self:stretch;height:34px;
+    display:flex;align-items:center;justify-content:center;gap:12px;
+  }
+  .ult-title{
+    margin:0;flex:none;font-size:18px;font-weight:700;letter-spacing:.3em;
+    color:#ffe2ab;
+    text-shadow:0 1px 0 #000,0 0 18px rgba(255,170,70,.42);
+  }
+  .ult-timer{
+    position:absolute;right:2px;top:50%;transform:translateY(-50%);
+    display:inline-flex;align-items:center;gap:8px;padding:4px 10px;
+    font-size:10px;letter-spacing:.08em;color:#b9a275;white-space:nowrap;
+    background:rgba(0,0,0,.36);
+    border:1px solid rgba(201,170,80,.3);
+    clip-path:var(--cut-sm);
+  }
+  .ult-timer b{font-family:Consolas,"Cascadia Mono","Courier New",monospace;font-size:12px;color:#ffd76a}
+  .ult-timer i{
+    width:6px;height:6px;flex:none;background:#e0664f;
+    transform:rotate(45deg);box-shadow:0 0 8px rgba(224,102,79,.85);
+    animation:ultTimerPulse 1.2s ease-in-out infinite;
+  }
+  @keyframes ultTimerPulse{
+    0%,100%{opacity:1;box-shadow:0 0 8px rgba(224,102,79,.85)}
+    50%{opacity:.4;box-shadow:0 0 3px rgba(224,102,79,.3)}
+  }
+
+  /* 五张竖卡横排 —— 与游戏内 0.088 × 0.200 比例一致 */
+  .ult-row{position:relative;display:flex;justify-content:center;align-items:stretch;gap:12px;padding:2px 2px 8px}
+  .ult-row::after{
+    content:"";position:absolute;left:6%;right:6%;bottom:0;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,190,110,.35),transparent);
+  }
+  .ult-card{
+    --uq:#ffb454;--uq-soft:rgba(255,180,84,.22);
+    position:relative;flex:1 1 0;min-width:0;max-width:178px;height:392px;
+    display:flex;flex-direction:column;padding:0;
+    font-family:inherit;text-align:left;color:inherit;cursor:pointer;
+    border:1px solid rgba(201,170,80,.4);
+    background:
+      radial-gradient(130% 55% at 50% -8%,var(--uq-soft),transparent 64%),
+      linear-gradient(180deg,#232018 0%,#15130d 52%,#0a0906 100%);
+    clip-path:var(--cut-lg);
+    box-shadow:inset 0 0 0 1px #060504,inset 0 0 0 2px rgba(0,0,0,.5);
+    filter:drop-shadow(0 6px 14px rgba(0,0,0,.55));
+    transition:transform .22s ease,filter .22s ease,border-color .22s ease,box-shadow .22s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .ult-card:hover,.ult-card.is-focus{
+    transform:translateY(-8px);
+    border-color:var(--uq);
+    box-shadow:inset 0 0 0 1px #060504,inset 0 0 0 2px rgba(0,0,0,.5),inset 0 0 34px var(--uq-soft);
+    filter:drop-shadow(0 14px 24px rgba(0,0,0,.62)) drop-shadow(0 0 22px var(--uq-soft));
+  }
+  .ult-card::after{
+    content:"";position:absolute;inset:0;z-index:4;pointer-events:none;
+    background:linear-gradient(105deg,transparent 22%,rgba(255,242,210,.02) 34%,rgba(255,242,210,.06) 43%,rgba(255,250,235,.13) 50%,rgba(255,242,210,.06) 57%,rgba(255,242,210,.02) 66%,transparent 78%);
+    transform:translateX(-130%);opacity:0;
+  }
+  .ult-card:hover::after,.ult-card.is-focus::after{animation:cardSweep .9s cubic-bezier(.35,0,.25,1) .04s}
+  .ult-card:focus-visible{outline:2px solid #ffd76a;outline-offset:4px}
+
+  .ult-card__rank{
+    position:absolute;right:9px;top:3px;pointer-events:none;
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:30px;line-height:1;color:rgba(255,236,196,.075);
+  }
+  .ult-card__seal{
+    position:relative;display:grid;place-items:center;
+    width:84px;height:84px;margin:22px auto 12px;flex:none;
+    border:1px solid var(--uq);
+    background:
+      radial-gradient(60% 60% at 50% 42%,var(--uq-soft),transparent 72%),
+      linear-gradient(180deg,#28231a,#090806);
+    clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px);
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.8),inset 0 0 20px rgba(0,0,0,.75),0 0 20px var(--uq-soft);
+  }
+  .ult-card__seal::after{
+    content:"";position:absolute;inset:5px;border:1px dashed rgba(255,238,200,.18);
+    clip-path:var(--cut-sm);
+  }
+  .ult-card__seal .glyph{
+    width:40px;height:40px;color:var(--uq);
+    filter:drop-shadow(0 0 10px var(--uq-soft)) drop-shadow(0 2px 3px rgba(0,0,0,.9));
+  }
+  .ult-card__role{
+    align-self:center;padding:2px 10px;margin-bottom:7px;
+    font-size:9px;letter-spacing:.26em;color:var(--uq);
+    background:rgba(0,0,0,.3);
+    border:1px solid rgba(201,170,80,.28);
+  }
+  .ult-card__name{
+    align-self:center;padding:0 8px;text-align:center;
+    font-size:14px;font-weight:700;letter-spacing:.1em;color:#f6e9c8;
+    text-shadow:0 1px 0 #000,0 0 12px var(--uq-soft);
+  }
+  .ult-card__rule{
+    display:block;height:1px;margin:10px 16px 0;opacity:.6;
+    background:linear-gradient(90deg,transparent,var(--uq),transparent);
+  }
+  .ult-card__effects{display:flex;flex-direction:column;flex:1;gap:2px;padding:10px 14px 6px}
+  .ult-effect{display:flex;gap:7px;padding:4px 0;font-size:10.5px;line-height:1.7;color:#ab9f84}
+  .ult-effect i{
+    width:5px;height:5px;flex:none;margin-top:6px;transform:rotate(45deg);
+    background:var(--uq);box-shadow:0 0 6px var(--uq-soft);
+  }
+  .ult-effect b{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:11px;font-weight:700;color:var(--uq);
+    font-variant-numeric:tabular-nums;
+  }
+  .ult-card__cd{
+    display:block;padding:7px 10px;text-align:center;white-space:nowrap;
+    font-size:9.5px;letter-spacing:.06em;color:#8a7f66;
+    border-top:1px dashed rgba(201,170,80,.16);
+  }
+  .ult-card__cd b{font-family:Consolas,"Cascadia Mono","Courier New",monospace;font-size:11px;color:#e3cb92}
+  .ult-card.is-picked{
+    border-color:#ffe9a8;
+    box-shadow:inset 0 0 0 1px #060504,inset 0 0 0 2px rgba(255,225,150,.35),inset 0 0 40px rgba(255,205,110,.18);
+    filter:drop-shadow(0 12px 22px rgba(0,0,0,.6)) drop-shadow(0 0 24px rgba(255,200,90,.4));
+  }
+
+  @media (max-width:900px){
+    .ult-row{flex-wrap:wrap}
+    .ult-card{flex:0 0 168px}
+  }
+
+  /* ============================================================
+     15 BOSS血条 · 秒伤统计
+     ============================================================ */
+  .bbsim{
+    position:relative;width:min(980px,100%);
+    padding:30px 32px 34px;
+    background:
+      var(--noise) repeat 0 0/160px 160px,
+      radial-gradient(130% 140% at 50% 0%,rgba(58,86,52,.5),transparent 60%),
+      linear-gradient(180deg,#131b10,#0b0f0a 58%,#070906);
+    border:1px solid #0a0907;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.05),inset 0 0 56px rgba(0,0,0,.6);
+    clip-path:var(--cut-md);
+  }
+  .bbsim__hud{position:relative;width:660px;max-width:100%;margin:0 auto}
+
+  /* 名牌(底边贴血条顶边, 水平居中) */
+  .bb-name{
+    position:relative;width:172px;height:26px;margin:0 auto -1px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;letter-spacing:.22em;color:#f5e3b3;
+    text-shadow:0 1px 0 #000,0 0 8px rgba(255,205,110,.35);
+    background:linear-gradient(180deg,#4a4130 0%,#2b2519 55%,#17130c 100%);
+    border:1px solid #a07f34;border-bottom-color:#060504;
+    clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 100%,0 100%);
+    box-shadow:inset 0 0 0 1px #060504,inset 0 1px 0 rgba(255,240,190,.16);
+  }
+  /* 血条本体 */
+  .bb-bar{
+    position:relative;height:34px;
+    background:linear-gradient(180deg,#312b20 0%,#1c1811 50%,#0e0c08 100%);
+    border:1px solid #a07f34;
+    clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 50%,calc(100% - 7px) 100%,7px 100%,0 50%);
+    box-shadow:inset 0 0 0 1px #060504,inset 0 0 0 3px rgba(205,170,74,.12),inset 0 8px 14px rgba(0,0,0,.6);
+  }
+  .bb-bar__fill{
+    position:absolute;left:6px;top:5px;bottom:5px;width:62%;
+    background:linear-gradient(180deg,#ffb39f 0%,#e0492f 34%,#a01f12 68%,#6e1009 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -6px 10px rgba(0,0,0,.45),0 0 12px rgba(255,70,40,.35);
+  }
+  .bb-bar__fill::after{
+    content:"";position:absolute;left:0;right:0;top:1px;height:38%;
+    background:linear-gradient(180deg,rgba(255,255,255,.34),transparent);
+  }
+  .bb-bar__hp{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:6px;
+    font-size:12.5px;letter-spacing:.1em;color:#ffe9c9;
+    text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.85);
+  }
+  .bb-bar__hp b{color:#fff;font-weight:700}
+  /* 护盾白条(贴血条正下方, 不压血条) */
+  .bb-shield{
+    position:absolute;left:6px;right:38%;top:calc(100% + 2px);height:3px;
+    background:linear-gradient(90deg,#f2f8ff,#a8c4dd);
+    box-shadow:0 0 5px rgba(170,205,255,.55);
+  }
+  /* 下方信息行: 左 Buff / 右 计时+秒伤 */
+  .bb-row{display:flex;justify-content:space-between;align-items:flex-start;margin-top:11px}
+  .bb-buffs{display:flex;gap:4px}
+  .bb-buff{
+    position:relative;width:30px;height:30px;flex:none;
+    display:flex;align-items:center;justify-content:center;
+    border:1px solid #060504;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 0 8px rgba(0,0,0,.5);
+    color:#d5e8c0;
+  }
+  .bb-buff .glyph{width:18px;height:18px}
+  .bb-buff--up{background:radial-gradient(120% 120% at 30% 20%,#3d5c31,#16210f)}
+  .bb-buff--down{background:radial-gradient(120% 120% at 30% 20%,#5c2f2a,#211009);color:#eecfc4}
+  .bb-buff i{position:absolute;right:1px;bottom:0;font-style:normal;font-size:8px;color:#ffe9b0;text-shadow:0 1px 1px #000}
+
+  .bb-side{text-align:right;line-height:1.45}
+  .bb-timer{
+    font-family:Consolas,"Cascadia Mono",monospace;
+    font-size:14px;font-weight:700;letter-spacing:.08em;color:#ff5140;
+    text-shadow:0 1px 2px #000,0 0 8px rgba(255,60,40,.4);
+  }
+  /* 新增: 伤害统计排行面板(剑灵小助手式 · 青铜皮肤) */
+  .bbm{
+    position:relative;margin-top:6px;width:330px;
+    background:linear-gradient(180deg,rgba(28,25,19,.93),rgba(12,11,8,.95));
+    border:1px solid var(--gold-3);
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px #060504,inset 0 0 18px rgba(0,0,0,.55),0 6px 18px rgba(0,0,0,.5);
+    font-size:11px;color:var(--ink);
+  }
+  .bbm__head{
+    display:flex;align-items:center;gap:8px;padding:5px 10px;
+    background:linear-gradient(180deg,rgba(205,170,74,.16),rgba(205,170,74,.04));
+    border-bottom:1px solid rgba(205,170,74,.35);
+  }
+  .bbm__title{flex:1;font-size:11px;font-weight:700;letter-spacing:.22em;color:var(--gold-1);text-align:left}
+  .bbm__time{font-family:Consolas,monospace;font-size:10.5px;color:var(--ink-dim)}
+  .bbm__th,.bbm__row{
+    display:grid;grid-template-columns:1fr 62px 62px 44px;
+    align-items:center;gap:6px;padding:0 10px;
+  }
+  .bbm__th{height:22px;font-size:9.5px;letter-spacing:.1em;color:var(--ink-dim);border-bottom:1px solid rgba(255,255,255,.06);text-align:left}
+  .bbm__th > span:nth-child(n+2){text-align:right}
+  .bbm__row{position:relative;height:27px;text-align:left}
+  .bbm__row + .bbm__row{border-top:1px solid rgba(255,255,255,.04)}
+  .bbm__row > .bbm__bar{position:absolute;left:0;top:3px;bottom:3px;background:rgba(205,170,74,.16)}
+  .bbm__row > span{position:relative;z-index:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bbm__dps{font-family:Consolas,monospace;font-weight:700;text-align:right;color:var(--gold-1)}
+  .bbm__total{font-family:Consolas,monospace;text-align:right;color:var(--ink-dim)}
+  .bbm__pct{font-family:Consolas,monospace;text-align:right;font-size:10px;color:var(--ink-dim)}
+  .bbm__row--me{background:rgba(255,215,106,.07);box-shadow:inset 2px 0 0 #ffd76a}
+  .bbm__row--me .bbm__name,.bbm__row--me .bbm__dps{color:#ffd76a}
+  .bbm__row--me .bbm__bar{background:rgba(255,215,106,.18)}
+  .bbm__foot{
+    display:flex;justify-content:space-between;padding:4px 10px;
+    border-top:1px solid rgba(205,170,74,.25);
+    font-size:10px;color:var(--ink-dim);
+  }
+  .bbm__foot b{color:var(--gold-1);font-family:Consolas,monospace;font-weight:700}
+  /* 收起态: 只留标题栏, 右侧只显示自己的秒伤; 点击标题栏切换 */
+  .bbm__toggle{color:var(--gold-2);font-size:9px;margin-left:2px}
+  .bbm__my{font-family:Consolas,monospace;font-size:11px;font-weight:700;color:#ffd76a}
+  .bbm__my i{font-style:normal;font-weight:400;font-size:9.5px;color:var(--ink-dim);margin-right:4px}
+  .bbm--min .bbm__head{border-bottom-color:transparent}
+  .bbsim--min{margin-top:16px;padding:16px 32px;display:flex;justify-content:flex-end}
+  .bbsim__col{display:flex;flex-direction:column;width:min(980px,100%)}
+  .bbsim__state{
+    position:absolute;left:14px;top:12px;
+    font-size:10px;letter-spacing:.2em;color:var(--gold-2);
+    border:1px solid rgba(205,170,74,.4);padding:2px 8px;
+    clip-path:var(--cut-sm);
+  }
+
+  .bbsim__note{
+    margin-top:18px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;
+    font-size:10.5px;letter-spacing:.1em;color:#7d8a72;
+  }
+  .bbsim__note b{color:#a8d9bd;font-weight:700}
+
+  /* ==================== 16 新手指引 ==================== */
+  .gdp{
+    width:300px;
+    background:linear-gradient(180deg,rgba(28,25,19,.94),rgba(12,11,8,.96));
+    border:1px solid var(--gold-3);
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px #060504,inset 0 0 18px rgba(0,0,0,.55),0 6px 18px rgba(0,0,0,.5);
+    font-size:11px;color:var(--ink);
+  }
+  .gdp__head{
+    display:flex;align-items:center;gap:8px;padding:6px 10px;
+    background:linear-gradient(180deg,rgba(205,170,74,.16),rgba(205,170,74,.04));
+    border-bottom:1px solid rgba(205,170,74,.35);
+  }
+  .gdp__title{color:#e6c884;font-weight:700;letter-spacing:.14em;font-size:12px}
+  .gdp__step{margin-left:auto;color:#9a8f78;font-size:10px;letter-spacing:.05em}
+  .gdp__dots{display:inline-flex;gap:3px;margin-left:6px;vertical-align:1px}
+  .gdp__dots i{width:5px;height:5px;border-radius:50%;background:#4a463a}
+  .gdp__dots i.on{background:#ffd76a;box-shadow:0 0 4px rgba(255,214,106,.65)}
+  .gdp__task{padding:9px 12px 2px;font-size:13.5px;font-weight:700;color:#ffd76a;letter-spacing:.06em;text-shadow:0 1px 2px #000}
+  .gdp__rows{padding:6px 12px 2px;display:grid;gap:5px}
+  .gdp__row{display:flex;gap:7px;align-items:baseline;line-height:1.5}
+  .gdp__label{
+    flex:none;padding:0 5px;font-size:9.5px;color:#cdaa4a;
+    border:1px solid rgba(205,170,74,.4);border-radius:2px;background:rgba(205,170,74,.08);
+  }
+  .gdp__row--prog .gdp__val{color:#7cff78}
+  .gdp__row--reward .gdp__val{color:#8fe07c}
+  .gdp__btns{display:flex;justify-content:flex-end;gap:8px;padding:8px 10px 10px}
+  .gd-btn{
+    padding:3px 14px;font-size:11px;letter-spacing:.2em;cursor:pointer;
+    border:1px solid #a07f34;
+    clip-path:polygon(5px 0,calc(100% - 5px) 0,100% 50%,calc(100% - 5px) 100%,5px 100%,0 50%);
+  }
+  .gd-btn--primary{background:linear-gradient(180deg,#6b5316,#3d2f0c);color:#ffe2ab;font-weight:700;box-shadow:inset 0 1px 0 rgba(255,240,190,.25)}
+  .gd-btn--ghost{background:rgba(205,170,74,.06);color:#c9b98f}
+  /* 收起态: 屏幕右缘竖排挂签 */
+  .gdtab{
+    width:34px;padding:12px 0;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;
+    background:linear-gradient(180deg,rgba(28,25,19,.95),rgba(12,11,8,.97));
+    border:1px solid var(--gold-3);border-right:none;
+    clip-path:polygon(7px 0,100% 0,100% 100%,7px 100%,0 50%);
+    box-shadow:inset 0 0 0 1px #060504,0 4px 14px rgba(0,0,0,.5);
+    color:#e6c884;font-size:11px;letter-spacing:.3em;
+  }
+  .gdtab b{writing-mode:vertical-rl;font-weight:700}
+  .gdtab i{color:#cdaa4a;font-style:normal;font-size:9px}
+
+  /* ============================================================
      品质图例 / 页脚
      ============================================================ */
   .legend{
@@ -1942,6 +2270,9 @@
     <a href="#tooltip"><span>12</span>悬浮提示</a>
     <a href="#grid-spec"><span>13</span>网格规范</a>
     <a href="#affix"><span>12</span>词条升级</a>
+    <a href="#ultimate"><span>14</span>选择奥义</a>
+    <a href="#boss"><span>15</span>BOSS血条</a>
+    <a href="#guide"><span>16</span>新手指引</a>
   </nav>
 
   <!-- ==================== 01 存档 ==================== -->
@@ -2991,6 +3322,155 @@
     </ul>
   </section>
 
+  <!-- ==================== 14 选择奥义 · 五择其一 ==================== -->
+  <section class="sec" id="ultimate">
+    <div class="sec__head">
+      <span class="sec__idx">14</span><h2>选择奥义</h2>
+      <span class="sec__en">ULTIMATE OFFERING · 五择其一</span><span class="sec__rule"></span>
+    </div>
+    <div class="stage stage--ult">
+      <span class="stage__mark">义</span>
+      <div class="ult-wrap">
+        <div class="ult-head">
+          <span class="head-line"></span><span class="diamond"></span>
+          <h3 class="ult-title">选择奥义</h3>
+          <span class="diamond"></span><span class="head-line head-line--r"></span>
+          <span class="ult-timer"><i></i><b id="ultTimer">30</b> 秒后自动选择首项</span>
+        </div>
+        <div class="ult-row" id="ultRow"></div>
+      </div>
+      <span class="stage__tag">5 ULTIMATES · PICK ONE</span>
+    </div>
+    <ul class="chips">
+      <li>第 4 次进化后弹出</li>
+      <li>五张竖卡横排 · 悬停上浮 + 扫光</li>
+      <li>图标 / 定位 / 效果 / 冷却 · 一屏读完</li>
+      <li>点击即确认 · 30 秒兜底自动选首项</li>
+    </ul>
+  </section>
+
+  <!-- ==================== 15 BOSS血条 · 秒伤统计 ==================== -->
+  <section class="sec" id="boss">
+    <div class="sec__head">
+      <span class="sec__idx">15</span><h2>BOSS血条 · 秒伤统计</h2>
+      <span class="sec__en">BOSS HP BAR · DPS METER</span><span class="sec__rule"></span>
+    </div>
+    <div class="stage">
+      <span class="stage__mark">王</span>
+      <div class="bbsim__col">
+      <div class="bbsim">
+        <span class="bbsim__state">展开态</span>
+        <div class="bbsim__hud">
+          <div class="bb-name">提克迪奥斯</div>
+          <div class="bb-bar">
+            <span class="bb-bar__fill"></span>
+            <span class="bb-bar__hp"><b>1.9亿</b> / 3亿</span>
+            <span class="bb-shield"></span>
+          </div>
+          <div class="bb-row">
+            <div class="bb-buffs">
+              <span class="bb-buff bb-buff--up"><svg class="glyph" aria-hidden="true"><use href="#i-shield"></use></svg></span>
+              <span class="bb-buff bb-buff--down"><svg class="glyph" aria-hidden="true"><use href="#i-flame"></use></svg><i>x2</i></span>
+              <span class="bb-buff bb-buff--down"><svg class="glyph" aria-hidden="true"><use href="#i-skull"></use></svg><i>4.8</i></span>
+            </div>
+            <div class="bb-side">
+              <div class="bb-timer">00:02:45</div>
+              <div class="bbm">
+                <div class="bbm__head"><span class="bbm__title">伤害统计</span><span class="bbm__time">战斗 00:47</span><span class="bbm__toggle">▼</span></div>
+                <div class="bbm__th"><span>玩家</span><span>秒伤</span><span>总伤</span><span>占比</span></div>
+                <div class="bbm__row bbm__row--me">
+                  <span class="bbm__bar" style="width:100%"></span>
+                  <span class="bbm__name">夜雨声烦</span>
+                  <span class="bbm__dps">128.6万</span><span class="bbm__total">6,024万</span><span class="bbm__pct">38.2%</span>
+                </div>
+                <div class="bbm__row">
+                  <span class="bbm__bar" style="width:75%"></span>
+                  <span class="bbm__name">Moonlight</span>
+                  <span class="bbm__dps">96.4万</span><span class="bbm__total">4,515万</span><span class="bbm__pct">28.6%</span>
+                </div>
+                <div class="bbm__row">
+                  <span class="bbm__bar" style="width:55%"></span>
+                  <span class="bbm__name">Kaze</span>
+                  <span class="bbm__dps">71.2万</span><span class="bbm__total">3,336万</span><span class="bbm__pct">21.1%</span>
+                </div>
+                <div class="bbm__row">
+                  <span class="bbm__bar" style="width:27%"></span>
+                  <span class="bbm__name">布丁</span>
+                  <span class="bbm__dps">35.0万</span><span class="bbm__total">1,640万</span><span class="bbm__pct">10.4%</span>
+                </div>
+                <div class="bbm__foot"><span>团队秒伤 <b>331.2万</b></span><span>统计中 · 4 人</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bbsim__note">
+          <span>排行面板挂血条右下方 · 青铜皮肤贴合现有 UI · 点击标题栏收起 / 展开</span>
+        </div>
+      </div>
+      <div class="bbsim bbsim--min">
+        <span class="bbsim__state">收起态</span>
+        <div class="bbm bbm--min">
+          <div class="bbm__head"><span class="bbm__title">伤害统计</span><span class="bbm__my"><i>我的秒伤</i>128.6万</span><span class="bbm__toggle">▶</span></div>
+        </div>
+      </div>
+      </div>
+      <span class="stage__tag">SCREEN TOP CENTER · HUD</span>
+    </div>
+    <ul class="chips">
+      <li>剑灵小助手式：按秒伤降序 · 占比条按第一名归一化</li>
+      <li>玩家列显示玩家昵称 · 自己行金色高亮</li>
+      <li>点击标题栏收起 / 展开 · 收起时只显示自己的秒伤</li>
+      <li>口径：首次受伤起算 · 标题栏战斗时长 · 底部团队秒伤汇总</li>
+      <li>显隐：未受击不显示 · 更换 BOSS 自动清零重计</li>
+    </ul>
+  </section>
+
+  <!-- ==================== 16 新手指引 ==================== -->
+  <section class="sec" id="guide">
+    <div class="sec__head">
+      <span class="sec__idx">16</span><h2>新手指引</h2>
+      <span class="sec__en">NEWBIE GUIDE</span><span class="sec__rule"></span>
+    </div>
+    <div class="stage">
+      <span class="stage__mark">引</span>
+      <div class="bbsim__col">
+      <div class="bbsim">
+        <span class="bbsim__state">展开态</span>
+        <div class="bbsim__hud">
+          <div class="gdp">
+            <div class="gdp__head"><span class="gdp__title">✦ 新手指引</span><span class="gdp__step">第 1/3 步<span class="gdp__dots"><i class="on"></i><i></i><i></i></span></span></div>
+            <div class="gdp__task">完成第一次进化</div>
+            <div class="gdp__rows">
+              <div class="gdp__row"><span class="gdp__label">内容</span><span class="gdp__val">击杀 30 个小怪完成第一次进化</span></div>
+              <div class="gdp__row gdp__row--prog"><span class="gdp__label">进度</span><span class="gdp__val">(12/30)</span></div>
+              <div class="gdp__row gdp__row--reward"><span class="gdp__label">奖励</span><span class="gdp__val">天赋点 +1</span></div>
+            </div>
+            <div class="gdp__btns"><span class="gd-btn gd-btn--primary">引导</span><span class="gd-btn gd-btn--ghost">收起</span></div>
+          </div>
+        </div>
+        <div class="bbsim__note">
+          <span>挂屏幕右上 · 步骤点展示任务链进度 · 引导为主按钮金色高亮</span>
+        </div>
+      </div>
+      <div class="bbsim bbsim--min">
+        <span class="bbsim__state">收起态</span>
+        <div class="gdtab"><i>◀</i><b>新手指引</b></div>
+        <div class="bbsim__note">
+          <span>收起后屏幕右缘留竖排挂签 · 点击重新展开</span>
+        </div>
+      </div>
+      </div>
+      <span class="stage__tag">SCREEN RIGHT TOP · HUD</span>
+    </div>
+    <ul class="chips">
+      <li>标题栏：✦ 新手指引 + 第 x/3 步步骤点(●○○)</li>
+      <li>任务名金色大字 · 内容/进度/奖励 铜牌标签分行</li>
+      <li>引导=主按钮金色填充 · 收起=次级幽灵按钮</li>
+      <li>收起态：屏幕右缘竖排挂签(◀ 新手指引)</li>
+      <li>三段任务链：首次进化 → 用天赋点 → 击破挑战怪</li>
+    </ul>
+  </section>
+
   <!-- ==================== 品质图例 ==================== -->
   <aside class="legend">
     <div class="legend__head">品质色阶 / QUALITY SCALE</div>
@@ -3534,6 +4014,82 @@
       alert('确认选择：' + pick.name + '  ' + fmtVal(pick.def, pick.value));
     });
   });
+
+  /* ---------------- 选择奥义 · 五张竖卡 ---------------- */
+  var ULT_CARDS = [
+    { rank:'Ⅰ', name:'奥义·我要开车', role:'机动冲锋', glyph:'i-boot', color:'#ffab4a', soft:'rgba(255,171,74,.22)',
+      effects:['骑乘冲锋 <b>10</b> 秒，期间缴械','锁定最远敌人自动冲撞','击飞并造成 攻击+力量+敏捷 物理伤害'] },
+    { rank:'Ⅱ', name:'奥义·雷霆扑杀', role:'随机扑杀', glyph:'i-flame', color:'#ffd76a', soft:'rgba(255,215,106,.22)',
+      effects:['自动追击 <b>600~2000</b> 码内敌人','落点对周围 <b>500</b> 码造成伤害','攻击力 <b>×300%</b> 物理伤害'] },
+    { rank:'Ⅲ', name:'奥义·凌波微步', role:'蛇形游走', glyph:'i-wing', color:'#6fe3d2', soft:'rgba(111,227,210,.22)', focus:true,
+      effects:['蛇形游走 <b>10</b> 秒，可正常普攻','路径造成 攻击+智力+敏捷 法术伤害','伤害可暴击 · 索敌优先 BOSS'] },
+    { rank:'Ⅳ', name:'奥义·天降巨剑', role:'巨剑处决', glyph:'i-sword', color:'#9fc0ff', soft:'rgba(159,192,255,.22)',
+      effects:['巨剑镇压原地 <b>10</b> 秒','震荡波减速并击飞周围敌人','瞬移斩杀被击飞目标，结束归位'] },
+    { rank:'Ⅴ', name:'奥义·分身诱饵', role:'诱饵天罚', glyph:'i-orb', color:'#d3a2ff', soft:'rgba(211,162,255,.22)',
+      effects:['召唤不可击杀的诱饵吸引围攻','中毒每秒 <b>10%</b>，BOSS <b>2%</b>','<b>10</b> 秒后天罚 智力 <b>×500%</b>'] }
+  ];
+
+  document.getElementById('ultRow').innerHTML = ULT_CARDS.map(function(c){
+    return '<button type="button" class="ult-card' + (c.focus ? ' is-focus' : '') + '" ' +
+      'style="--uq:' + c.color + ';--uq-soft:' + c.soft + '">' +
+      '<span class="ult-card__rank">' + c.rank + '</span>' +
+      '<span class="ult-card__seal">' + svg(c.glyph) + '</span>' +
+      '<span class="ult-card__role">' + c.role + '</span>' +
+      '<span class="ult-card__name">' + c.name + '</span>' +
+      '<span class="ult-card__rule"></span>' +
+      '<span class="ult-card__effects">' +
+        c.effects.map(function(e){ return '<span class="ult-effect"><i></i><span>' + e + '</span></span>'; }).join('') +
+      '</span>' +
+      '<span class="ult-card__cd">冷却 <b>60</b> 秒</span>' +
+    '</button>';
+  }).join('');
+
+  document.querySelectorAll('#ultRow .ult-card').forEach(function(card){
+    card.addEventListener('click', function(){
+      document.querySelectorAll('#ultRow .ult-card').forEach(function(el){
+        el.classList.remove('is-picked', 'is-focus');
+      });
+      card.classList.add('is-picked');
+    });
+  });
+
+  /* 30 秒兜底倒计时(真实递减, 与服务端自动选择一致) */
+  (function(){
+    var sec = document.getElementById('ultimate');
+    var el = document.getElementById('ultTimer');
+    var chip = el ? el.parentElement : null;
+    if(!sec || !el || !chip){ return; }
+    var started = false;
+    function start(){
+      if(started){ return; }
+      started = true;
+      var left = 30;
+      var timer = setInterval(function(){
+        left--;
+        if(left > 0){
+          el.textContent = left;
+          return;
+        }
+        clearInterval(timer);
+        chip.innerHTML = '<i></i>正在自动选择首项…';
+        chip.style.color = '#e0664f';
+      }, 1000);
+    }
+    /* 滚动到该区块时再开始倒计时, 避免打开页面就先跑完 */
+    if('IntersectionObserver' in window){
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(entry){
+          if(entry.isIntersecting){
+            start();
+            io.disconnect();
+          }
+        });
+      }, { threshold: 0.3 });
+      io.observe(sec);
+    }else{
+      start();
+    }
+  })();
 
   /* ---------------- 三选一卡片 ---------------- */
   document.querySelectorAll('.hero-card, .relic-card').forEach(function(card){
