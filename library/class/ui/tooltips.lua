@@ -249,11 +249,13 @@ function _index:content(options)
     end
     tips = lines
     --- kv 模式: 把"标签: 值"形式的行转成两端对齐的属性行(设计图的数值行)
+    --- 数值行 UI 最多只渲染 4 行; 超出部分回退到正文以纯文本显示, 避免内容被静默截断
     if (options.kv == true and #tips > 0) then
         local body, kv = {}, {}
+        local statCap = 4 - #stats
         for _, s in ipairs(tips) do
             local label, val, hex = splitKV(s)
-            if (label and vistring.width(val, fontSize) <= pxw(200)) then
+            if (label and vistring.width(val, fontSize) <= pxw(200) and #kv < statCap) then
                 kv[#kv + 1] = { label = label, value = val, hex = hex }
             else
                 body[#body + 1] = s
