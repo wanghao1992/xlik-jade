@@ -100,6 +100,21 @@ function superposition.is(mod, key)
     return _value(mod, key) > 0
 end
 
+--- 暂停单位: 优先使用 EX 暂停(japi.EXPauseUnit)
+---   原生 PauseUnit 会把模型动画一并冻结在当前帧, 还会覆盖同帧设置的动画,
+---   导致"暂停 + 强制播动画"的做法完全看不到动作(冲锋走路/骑乘走路都会这样);
+---   EX 暂停只封锁单位指令, 模型动画照常播放(老图 AllStar 的晕眩/坐骑系统用的就是它)
+---   平台不提供该 JAPI 时退回原生 PauseUnit
+---@param obj Unit
+---@param status boolean
+local function pauseUnit(obj, status)
+    if (true == japi.Has("EXPauseUnit")) then
+        japi.Exec("EXPauseUnit", obj._handle, status)
+        return
+    end
+    J.PauseUnit(obj._handle, status)
+end
+
 -- 默认配置
 ---[[:use library/common/sync]]
 game.onPhase("process", function()
@@ -122,8 +137,8 @@ game.onPhase("process", function()
         function(obj) event.syncTrigger(obj, eventKind.unitInterruptIn) end,
         function(obj) event.syncTrigger(obj, eventKind.unitInterruptOut) end)
     superposition.config(UnitClass, "pause",
-        function(obj) J.PauseUnit(obj._handle, true) end,
-        function(obj) J.PauseUnit(obj._handle, false) end)
+        function(obj) pauseUnit(obj, true) end,
+        function(obj) pauseUnit(obj, false) end)
     superposition.config(UnitClass, "hide",
         function(obj) J.ShowUnit(obj._handle, false) end,
         function(obj) J.ShowUnit(obj._handle, true) end)

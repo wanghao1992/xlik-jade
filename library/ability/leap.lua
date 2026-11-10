@@ -59,6 +59,7 @@ end
         speed = 500, --[可选]每秒冲击的距离（默认1秒500px）
         acceleration = 0, --[可选]冲击加速度（每个周期[0.02秒]都会增加一次）
         height = 0, --[可选]飞跃高度（默认0）
+        flyHeight = true, --[可选]是否逐周期改写飞行高度（默认true；false时高度交给外部，避免每周期重加/移除飞行能力把强制播放的动画打断）
         reflex = 0, --[可选]弹射次数，当targetUnit存在时才有效，默认0
         stunPause = false, --[可选]眩晕时是否暂停推进（默认false；true时眩晕期间停在原地, 眩晕结束后继续）
         pauseKey = nil, --[可选]带该Buff(key)时暂停推进(如传送), 结束后从原进度继续
@@ -69,7 +70,7 @@ end
     }
 ]]
 ---@alias abilityLeapFunc fun(options:abilityLeapOptions,vec:number[]):nil|boolean
----@alias abilityLeapOptions {sourceUnit:Unit,targetUnit:Unit,targetVec:number[],animate:string|number,animateScale:number,frequency:number,speed:number,acceleration:number,height:number,reflex:number,stunPause:boolean,model:string,onMove:abilityLeapFunc,onEnd:abilityLeapFunc,onReflex:abilityLeapFunc}
+---@alias abilityLeapOptions {sourceUnit:Unit,targetUnit:Unit,targetVec:number[],animate:string|number,animateScale:number,frequency:number,speed:number,acceleration:number,height:number,flyHeight:boolean,reflex:number,stunPause:boolean,model:string,onMove:abilityLeapFunc,onEnd:abilityLeapFunc,onReflex:abilityLeapFunc}
 ---@param options abilityLeapOptions|abilityBuffAddon
 function ability.leap(options)
     sync.must()
@@ -116,6 +117,9 @@ function ability.leap(options)
 
     local flyHeight0 = sourceUnit:flyHeight()
     local animate = options.animate
+    --- 逐周期改写飞行高度: flyHeight 的 setter 每次都会重新加/移除飞行能力, 这会打断单位
+    --- 强制播放的动画(观感是一直卡在第一帧); 由外部控制高度时传 flyHeight = false 跳过
+    local flyEnabled = (options.flyHeight ~= false)
     local animateDiff = (options.animateScale or 1) - sourceUnit:animateScale()
 
     --- 本段位移的"立即终止"入口: 自己结束或被新位移顶掉时统一走这里(销毁计时器 + 回滚 Buff)
@@ -221,7 +225,9 @@ function ability.leap(options)
         end
         if (dt >= 1) then
             sourceUnit:position(vec2[1], vec2[2])
-            sourceUnit:flyHeight(vec2[3])
+            if (true == flyEnabled) then
+                sourceUnit:flyHeight(vec2[3])
+            end
             sourceUnit:facing(vector2.angle(vecT[1], vecT[2], vec2[1], vec2[2]))
             stop(true, vec2)
             return
@@ -244,7 +250,9 @@ function ability.leap(options)
 
         J.SetUnitX(sourceUnit:handle(), vecT[1])
         J.SetUnitY(sourceUnit:handle(), vecT[2])
-        sourceUnit:flyHeight(vecT[3])
+        if (true == flyEnabled) then
+            sourceUnit:flyHeight(vecT[3])
+        end
         sourceUnit:facing(vector2.angle(vecT[1], vecT[2], vec2[1], vec2[2]))
         distancePrev = distanceCur
         if (dtAcc ~= 0) then

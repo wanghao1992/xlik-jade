@@ -1582,6 +1582,169 @@
   }
 
   /* ============================================================
+     12 专属装备 · 词条三选一（紧凑弹窗 · 叠物品栏上方）
+     触发：10 / 20 / 30 / 40 级；品质 1~5 按权重随机；
+     候选名字与已选互斥；数值在品质档 [最小,最大] 内浮动
+     ============================================================ */
+  .stage--bg{
+    background:
+      var(--noise) repeat 0 0/320px 320px,
+      radial-gradient(ellipse at 50% 50%,rgba(30,26,18,.5),rgba(10,9,7,.92));
+    background-blend-mode:overlay,normal;
+  }
+  .affix-scene{
+    position:relative;width:100%;min-height:360px;
+    display:flex;justify-content:center;align-items:center;
+  }
+
+  /* --- 弹窗本体 --- */
+  .affix-pop{
+    position:relative;width:360px;
+    padding:0;
+    background:
+      var(--noise) repeat 0 0/240px 240px,
+      linear-gradient(180deg,#2a2318 0%,#15130c 60%,#0a0806 100%);
+    background-blend-mode:overlay,normal;
+    border:1px solid #5c4d2a;
+    clip-path:var(--cut-md);
+    box-shadow:
+      inset 0 0 0 1px #060504,
+      inset 0 0 0 2px rgba(205,170,74,.12),
+      0 0 0 4px rgba(0,0,0,.55),
+      0 12px 40px rgba(0,0,0,.7),
+      0 0 80px rgba(255,200,90,.08);
+    filter:drop-shadow(0 0 2px rgba(255,200,90,.1));
+  }
+  .affix-pop::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,transparent,rgba(255,210,120,.55),transparent);
+  }
+
+  /* 弹窗头部 */
+  .affix-pop__head{
+    display:flex;align-items:center;gap:10px;
+    padding:10px 14px 0;
+  }
+  .affix-pop__tag{
+    padding:2px 8px;font-size:8px;font-weight:700;letter-spacing:.3em;
+    color:#201806;background:linear-gradient(90deg,#f2d884,#b08a2c);
+    box-shadow:0 0 8px rgba(255,210,120,.5);
+  }
+  .affix-pop__title{
+    flex:1;margin:0;font-size:14px;font-weight:700;letter-spacing:.08em;
+    color:#ffe9a8;
+    text-shadow:0 1px 0 #000,0 0 14px rgba(255,200,90,.22);
+  }
+  .affix-pop__title b{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:16px;color:#ffd76a;
+  }
+  .affix-pop__close{
+    position:relative;width:22px;height:22px;
+    background:transparent;border:0;cursor:pointer;
+  }
+  .affix-pop__close i{
+    position:absolute;top:50%;left:50%;width:14px;height:1.5px;
+    background:#8d8165;border-radius:1px;
+  }
+  .affix-pop__close i:nth-child(1){transform:translate(-50%,-50%) rotate(45deg)}
+  .affix-pop__close i:nth-child(2){transform:translate(-50%,-50%) rotate(-45deg)}
+  .affix-pop__close:hover i{background:#e0664f}
+
+  .affix-pop__sub{
+    padding:4px 14px 10px;
+    font-size:11px;letter-spacing:.08em;color:#9a8f74;
+    border-bottom:1px dashed rgba(201,170,80,.18);
+  }
+  .affix-pop__sub b{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-weight:700;color:#d8c79a;
+  }
+
+  /* 候选区域 — 竖排堆叠 */
+  .affix-pop__choices{
+    padding:14px 14px 10px;
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .affix-pop__choices .affix-card{
+    position:relative;
+    flex:none;width:100%;
+    display:grid;grid-template-columns:40px auto auto;gap:10px;align-items:center;
+    padding:10px 12px 10px 10px;cursor:pointer;
+    background:linear-gradient(180deg,#1c1912,#0d0b08);
+    border:2px solid var(--qt);
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px #050403,inset 0 1px 0 rgba(255,240,190,.03),0 0 10px var(--qbg);
+    transition:transform .15s,filter .15s;
+  }
+  .affix-pop__choices .affix-card:hover{
+    transform:translateX(3px);filter:brightness(1.12);
+    box-shadow:inset 0 0 0 1px #050403,0 0 20px var(--qbg);
+  }
+  .affix-pop__choices .affix-card.is-picked{
+    transform:translateX(4px);filter:brightness(1.22);
+    box-shadow:inset 0 0 0 1px #050403,0 0 26px var(--qbg),0 0 0 2px var(--qt);
+    animation:affixPulse 1s ease-in-out infinite;
+  }
+  @keyframes affixPulse{
+    0%,100%{filter:brightness(1.22)}
+    50%{filter:brightness(1.4)}
+  }
+  /* 品质点 — 右上角小方块 */
+  .affix-pop__choices .affix-card__qtag{
+    position:absolute;top:6px;right:6px;
+    width:8px;height:8px;border-radius:1px;
+    background:var(--qt);
+    box-shadow:0 0 6px var(--qbg);
+  }
+  .affix-pop__choices .affix-card__icon{
+    width:40px;height:40px;
+    border:2px solid var(--qt);
+    background:
+      radial-gradient(65% 60% at 50% 28%,var(--qbg),transparent 70%),
+      linear-gradient(180deg,#242016,#0a0906);
+    clip-path:var(--cut-sm);
+    display:grid;place-items:center;color:var(--qt);
+  }
+  .affix-pop__choices .affix-card__icon .glyph{
+    width:18px;height:18px;
+    filter:drop-shadow(0 0 6px var(--qbg)) drop-shadow(0 1px 2px rgba(0,0,0,.9));
+  }
+  .affix-pop__choices .affix-card__name{
+    font-size:13px;font-weight:700;letter-spacing:.04em;color:#fff8dc;
+    text-shadow:0 1px 0 #000,0 0 8px var(--qbg);
+  }
+  .affix-pop__choices .affix-card__val{
+    margin-left:auto;
+    padding:4px 10px;
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:14px;font-weight:700;letter-spacing:.04em;
+    color:var(--qt);
+    background:rgba(0,0,0,.45);
+    border:1px solid var(--qt);
+    font-variant-numeric:tabular-nums;
+    box-shadow:0 0 8px var(--qbg);
+    white-space:nowrap;
+  }
+  .affix-pop__choices .affix-card__desc{display:none}
+
+  /* 底部 */
+  .affix-pop__foot{
+    display:flex;align-items:center;gap:10px;padding:6px 14px 10px;
+    border-top:1px dashed rgba(201,170,80,.16);
+  }
+  .affix-pop__tip{
+    flex:1;font-size:10px;letter-spacing:.04em;color:#7f7460;
+  }
+
+  /* 真实品质色（对应 QUALITY_COLOR） */
+  .q-green  {--qt:#7aff0d;  --qbg:rgba(122,255,13,.14);}
+  .q-blue   {--qt:#3399ff;  --qbg:rgba(51,153,255,.18);}
+  .q-purple {--qt:#d992ff;  --qbg:rgba(217,146,255,.2);}
+  .q-orange {--qt:#ffa500;  --qbg:rgba(255,165,0,.22);}
+  .q-pink   {--qt:#ff69b4;  --qbg:rgba(255,105,180,.24);}
+
+  /* ============================================================
      品质图例 / 页脚
      ============================================================ */
   .legend{
@@ -1732,6 +1895,19 @@
   <symbol id="i-check" viewBox="0 0 24 24">
     <path d="M4 12l5 5L20 6"/>
   </symbol>
+  <symbol id="i-rune" viewBox="0 0 24 24">
+    <path d="M6 4h12l-2 4-4 2-4-2z"/><path d="M4 10l2 3 6 3 6-3 2-3"/>
+    <path d="M6 16l4 4h4l4-4"/>
+  </symbol>
+  <symbol id="i-hammer" viewBox="0 0 24 24">
+    <path d="M4 17l8-9 4 4-8 9z"/><path d="M12 8l3-3 5 5-3 3z"/><path d="M8 13l-4 4"/>
+  </symbol>
+  <symbol id="i-arrow-up" viewBox="0 0 24 24">
+    <path d="M12 3v18M6 9l6-6 6 6"/>
+  </symbol>
+  <symbol id="i-shiny" viewBox="0 0 24 24">
+    <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/>
+  </symbol>
 </svg>
 
 <div class="shell">
@@ -1765,6 +1941,7 @@
     <a href="#synth"><span>11</span>卡片合成</a>
     <a href="#tooltip"><span>12</span>悬浮提示</a>
     <a href="#grid-spec"><span>13</span>网格规范</a>
+    <a href="#affix"><span>12</span>词条升级</a>
   </nav>
 
   <!-- ==================== 01 存档 ==================== -->
@@ -2776,6 +2953,42 @@
       </ul>
     </div>
     <span class="stage__tag">UNIFIED CELL · 5 SIZES</span>
+  <!-- ==================== 12 专属装备 · 词条三选一（紧凑弹窗） ==================== -->
+  <section class="sec" id="affix">
+    <div class="sec__head">
+      <span class="sec__idx">12</span><h2>专属装备 · 词条三选一</h2>
+      <span class="sec__en">AFFIX OFFERING · 物品栏上方弹窗</span><span class="sec__rule"></span>
+    </div>
+    <div class="stage stage--bg">
+      <!-- 词条三选一 · 弹窗 -->
+      <div class="affix-scene">
+        <div class="affix-pop" role="dialog" aria-modal="true">
+          <div class="affix-pop__head">
+            <span class="affix-pop__tag">词 条 选 择</span>
+            <h3 class="affix-pop__title">灰烬使者 达到 <b>10</b> 级</h3>
+            <button class="affix-pop__close" type="button" aria-label="关闭"><i></i><i></i></button>
+          </div>
+
+          <div class="affix-pop__sub">
+            <span>请选择 <b>1</b> 条词条 · 剩余机会 <b>3 / 4</b></span>
+          </div>
+
+          <div class="affix-pop__choices" id="affixChoices"></div>
+
+          <div class="affix-pop__foot">
+            <span class="affix-pop__tip">点击卡片即确认选择 · 品质按权重随机 · 数值在品质档内浮动</span>
+          </div>
+        </div>
+      </div>
+
+      <span class="stage__tag">OVERLAY · 10/20/30/40 · 3 CHOICES</span>
+    </div>
+    <ul class="chips">
+      <li>触发时机：10 / 20 / 30 / 40 级各弹一次</li>
+      <li>叠在物品栏上方的小弹窗（约 520 × 380）</li>
+      <li>品质 1~5 档按权重随机 · 真实颜色</li>
+      <li>选中即确认 · 关闭则排队到下次触发</li>
+    </ul>
   </section>
 
   <!-- ==================== 品质图例 ==================== -->
@@ -3252,6 +3465,75 @@
     var out = (i === 0) ? ['时光沙漏','i-orb','q4'] : null;
     return synthRow(a, out);
   }).join('');
+
+  /* ---------------- 专属装备 · 词条三选一（紧凑弹窗 · 叠物品栏上方） ---------------- */
+  /* 真实词条定义：percent 决定是否百分比，scale 是展示倍率，tier=[权重,最小,最大] 5 档 */
+  var AFFIX_DEFS_REAL = {
+    "攻击力":    { percent:false, scale:1,  tier:[[35,50,60],[25,60,80],[20,80,105],[15,105,130],[5,130,160]] },
+    "攻击力%":   { percent:true,  scale:100,tier:[[35,.06,.08],[25,.08,.12],[20,.12,.16],[15,.16,.19],[5,.19,.22]] },
+    "护甲":      { percent:false, scale:1,  tier:[[30,5,6],[25,6,9],[20,9,12],[15,12,16],[10,16,20]] },
+    "护甲%":     { percent:true,  scale:100,tier:[[35,.06,.08],[25,.08,.12],[20,.12,.16],[15,.16,.19],[5,.19,.22]] },
+    "生命上限":  { percent:false, scale:1,  tier:[[30,1200,1440],[25,1440,1920],[20,1920,2520],[15,2520,3120],[10,3120,3840]] },
+    "生命上限%": { percent:true,  scale:100,tier:[[30,.072,.096],[25,.096,.144],[20,.144,.192],[15,.192,.228],[5,.228,.264]] },
+    "全属性":    { percent:false, scale:1,  tier:[[30,20,30],[25,30,45],[20,45,65],[15,65,85],[10,85,110]] },
+    "全属性%":   { percent:true,  scale:100,tier:[[30,.03,.04],[25,.04,.06],[20,.06,.09],[15,.09,.12],[10,.12,.16]] },
+    "主属性":    { percent:false, scale:1,  tier:[[30,30,40],[25,40,55],[20,55,75],[15,75,95],[10,95,125]] },
+    "主属性%":   { percent:true,  scale:100,tier:[[35,.06,.08],[25,.08,.12],[20,.12,.16],[15,.16,.19],[5,.19,.22]] },
+    "伤害加成%": { percent:true,  scale:100,tier:[[30,.05,.07],[25,.07,.11],[20,.11,.16],[15,.16,.21],[10,.21,.27]] },
+    "法术吸血%": { percent:true,  scale:100,tier:[[30,.02,.025],[25,.025,.035],[20,.035,.045],[15,.045,.055],[10,.055,.075]] },
+    "护甲穿透":  { percent:false, scale:1,  tier:[[30,20,25],[25,25,40],[20,40,55],[15,55,75],[10,75,105]] },
+    "护甲穿透%": { percent:true,  scale:100,tier:[[30,.05,.06],[25,.06,.075],[20,.075,.095],[15,.095,.125],[10,.125,.16]] },
+    "重伤%":     { percent:true,  scale:100,tier:[[30,.08,.10],[25,.10,.13],[20,.13,.17],[15,.17,.21],[10,.21,.26]] }
+  };
+  var QCLS = ['','q-green','q-blue','q-purple','q-orange','q-pink'];
+  var QNAME = ['','品质1','品质2','品质3','品质4','品质5'];
+
+  function rollQuality(def){
+    var tiers = def.tier, total = 0;
+    for(var i=0;i<tiers.length;i++) total += tiers[i][0];
+    var r = Math.floor(Math.random()*total)+1, w = 0;
+    for(var q=1;q<=5;q++){ w += tiers[q-1][0]; if(r<=w) return q; }
+    return 1;
+  }
+  function rollTierValue(def, quality){
+    var t = def.tier[quality-1];
+    var v = t[1] + Math.random()*((t[2]!=null?t[2]:t[1])-t[1]);
+    return def.percent ? Math.round(v*10000)/10000 : Math.floor(v);
+  }
+  function fmtVal(def, val){
+    return '+ ' + (def.percent ? (val*def.scale).toFixed(1) + '%' : val);
+  }
+  /* 抽 1 个候选：品质按权重随机，数值在品质档 [最小,最大] 内浮动，名字与已选互斥 */
+  function rollOne(ownedNames){
+    var pool = Object.keys(AFFIX_DEFS_REAL).filter(function(n){ return !(ownedNames||{})[n]; });
+    var name = pool[Math.floor(Math.random()*pool.length)] || Object.keys(AFFIX_DEFS_REAL)[0];
+    var def = AFFIX_DEFS_REAL[name];
+    var q = rollQuality(def);
+    return { name:name, quality:q, value:rollTierValue(def, q), def:def };
+  }
+
+  /* 渲染 3 选 1 候选（紧凑卡片） */
+  var ownedNames = {};
+  var OWNED_AFFIXES = ['攻击力','主属性%'];  /* 已选 2 条 */
+  OWNED_AFFIXES.forEach(function(n){ ownedNames[n] = true; });
+  var CANDIDATES = [rollOne(ownedNames), rollOne(ownedNames), rollOne(ownedNames)];
+
+  document.getElementById('affixChoices').innerHTML = CANDIDATES.map(function(c,i){
+    var cls = QCLS[c.quality];
+    return '<button type="button" class="affix-card ' + cls + '">' +
+      '<span class="affix-card__icon"><svg class="glyph"><use href="#i-rune"/></svg></span>' +
+      '<span class="affix-card__name">' + c.name + '</span>' +
+      '<span class="affix-card__val">' + fmtVal(c.def, c.value) + '</span>' +
+    '</button>';
+  }).join('');
+
+  /* 交互：点卡片直接确认 */
+  document.querySelectorAll('#affixChoices .affix-card').forEach(function(c,i){
+    c.addEventListener('click', function(){
+      var pick = CANDIDATES[i];
+      alert('确认选择：' + pick.name + '  ' + fmtVal(pick.def, pick.value));
+    });
+  });
 
   /* ---------------- 三选一卡片 ---------------- */
   document.querySelectorAll('.hero-card, .relic-card').forEach(function(card){
