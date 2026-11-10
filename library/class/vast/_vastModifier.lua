@@ -576,6 +576,12 @@ local modifier = {
             local m = japi.AssetsModel(newVal)
             if (type(m) == "string") then
                 japi.DZ_SetUnitModel(obj._handle, m)
+                --- 换模型后重挂模型缩放: 引擎换模型会按新模型默认值重置视觉大小,
+                --- 而 _modelScale 数值不变(1==1 时 set 会跳过), 不重设就会缩回 1.0
+                local s = tonumber(obj._modelScale) or 1
+                if (s ~= 1) then
+                    J.SetUnitScale(obj._handle, s, s, s)
+                end
             end
         end,
         ---@param obj Unit
