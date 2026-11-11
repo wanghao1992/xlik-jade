@@ -659,6 +659,106 @@ def build_heroes(p: Profile):
         notes=[f"腐肉堆积 +{min(kills*15,3500):.0f} 生命 -> 腐烂每跳随生命上限提高"],
     ))
 
+    # ================================================================
+    # 以下为本轮新增的 8 个 SSR 职业（2026-11-11 迁移）
+    # ================================================================
+
+    # ---------------- 欺诈者（智力）
+    # 裂地: CD25, 持续10秒每0.5秒 智力*1.2 魔法(共20跳)
+    # 死亡一指: 每0.2秒 智力*1.8 魔法(5次/秒)
+    # 幽魂: 环绕碰撞爆炸 智力*5, 单体木桩轨道不命中目标
+    liedi_per_cast = 20 * p.int * 1.2 * p.magic_mastery
+    siwang_dps = p.int * 1.8 * 5 * p.magic_mastery
+    hs.append(Hero(
+        "欺诈者",
+        actives=[Active("裂地", liedi_per_cast, 25)],
+        flat_skills=[("死亡一指", siwang_dps, "magic")],
+        notes=["裂地 20跳*智力*1.2 / 25秒；死亡一指 智力*1 / 0.2秒；幽魂环绕木桩不命中"],
+    ))
+
+    # ---------------- 阿卡玛（敏捷）
+    # 致命一击: 5%概率全伤害*1.75 -> 期望乘区 1.0375
+    # 附魔攻击: CD45持续15秒, 普攻附加 攻击*2 物理
+    # 双刃剑: HP>50%普攻对400码 敏捷*2.5 物理
+    akama_enchant_dps = p.aps * p.attack * 2 * (15.0 / 45.0) * p.phys_mastery
+    hs.append(Hero(
+        "阿卡玛",
+        all_amp=1.0 + 0.05 * 0.75,
+        procs=[Proc("双刃剑", 1.0, p.agi * 2.5 * p.phys_mastery, "phys")],
+        flat_skills=[("附魔攻击", akama_enchant_dps, "phys")],
+        notes=["致命一击 5%*1.75 全伤害；附魔攻击 15/45秒普攻+攻击*2；双刃剑 普攻+敏捷*2.5"],
+    ))
+
+    # ---------------- 精灵信使（智力）
+    # 金钟罩: CD18持续10秒, 护盾期间+40%伤害 -> 期望 1.222
+    # 强化一击: 每3秒充能, 普攻 智力*4 魔法
+    # 水元素: CD40持续30秒, 2只 智力*0.5攻击
+    jinzhong_amp = 1.0 + 0.4 * (10.0 / 18.0)
+    hs.append(Hero(
+        "精灵信使",
+        all_amp=jinzhong_amp,
+        actives=[Active("强化一击", p.int * 10 * p.magic_mastery, 3)],
+        summons=[Summon("水元素", 4 * p.int * 1 * p.aps * (30.0 / 40.0))],
+        notes=["金钟罩 10/18秒+40%伤害；强化一击 智力*10/3秒；水元素 4只*智力*1攻, 30/40秒"],
+    ))
+
+    # ---------------- 深渊魔王（力量）
+    # 英雄之力: CD3, 力量*15 物理
+    # 护甲增幅: 纯防御(+20%护甲)
+    # 阎刃: 普攻直线 力量*20 魔法, CD5秒
+    hs.append(Hero(
+        "深渊魔王",
+        actives=[Active("英雄之力", p.str * 15 * p.phys_mastery, 3, "phys")],
+        procs=[Proc("阎刃", 1.0, p.str * 20 * p.magic_mastery, "magic", icd=5.0)],
+        notes=["英雄之力 力量*15/3秒；阎刃 普攻触发 力量*20, CD5；护甲增幅 +20%纯防御"],
+    ))
+
+    # ---------------- 火之熊猫战士（敏捷）
+    # 强化: CD120持续15秒, 期间普攻400码 攻击*2, 每次普攻减CD1秒 -> 循环约90秒
+    # 冲击: 20%概率 攻击*2.5 魔法
+    # 燃烧: 每秒 生命上限*5% 魔法
+    qianghua_uptime = 15.0 / 90.0
+    qianghua_dps = p.aps * p.attack * 2 * qianghua_uptime * p.phys_mastery
+    hs.append(Hero(
+        "火之熊猫战士",
+        procs=[Proc("冲击", 0.20, p.attack * 2.5 * p.magic_mastery, "magic")],
+        flat_skills=[
+            ("强化", qianghua_dps, "phys"),
+            ("燃烧", p.hp * 0.05 * p.magic_mastery, "magic"),
+        ],
+        notes=["强化 15/90秒循环, 普攻+攻击*2；冲击 20%攻击*2.5；燃烧 HP*5%/秒"],
+    ))
+
+    # ---------------- 地之熊猫战士（智力）
+    # 通灵: CD40持续20秒, 召唤 (2+等级/5) 只影狼, 智力*1.25攻击
+    # 夺魂: 每4秒充能, 普攻3道 智力*10 魔法
+    # 魔霭诅咒: 普攻叠层, 每层每秒 智力*0.1 魔法, 持续2秒 -> 稳态4层
+    wolf_count = 2 + p.level // 5
+    wolf_dps = wolf_count * p.int * 1.25 * p.aps * (20.0 / 40.0)
+    curse_stacks = min(10, int(p.aps * 2))
+    curse_dps = curse_stacks * p.int * 0.1 * p.magic_mastery
+    hs.append(Hero(
+        "地之熊猫战士",
+        actives=[Active("夺魂", 3 * p.int * 10 * p.magic_mastery, 4)],
+        flat_skills=[("魔霭诅咒", curse_dps, "magic")],
+        summons=[Summon("影狼", wolf_dps)],
+        notes=[f"通灵 {wolf_count}只影狼*智力*1.25攻, 20/40秒；夺魂 3*智力*10/4秒；魔霭诅咒 稳态{curse_stacks}层*智力*0.1/秒"],
+    ))
+
+    # ---------------- 火浣（敏捷）
+    # 抗拒火环: CD7, 敏捷*8 物理 + 10层灼烧
+    # 灼烧: 普攻+1层, 每层每秒 敏捷*0.25 魔法, 上限50层(攻击刷新持续, 快速叠满)
+    # 潮汐之刃: CD3, 普攻扇形 攻击*2 物理
+    burn_stacks_avg = 44.0  # 2APS+抗拒火环每7秒+10层, 约15秒到50层的均值
+    burn_dps = burn_stacks_avg * p.agi * 0.25 * p.magic_mastery
+    hs.append(Hero(
+        "火浣",
+        actives=[Active("抗拒火环", p.agi * 8 * p.phys_mastery, 7, "phys")],
+        procs=[Proc("潮汐之刃", 1.0, p.attack * 2 * p.phys_mastery, "phys", icd=3.0)],
+        flat_skills=[("灼烧", burn_dps, "magic")],
+        notes=[f"抗拒火环 敏捷*8/7秒；灼烧 稳态约{burn_stacks_avg:.0f}层*敏捷*0.25/秒；潮汐之刃 攻击*2/3秒"],
+    ))
+
     return hs, shenling
 
 
