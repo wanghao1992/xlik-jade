@@ -10,7 +10,7 @@
 - 暴击期望 = 1 + 暴击几率 * 暴击伤害%
 - 物理伤害吃护甲，木桩护甲 0；三维精通：每 100 敏/智 +1% 物理/法术伤害
 - 技能伤害走 job.damage，全部吃暴击；召唤物不继承英雄暴击与三维精通
-- 击杀叠层按累计击杀折算；默认按当前代码实际行为（capAttr 自引用，实际不封顶）
+- 击杀叠层按累计击杀折算；默认按设计封顶（capAttr 已剔除自身叠层加成）
 - 主动技能假设卡 CD 自动释放、蓝量充足；被动按期望触发
 
 用法：
@@ -38,7 +38,7 @@ class Profile:
     hp: float = 8000.0             # 生命上限
     seconds: float = 60.0          # 模拟时长
     kills: int = 1000              # 累计击杀（叠层用）
-    stack_mode: str = "bug"        # bug=按当前代码（主属性叠层不封顶） intended=按设计封顶
+    stack_mode: str = "intended"   # intended=按设计封顶(当前代码)；bug=旧行为(叠层不封顶)对照用
     str: float = 100.0
     agi: float = 100.0
     int: float = 100.0
@@ -216,15 +216,16 @@ def sim_shenling(p: Profile):
         if t + 1e-9 >= next_blood:
             blood_until = t + 15.0
             lost = math.floor(max(0.0, 1.0 - hp / hp_max) * 100)
-            cur_atk = p.attack + 7.0 * lost
+            # 狂战士之血: 攻击加成封顶 +150
+            cur_atk = p.attack + min(7.0 * lost, 150.0)
             blood_atk = math.floor(cur_atk * 0.33)
             next_blood += 20.0
 
         lost = math.floor(max(0.0, 1.0 - hp / hp_max) * 100)
-        as_stat = 100.0 + 3.0 * lost
+        # 狂战士之血: 攻速加成封顶 +100(3.0 APS)
+        as_stat = 100.0 + min(3.0 * lost, 100.0)
         aps = 1.0 + as_stat / 100.0
-        atk = p.attack + 7.0 * lost + (blood_atk if t < blood_until else 0.0)
-        interval = 1.0 / aps
+        atk = p.attack + min(7.0 * lost, 150.0) + (blood_atk if t < blood_until else 0.0)
         attacks = aps * dt
 
         total_basic += attacks * atk * crit * phys
@@ -234,12 +235,11 @@ def sim_shenling(p: Profile):
             stacks = min(10.0, stacks + attacks)
             last_attack = t
 
-        # 每次攻击都会 BuffClear 重挂，计时器 1/3 秒；攻击间隔 < 1/3 时永远跳不出来
-        if interval >= 1.0 / 3.0 - 1e-9:
-            tick = (67.0 / 3.0) * stacks
-            total_dot += attacks * tick * crit * phys
-        else:
-            pass
+        # 沸血之矛 DoT 与攻击脱钩: 每 1/3 秒按层数跳一次; 5 秒内没有新引燃则清空层数
+        if stacks > 0 and t - last_attack > 5.0:
+            stacks = 0.0
+        if stacks > 0:
+            total_dot += (67.0 * stacks) * dt * crit * phys
 
         if t < blood_until:
             hp += hp * 0.01 * dt
@@ -275,10 +275,11 @@ def build_heroes(p: Profile):
     hs = []
 
     # ---------------- 邪剑圣
+    jian_mul = 7.0 + p.level * 0.04          # 总倍率(L30 = 8.2)
     hs.append(Hero(
         "邪剑圣",
-        procs=[Proc("致命一击", 0.20, 22.0 * p.attack, "phys")],
-        notes=["致命一击按代码 20% 概率追加 22 倍普攻伤害（23 倍暴击）"],
+        procs=[Proc("致命一击", 0.20, (jian_mul - 1.0) * p.attack, "phys")],
+        notes=[f"致命一击 20% 概率、总倍率 {jian_mul:.1f}（追加 {jian_mul - 1:.1f} 倍）"],
     ))
 
     # ---------------- 剑圣
@@ -291,7 +292,7 @@ def build_heroes(p: Profile):
     # ---------------- 大娜迦
     hs.append(Hero(
         "大娜迦",
-        onhits=[OnHit("分裂箭主目标", 30 * 1.01)],
+        onhits=[OnHit("分裂箭主目标", 120 * 1.01)],
         actives=[Active("石化", 1780 * 0.9 * 1.01, 11)],
     ))
 
@@ -322,10 +323,11 @@ def build_heroes(p: Profile):
         notes=["炽魂可叠层，平均 2.5 层 -> 攻速 +125、法术 +25%；攻速乘数 1.625"],
     ))
 
-    # ---------------- 圣骑士
+    # ---------------- 圣骑士（主目标额外 2 跳）
     hs.append(Hero(
         "圣骑士",
-        procs=[Proc("圣锤", 0.15, 470 * 1.01)],
+        procs=[Proc("圣锤", 0.15, 470 * 3 * 1.01)],
+        notes=["圣锤 15% 概率，主目标额外承受 2 跳"],
     ))
 
     # ---------------- 影魔
@@ -341,9 +343,9 @@ def build_heroes(p: Profile):
     # ---------------- 大法师
     hs.append(Hero(
         "大法师",
-        flat_skills=[("暴风雪", 1086.0, "magic")],
-        summons=[Summon("水元素", 816.0)],
-        notes=["水元素 3 只，继承攻击，20/25 秒；暴风雪已含辉煌光环 1.81"],
+        flat_skills=[("暴风雪", 655.0, "magic")],
+        summons=[Summon("水元素", 544.0)],
+        notes=["水元素 2 只，继承攻击，20/25 秒；暴风雪纯智力缩放(300/阵)并含辉煌光环 1.8"],
     ))
 
     # ---------------- 神灵武士（特殊）
@@ -353,7 +355,8 @@ def build_heroes(p: Profile):
     # ---------------- 幻影刺客
     hs.append(Hero(
         "幻影刺客",
-        procs=[Proc("恩赐解脱", 0.10, 88.95 * 1.01, "phys")],
+        procs=[Proc("恩赐解脱", 0.15, p.attack * 4.02 * 1.01, "phys")],
+        notes=["15% 概率、L30 暴击倍率 400%×敏捷系数 1.005"],
     ))
 
     # ---------------- 地狱火
@@ -374,12 +377,13 @@ def build_heroes(p: Profile):
 
     # ---------------- 卓尔游侠
     agi_do = 277.5
+    do_mul = 0.5 + p.level * 0.04            # L30 = 1.7
     hs.append(Hero(
         "卓尔游侠",
         attack=p.attack + math.floor(agi_do / 5) - 20,
         phys_mastery=1.0 + agi_do / 10000.0,
-        onhits=[OnHit("冰冻冷箭", (100 + agi_do * 4.1) * 1.01)],
-        notes=["敏捷光环自身 +177.5 敏捷，冰冻冷箭每击随敏捷放大到 1238"],
+        onhits=[OnHit("冰冻冷箭", (100 + agi_do * do_mul) * 1.01)],
+        notes=[f"敏捷光环自身 +177.5 敏捷，冰冻冷箭每击 {100 + agi_do * do_mul:.0f}（系数 {do_mul:.2f}）"],
     ))
 
     # ---------------- 山丘之王
@@ -416,7 +420,7 @@ def build_heroes(p: Profile):
         "月骑",
         phys_amp=1.297,
         magic_amp=1.297,
-        actives=[Active("月光", 5750 * 1.01, 6)],
+        actives=[Active("月光", 2600 * 1.01, 6)],
         notes=["鼓舞光环自身 +30 物/法伤害点 -> 全伤害 1.297"],
     ))
 
@@ -431,7 +435,8 @@ def build_heroes(p: Profile):
     hs.append(Hero(
         "兽王",
         procs=[Proc("惊吓", 0.15, 265 * 1.01)],
-        summons=[Summon("战鹰", 12.0), Summon("豪猪", 12.0)],
+        summons=[Summon("战鹰", 182.0), Summon("豪猪", 182.0)],
+        notes=["战鹰/豪猪继承英雄 40% 攻击与攻速 -> 各 182 秒伤"],
     ))
 
     # ---------------- 巫妖
@@ -461,7 +466,7 @@ def build_heroes(p: Profile):
     hs.append(Hero(
         "死骑",
         onhits=[OnHit("霜之哀伤", 30 * 1.01)],
-        actives=[Active("死亡缠绕", 6400 * 1.01, 10)],
+        actives=[Active("死亡缠绕", 5150 * 1.01, 10)],
     ))
 
     # ---------------- 狮鹫
@@ -505,14 +510,15 @@ def build_heroes(p: Profile):
     ))
 
     # ---------------- 炼金术士
-    # 化学狂暴同时 +150 攻速与攻击间隔 -0.2：按当前代码实际落到 10 APS
-    as_lianjin = 3.727
+    # 化学狂暴只 +150 攻速(aps 2.0 -> 3.5)，15 秒持续 / 22 秒冷却
+    lianjin_uptime = 15.0 / 22.0
+    as_lianjin = (2.0 + 1.5 * lianjin_uptime) / 2.0
     hs.append(Hero(
         "炼金术士",
         as_mult=as_lianjin,
         procs=[Proc("贪婪", 0.15, 700 * 1.01, "phys")],
         actives=[Active("腐蚀酸雾", 185.8, 10)],
-        notes=["化学狂暴同时 +150 攻速与 -0.2 攻击间隔，代码实际到 10 APS（平均 7.45）"],
+        notes=[f"化学狂暴仅 +150 攻速，平均 {2.0 * as_lianjin:.2f} APS"],
     ))
 
     # ---------------- 巫师
@@ -529,22 +535,25 @@ def build_heroes(p: Profile):
     hs.append(Hero(
         "混沌骑士",
         procs=[Proc("致命一击", 0.15, 69 * 1.01, "phys")],
-        actives=[Active("混乱之箭", 1480 * 1.01, 10)],
+        actives=[Active("混乱之箭", 2950 * 1.01, 10)],
         summons=[Summon("幻象", 42.4)],
     ))
 
-    # ---------------- 斧王
+    # ---------------- 斧王（攻击也可触发反击螺旋 + 越战越勇加攻击）
+    atk_fw = p.attack + min(kills, 30) * 5
     hs.append(Hero(
         "斧王",
-        notes=["反击螺旋仅在受普攻时触发，木桩不还手 -> 0"],
+        attack=atk_fw,
+        procs=[Proc("反击螺旋(攻击触发)", 0.08, 570 * 1.01)],
+        notes=["攻击触发 8%：400+力量*1.7=570；越战越勇满层 +150 攻击"],
     ))
 
     # ---------------- 风暴之灵
     hs.append(Hero(
         "风暴之灵",
-        actives=[Active("球状闪电", 950 * 1.01, 1), Active("牵引", 2450 * 1.01, 10)],
+        actives=[Active("球状闪电", 750 * 1.01, 1.4), Active("牵引", 2450 * 1.01, 10)],
         flat_skills=[("超负荷", 440 * 1.01, "magic")],
-        notes=["球状闪电 CD 1 秒；超负荷约 1 次/秒；未计蓝量约束"],
+        notes=["球状闪电 CD 1.4 秒；超负荷约 1 次/秒；未计蓝量约束"],
     ))
 
     # ---------------- 龙骑士
@@ -572,20 +581,20 @@ def build_heroes(p: Profile):
         "血魔法师",
         attack=atk_stack,
         actives=[
-            Active("火焰风暴", (1850 + 4.9 * p_stack) * mm, 14),
-            Active("烈焰冲击", (800 + 3.5 * p_stack) * mm, 9),
+            Active("火焰风暴", (1850 + 5.3 * p_stack) * mm, 14),
+            Active("烈焰冲击", (800 + 4.1 * p_stack) * mm, 9),
         ],
-        notes=[f"焚烧叠层当前代码不封顶：智力 {p_stack:.0f}"],
+        notes=[f"焚烧叠层已封顶：智力 +{p_stack - 100:.0f}"],
     ))
 
     # ---------------- 死亡之翼
-    atk_siwang = p.attack + min(kills * 2.0, 360.0)
+    atk_siwang = p.attack + min(kills * 2.0, 300.0)
     hs.append(Hero(
         "死亡之翼",
         attack=atk_siwang,
         procs=[Proc("龙焰溅射", 0.25, 560 * 1.01)],
         actives=[Active("奥术脉冲", 990 * 1.01, 10)],
-        notes=[f"灭世叠层 +{min(kills*2,360):.0f} 攻击"],
+        notes=[f"灭世叠层 +{min(kills*2,300):.0f} 攻击"],
     ))
 
     # ---------------- 骷髅王
@@ -611,7 +620,7 @@ def build_heroes(p: Profile):
         phys_mastery=1.0 + p_stack / 10000.0,
         procs=[Proc("逐光", 0.25, (400 + 2.9 * p_stack) * 1.01)],
         actives=[Active("光明箭雨", (900 + 4.8 * p_stack) * 1.01, 11)],
-        notes=[f"圣光叠层当前代码不封顶：敏捷 {p_stack:.0f}"],
+        notes=[f"圣光叠层已封顶：敏捷 +{p_stack - 100:.0f}"],
     ))
 
     # ---------------- 大魔导师（主属性叠层）
@@ -620,7 +629,7 @@ def build_heroes(p: Profile):
         attack=atk_stack,
         procs=[Proc("奥术共鸣", 0.20, (350 + 2.4 * p_stack) * mm)],
         actives=[Active("奥术冲击", (1100 + 4.6 * p_stack) * mm, 11)],
-        notes=[f"博学叠层当前代码不封顶：智力 {p_stack:.0f}"],
+        notes=[f"博学叠层已封顶：智力 +{p_stack - 100:.0f}"],
     ))
 
     # ---------------- 炎魔之王（主属性叠层 + 生命转输出）
@@ -630,7 +639,7 @@ def build_heroes(p: Profile):
         attack=atk_stack,
         procs=[Proc("焚身", 0.20, (0.04 * hp_yanmo + 1.5 * p_stack) * 1.01)],
         actives=[Active("熔岩爆发", (0.10 * hp_yanmo + 3.5 * p_stack) * 1.01, 11)],
-        notes=[f"炽热叠层当前代码不封顶：力量 {p_stack:.0f}，生命 {hp_yanmo:.0f}"],
+        notes=[f"炽热叠层已封顶：力量 +{p_stack - 100:.0f}，生命 {hp_yanmo:.0f}"],
     ))
 
     # ---------------- 痛苦女王（主属性叠层）
@@ -639,14 +648,14 @@ def build_heroes(p: Profile):
         attack=atk_stack,
         procs=[Proc("痛苦之刺", 0.25, (300 + 2.4 * p_stack) * mm)],
         actives=[Active("尖啸", (1000 + 4.3 * p_stack) * mm, 10)],
-        notes=[f"磨难叠层当前代码不封顶：智力 {p_stack:.0f}"],
+        notes=[f"磨难叠层已封顶：智力 +{p_stack - 100:.0f}"],
     ))
 
     # ---------------- 憎恶（生命叠层 + 生命转输出）
     hp_zengwu = p.hp + min(kills * 15.0, 3500.0)
     hs.append(Hero(
         "憎恶",
-        dots=[Dot("腐烂", (0.02 * hp_zengwu + 0.5 * p.attack) * 8 / 14 * 1.01)],
+        dots=[Dot("腐烂", (0.04 * hp_zengwu + 1.5 * 100.0) * 8 / 14 * 1.01)],
         notes=[f"腐肉堆积 +{min(kills*15,3500):.0f} 生命 -> 腐烂每跳随生命上限提高"],
     ))
 
@@ -662,7 +671,7 @@ def fmt_pct(part, total):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--kills", type=int, default=1000)
-    ap.add_argument("--stack-mode", choices=["bug", "intended"], default="bug")
+    ap.add_argument("--stack-mode", choices=["bug", "intended"], default="intended")
     ap.add_argument("--attack", type=float, default=300)
     ap.add_argument("--aps", type=float, default=2.0)
     ap.add_argument("--crit", type=float, default=0.25)
