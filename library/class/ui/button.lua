@@ -3,13 +3,15 @@ UIButtonClass = "UIButton"
 
 --- 原生旋转冷却指示器模型(客户端自带, 贴图也在MPQ内)
 local COOLDOWN_MODEL = "UI\\Feedback\\Cooldown\\UI-Cooldown-Indicator.mdx"
---- 该模型平面在归一化屏幕单位下的 X/Y 边长(实测自 war3.mpq 的 MODL Extent)
----   旧值 0.038 是错误估值, 导致模型被放大约 2.3 倍, 冷却圈跑出按钮范围
-local COOLDOWN_MODEL_EXTENT_X = 0.087762
-local COOLDOWN_MODEL_EXTENT_Y = 0.086944
---- 模型几何中心相对原点的偏移(Extent 中心不在原点, 需补偿才能让冷却圈在按钮内居中)
-local COOLDOWN_MODEL_CENTER_X = 0.018911
-local COOLDOWN_MODEL_CENTER_Y = 0.017080
+--- 该模型平面在归一化屏幕单位下的边长(经验值, 配合 frame 裁剪让冷却圈铺满按钮)
+---   注意: 不能用 MODL Extent 边界盒边长(0.088), 那是模型整体包围盒, 不等于可见冷却圈大小;
+---   用 0.088 会让缩放系数降到原来的 ~43%, 模型缩到按钮尺寸以下.
+local COOLDOWN_MODEL_EXTENT = 0.038
+--- 说明: 该模型不需要任何位移补偿。
+---   UI-Cooldown-Indicator 的可见冷却盘几何为 x/y 0.0189~0.0379, 而根骨骼 pivot(PIVT[0])
+---   恰好在盘的几何中心 (0.02855, 0.02833); 引擎按 pivot 对齐到 frame 锚点, 所以
+---   relation(居中) 之后冷却圈天然居中。此前按几何中心再做反向平移属于重复补偿,
+---   反而把冷却圈推出按钮框(表现为偏向左下、溢出边框)。
 
 --- 平台是否支持设置模型动画进度(旋转冷却依赖它)
 ---@return boolean
@@ -295,15 +297,14 @@ function _index:_refreshCooldownModel()
     local m = self._cooldown
     local w, h = self._width, self._height
     if (nil ~= m and nil ~= w and nil ~= h and w > 0 and h > 0) then
-        --- 按按钮宽高换算缩放; 系数 <1 时模型小于按钮(四周留边, 不压边框)
+        --- 系数 1 = 冷却圈正好铺满按钮; 小于 1 则四周留边
+        --- x/y 分别按按钮宽高换算: 平台原生 FrameSetModelScale 支持分轴; 本地 WhScale 只有等比,
+        --- 这种情况下竖向会按 x 的比例渲染(偏扁), 属环境限制, 需要严格贴合按钮请改用按钮遮罩 maskRatio
         local s = self._cooldownModelScale or 1
-        local sx = w / COOLDOWN_MODEL_EXTENT_X * s
-        local sy = h / COOLDOWN_MODEL_EXTENT_Y * s
+        local sx = w / COOLDOWN_MODEL_EXTENT * s
+        local sy = h / COOLDOWN_MODEL_EXTENT * s
         m:size(w, h)
         m:scaleXYZ(sx, sy, 1)
-        --- 模型几何中心不在原点, 反向平移让冷却圈在按钮内居中
-        m:relation(UI_ALIGN_CENTER, self, UI_ALIGN_CENTER,
-            -COOLDOWN_MODEL_CENTER_X * sx, -COOLDOWN_MODEL_CENTER_Y * sy)
     end
 end
 
