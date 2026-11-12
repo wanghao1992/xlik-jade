@@ -1,6 +1,17 @@
 --- current class name
 UIButtonClass = "UIButton"
 
+--- 原生旋转冷却指示器模型(客户端自带, 贴图也在MPQ内)
+local COOLDOWN_MODEL = "UI\\Feedback\\Cooldown\\UI-Cooldown-Indicator.mdx"
+--- 该模型平面在归一化屏幕单位下的边长(用于按按钮宽高换算缩放)
+local COOLDOWN_MODEL_EXTENT = 0.038
+
+--- 平台是否支持设置模型动画进度(旋转冷却依赖它)
+---@return boolean
+local function hasCooldownProgress()
+    return japi.Has("DzFrameSetAnimateOffset") or japi.Has("FrameSetAnimateOffset")
+end
+
 --- 按钮UI
 ---@class UIButton:UI
 local _index = UI(UIButtonClass, {
@@ -10,6 +21,8 @@ local _index = UI(UIButtonClass, {
     _borderScaleHeight = 1,
     ---@type number 遮罩值
     _maskRatio = 0,
+    ---@type number 旋转冷却覆盖度[0-1]
+    _cooldownRatio = 0,
 })
 
 ---@protected
@@ -44,6 +57,11 @@ function _index:construct()
             :show(false)
         self._hasMark = nil
     end
+    -- 旋转冷却模型(需创建在文本之前, 否则会盖住冷却数字)
+    if (true == self._hasCooldownModel and hasCooldownProgress()) then
+        self:cooldown()
+        self._hasCooldownModel = nil
+    end
     -- 阻碍
     self._blocker = UIBlock(self._key .. ':block', self)
         :relation(UI_ALIGN_CENTER, self, UI_ALIGN_CENTER, 0, 0)
@@ -61,6 +79,8 @@ end
 
 ---@protected
 function _index:destruct()
+    class.destroy(self._cooldown)
+    self._cooldown = nil
     class.destroy(self._borderTimer)
     self._borderTimer = nil
     class.destroy(self._highlight)
@@ -91,6 +111,7 @@ function _index:size(width, height)
             self._border:size(width * self._borderScaleWidth, height * self._borderScaleHeight)
         end
         self:maskRatio(self._maskRatio) -- 刷新遮罩状态
+        self:_refreshCooldownModel() -- 刷新冷却模型尺寸
     end
     return self
 end
@@ -227,6 +248,77 @@ function _index:maskRatio(value)
             self._mask:show(true)
         end
         self._maskRatio = value
+    end
+    return self
+end
+
+--- 创建(或获取)旋转冷却模型
+--- 用原生 UI-Cooldown-Indicator 模型替代纯色遮罩, 配合 cooldownRatio 驱动转圈效果
+---@param path string|nil 模型路径, 默认原生冷却指示器
+---@return UIModel|nil
+function _index:cooldown(path)
+    if (nil == self._cooldown and type(UIModel) == "function" and hasCooldownProgress()) then
+        local m = UIModel(self._key .. ':cd', self)
+            :relation(UI_ALIGN_CENTER, self, UI_ALIGN_CENTER, 0, 0)
+        if (nil ~= m) then
+            m:model(path or COOLDOWN_MODEL)
+            m:animate("Stand", false)
+            m:progress(1)
+            m:show(false)
+            self._cooldown = m
+            self:onEvent(eventKind.uiHide, "lk_cooldown", function()
+                if (nil ~= self._cooldown) then
+                    self._cooldown:show(false)
+                end
+            end)
+            self:onEvent(eventKind.uiShow, "lk_cooldown", function()
+                if (nil ~= self._cooldown and self._cooldownRatio > 0) then
+                    self._cooldown:show(true)
+                end
+            end)
+            self:_refreshCooldownModel()
+        end
+    end
+    return self._cooldown
+end
+
+---@protected
+---@return void
+function _index:_refreshCooldownModel()
+    local m = self._cooldown
+    local w, h = self._width, self._height
+    if (nil ~= m and nil ~= w and nil ~= h and w > 0 and h > 0) then
+        m:size(w, h)
+        m:scaleXYZ(w / COOLDOWN_MODEL_EXTENT, h / COOLDOWN_MODEL_EXTENT, 1)
+    end
+end
+
+--- 设置旋转冷却覆盖度
+--- 0=无冷却(隐藏), 1=完全覆盖; 与 maskRatio 的取值方向一致, 但表现是转圈
+---@param value number 取值范围[0.00-1.00]
+---@return self
+function _index:cooldownRatio(value)
+    if (type(value) == "number") then
+        value = math.max(0, math.min(1, value))
+        self._cooldownRatio = value
+        local m = nil
+        if (hasCooldownProgress()) then
+            m = self:cooldown()
+        end
+        if (nil ~= m) then
+            if (value > 0) then
+                --- 模型动画 0=满遮罩, 1=无遮罩, 与覆盖度方向相反
+                m:progress(1 - value)
+                m:show(self:isShow())
+            else
+                m:show(false)
+            end
+        else
+            --- 平台不支持动画进度时退回纯色遮罩(0 交给调用方的 maskRatio 决定, 避免清掉禁用遮罩)
+            if (value > 0) then
+                self:maskRatio(value)
+            end
+        end
     end
     return self
 end

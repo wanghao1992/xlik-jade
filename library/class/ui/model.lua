@@ -52,6 +52,13 @@ local function _applySprite(self)
             japi.WhScale(h, self._scale)
         end
     end
+    if (nil ~= self._scaleXYZ) then
+        if (isNative()) then
+            japi.FrameSetModelScale(h, self._scaleXYZ[1], self._scaleXYZ[2], self._scaleXYZ[3])
+        else
+            japi.WhScale(h, (self._scaleXYZ[1] + self._scaleXYZ[2]) / 2)
+        end
+    end
     if (nil ~= self._teamColor) then
         if (isNative()) then
             _nativeTeamColor(self, self._teamColor)
@@ -120,6 +127,13 @@ function _index:model(path)
             japi.WhAttachLit(self._handle)
         end
         _applySprite(self)
+        --- 换模型会重置动画状态: 重新挂上已设置的动画与进度
+        if (nil ~= self._animateId) then
+            japi.DZ_FrameSetAnimate(self._handle, self._animateId, self._autoCast)
+        end
+        if (nil ~= self._progress) then
+            self:progress(self._progress)
+        end
     end
     return self
 end
@@ -168,6 +182,41 @@ function _index:teamColor(color)
             _nativeTeamColor(self, color)
         else
             japi.WhTeamColor(self._handle, color)
+        end
+    end
+    return self
+end
+
+--- 设置模型按 xyz 轴分别缩放(非等比场景, 如冷却遮罩按按钮宽高铺满)
+---@param x number X轴缩放
+---@param y number Y轴缩放
+---@param z number|nil Z轴缩放, 默认1
+---@return self
+function _index:scaleXYZ(x, y, z)
+    if (type(x) == "number" and type(y) == "number") then
+        z = z or 1
+        self._scaleXYZ = { x, y, z }
+        if (isNative()) then
+            japi.FrameSetModelScale(self._handle, x, y, z)
+        else
+            japi.WhScale(self._handle, (x + y) / 2)
+        end
+    end
+    return self
+end
+
+--- 设置动画进度[0-1]
+--- 需先 animate(动画名, false) 关闭自动播放, 否则进度会被动画自身覆盖
+---@param value number 0=动画起点, 1=终点
+---@return self
+function _index:progress(value)
+    if (type(value) == "number") then
+        value = math.max(0, math.min(1, value))
+        self._progress = value
+        if (japi.Has("DzFrameSetAnimateOffset")) then
+            japi.DZ_FrameSetAnimateOffset(self._handle, value)
+        elseif (japi.Has("FrameSetAnimateOffset")) then
+            japi.Exec("FrameSetAnimateOffset", self._handle, value)
         end
     end
     return self
