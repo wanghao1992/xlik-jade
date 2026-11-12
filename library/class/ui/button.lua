@@ -23,6 +23,8 @@ local _index = UI(UIButtonClass, {
     _maskRatio = 0,
     ---@type number 旋转冷却覆盖度[0-1]
     _cooldownRatio = 0,
+    ---@type number 旋转冷却模型缩放系数(1=铺满按钮, 小于1则四周留边)
+    _cooldownModelScale = 1,
 })
 
 ---@protected
@@ -288,8 +290,10 @@ function _index:_refreshCooldownModel()
     local m = self._cooldown
     local w, h = self._width, self._height
     if (nil ~= m and nil ~= w and nil ~= h and w > 0 and h > 0) then
+        --- 按按钮宽高换算缩放; 系数 <1 时模型小于按钮(四周留边, 不压边框)
+        local s = self._cooldownModelScale or 1
         m:size(w, h)
-        m:scaleXYZ(w / COOLDOWN_MODEL_EXTENT, h / COOLDOWN_MODEL_EXTENT, 1)
+        m:scaleXYZ(w / COOLDOWN_MODEL_EXTENT * s, h / COOLDOWN_MODEL_EXTENT * s, 1)
     end
 end
 
@@ -450,9 +454,10 @@ end
 --- [constructs._highlightFdfName][默认 'LK_HIGHLIGHT_HUMAN_CONSOLE'] 改用某个高亮fdf模版，可设为false关闭高亮
 --- [constructs._hasBorder][默认 true] 可设为false关闭边框
 --- [constructs._hasMark][默认 true] 可设为false关闭遮罩
+--- [constructs._cooldownModelScale][默认 1] 旋转冷却模型相对按钮的缩放系数(小于1则四周留边)
 ---@param key string 索引名
 ---@param parent UI|nil 默认 UI_Game
----@param constructs {_fdfName:string,_highlightFdfName:string|boolean,_hasBorder:boolean,_hasMark:boolean}
+---@param constructs {_fdfName:string,_highlightFdfName:string|boolean,_hasBorder:boolean,_hasMark:boolean,_cooldownModelScale:number}
 ---@return UIButton
 function UIButton(key, parent, constructs)
     must(type(key) == "string", "key@string")
