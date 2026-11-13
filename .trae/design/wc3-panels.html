@@ -1745,6 +1745,307 @@
   .q-pink   {--qt:#ff69b4;  --qbg:rgba(255,105,180,.24);}
 
   /* ============================================================
+     17 专属装备 · 洗炼与重铸
+     满级后双击装备展开四条词条；悬停词条直接展开「换词条 / 换颜色」；
+     唯一被动条尾部「重铸」；失败累计提升下次成功率
+     ============================================================ */
+  .ref-scene{
+    position:relative;width:100%;
+    display:flex;align-items:flex-start;justify-content:center;gap:26px;
+    padding:4px 0;
+  }
+
+  /* --- 装备本体（双击展开/收起） --- */
+  .ref-gear{
+    flex:none;width:112px;padding-top:14px;
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+  }
+  .ref-gear__slot{--slot:76px}
+  .ref-gear__slot .slot__art .glyph{width:44%;height:44%}
+  .ref-gear__name{
+    font-size:12px;font-weight:700;letter-spacing:.06em;color:#ffe9a8;
+    text-shadow:0 1px 0 #000,0 0 12px rgba(255,205,110,.32);
+    white-space:nowrap;
+  }
+  .ref-gear__lvl{
+    display:inline-flex;align-items:center;gap:4px;
+    padding:2px 8px;font-size:9px;letter-spacing:.1em;color:#e5d3a2;
+    background:rgba(0,0,0,.42);border:1px solid rgba(201,170,80,.4);
+    clip-path:var(--cut-sm);
+  }
+  .ref-gear__lvl b{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:10px;color:#ffd76a;
+  }
+  .ref-gear__hint{
+    margin-top:2px;font-size:9px;line-height:1.7;letter-spacing:.04em;
+    color:#877c63;text-align:center;
+  }
+  .ref-gear__hint b{color:#d8c79a}
+
+  /* --- 调校面板 --- */
+  .ref-pop{
+    position:relative;flex:none;width:min(560px,100%);
+    background:
+      var(--noise) repeat 0 0/240px 240px,
+      linear-gradient(180deg,#2a2318 0%,#15130c 60%,#0a0806 100%);
+    background-blend-mode:overlay,normal;
+    border:1px solid #6a582c;
+    box-shadow:
+      inset 0 0 0 1px #060504,
+      inset 0 0 0 2px rgba(205,170,74,.12),
+      0 0 0 4px rgba(0,0,0,.55),
+      0 14px 42px rgba(0,0,0,.7),
+      0 0 70px rgba(255,200,90,.07);
+    animation:refPopIn .28s ease;
+  }
+  .ref-pop.is-hidden{display:none}
+  @keyframes refPopIn{
+    from{opacity:0;transform:translateY(7px) scale(.99)}
+    to{opacity:1;transform:none}
+  }
+  .ref-pop::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,transparent,rgba(255,210,120,.55),transparent);
+  }
+
+  .ref-pop__head{display:flex;align-items:center;gap:10px;padding:11px 14px 8px}
+  .ref-pop__tag{
+    flex:none;padding:2px 8px;font-size:8px;font-weight:700;letter-spacing:.3em;
+    color:#201806;background:linear-gradient(90deg,#f2d884,#b08a2c);
+    box-shadow:0 0 8px rgba(255,210,120,.5);
+  }
+  .ref-pop__title{
+    margin:0;font-size:14px;font-weight:700;letter-spacing:.06em;
+    color:#ffe9a8;
+    text-shadow:0 1px 0 #000,0 0 14px rgba(255,200,90,.22);
+  }
+  .ref-pop__title b{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:11px;color:#ffd76a;letter-spacing:0;
+  }
+  .ref-pop__gold{
+    margin-left:auto;display:inline-flex;align-items:center;gap:5px;
+    padding:3px 9px;
+    background:rgba(0,0,0,.4);
+    border:1px solid rgba(201,170,80,.32);
+    clip-path:var(--cut-sm);
+  }
+  .ref-pop__gold .glyph{width:12px;height:12px;color:#ffd76a}
+  .ref-pop__gold b{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:12px;font-weight:700;color:#ffe08a;
+    font-variant-numeric:tabular-nums;
+  }
+  .ref-pop__gold.is-low b{color:#e0664f}
+
+  .ref-pop__sub{
+    display:flex;flex-wrap:wrap;gap:4px 14px;
+    padding:0 14px 9px;
+    font-size:10px;letter-spacing:.03em;color:#978b70;
+    border-bottom:1px dashed rgba(201,170,80,.18);
+  }
+  .ref-pop__sub b{color:#e2c987;font-weight:700}
+
+  /* --- 唯一被动 --- */
+  .ref-passive{
+    position:relative;margin:10px 14px 0;padding:8px 96px 9px 14px;
+    min-height:64px;
+    background:linear-gradient(180deg,rgba(255,140,60,.08),rgba(0,0,0,.32));
+    border:1px solid rgba(201,170,80,.22);
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.5);
+  }
+  .ref-passive::before{
+    content:"";position:absolute;left:0;top:6px;bottom:6px;width:2px;
+    background:linear-gradient(#ffd08a,#9a5a24);
+    box-shadow:0 0 8px rgba(255,170,90,.55);
+  }
+  .ref-passive__tag{
+    font-size:8px;font-weight:700;letter-spacing:.24em;color:#ffb472;
+  }
+  .ref-passive__name{
+    margin-left:8px;font-size:12.5px;font-weight:700;letter-spacing:.06em;color:#ffd2a1;
+    text-shadow:0 1px 0 #000,0 0 12px rgba(255,150,70,.3);
+  }
+  .ref-passive__desc{
+    display:block;margin-top:4px;
+    font-size:10.5px;line-height:1.7;letter-spacing:.02em;color:#a99c80;
+  }
+  .ref-passive.is-new{animation:refPassiveFlash .7s ease}
+  @keyframes refPassiveFlash{
+    0%{box-shadow:inset 0 0 0 1px rgba(0,0,0,.5)}
+    35%{box-shadow:inset 0 0 0 1px rgba(0,0,0,.5),0 0 26px rgba(255,160,70,.5)}
+    100%{box-shadow:inset 0 0 0 1px rgba(0,0,0,.5)}
+  }
+
+  /* --- 四条词条 --- */
+  .ref-rows{display:flex;flex-direction:column;gap:6px;padding:10px 14px 12px}
+  .ref-row{
+    position:relative;z-index:1;
+    display:grid;grid-template-columns:8px minmax(0,1fr) auto auto;
+    gap:9px;align-items:center;
+    padding:8px 11px;
+    background:linear-gradient(180deg,#1c1912,#0d0b08);
+    border:1px solid rgba(201,170,80,.2);
+    box-shadow:inset 0 0 0 1px #050403;
+    transition:border-color .16s,background .16s,box-shadow .16s;
+  }
+  .ref-row:hover,.ref-row.is-sub{
+    z-index:6;
+    border-color:var(--qt);
+    background:linear-gradient(180deg,#221e14,#100d08);
+    box-shadow:inset 0 0 0 1px #050403,0 0 16px var(--qbg);
+  }
+  .ref-row__dot{
+    width:7px;height:7px;flex:none;
+    background:var(--qt);transform:rotate(45deg);
+    box-shadow:0 0 7px var(--qbg);
+  }
+  .ref-row__main{display:flex;align-items:baseline;gap:7px;min-width:0}
+  .ref-row__name{
+    font-size:12.5px;font-weight:700;letter-spacing:.04em;color:var(--qt);
+    text-shadow:0 1px 0 #000;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .ref-row__tier{
+    flex:none;padding:0 4px;line-height:1.5;
+    font-size:9px;letter-spacing:.1em;color:#8d8067;
+    border:1px solid rgba(201,170,80,.22);
+  }
+  .ref-row__val{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:12.5px;font-weight:700;color:#f2e5c4;
+    font-variant-numeric:tabular-nums;white-space:nowrap;
+  }
+  .ref-row__acts{
+    display:flex;align-items:center;gap:6px;margin-left:6px;
+    opacity:0;transform:translateX(5px);
+    transition:opacity .16s,transform .16s;
+    pointer-events:none;
+  }
+  .ref-row:hover .ref-row__acts,.ref-row.is-sub .ref-row__acts{
+    opacity:1;transform:none;pointer-events:auto;
+  }
+
+  .ref-btn{
+    display:inline-flex;align-items:center;gap:4px;
+    height:25px;padding:0 9px;
+    font-family:inherit;font-size:10.5px;font-weight:700;letter-spacing:.06em;
+    color:#d9c9a0;cursor:pointer;white-space:nowrap;
+    background:linear-gradient(180deg,#332c1e,#191509);
+    border:1px solid #5c5136;
+    clip-path:var(--cut-sm);
+    box-shadow:inset 0 0 0 1px #070604;
+    transition:color .16s,border-color .16s,background .16s;
+  }
+  .ref-btn:hover{color:#fff0c4;border-color:#c9a63f;background:linear-gradient(180deg,#4a3d1c,#241c0a)}
+  .ref-btn--forge:hover{color:#ffd2a4;border-color:#b06b32;background:linear-gradient(180deg,#3d2510,#1a0f06)}
+  .ref-btn__cost{font-family:Consolas,"Cascadia Mono","Courier New",monospace;font-size:9px;font-style:normal;color:#c9a63f}
+  .ref-btn--forge:hover .ref-btn__cost{color:#ffb472}
+
+  /* 唯一被动条尾部的重铸按钮 */
+  .ref-forge-btn{
+    position:absolute;right:8px;top:50%;
+    transform:translateY(-50%);
+    height:24px;padding:0 10px;
+  }
+
+  /* 洗炼子菜单：悬停词条时从行右侧展开 */
+  .ref-submenu{
+    position:absolute;left:calc(100% + 10px);top:50%;z-index:40;
+    width:174px;padding:8px;
+    transform:translateY(-50%) translateX(-4px);
+    background:linear-gradient(180deg,#2a2418,#12100a);
+    border:1px solid #8a7133;
+    box-shadow:
+      inset 0 0 0 1px #060504,
+      0 10px 28px rgba(0,0,0,.72),
+      0 0 22px rgba(255,200,90,.08);
+    opacity:0;pointer-events:none;
+    transition:opacity .16s,transform .16s;
+  }
+  .ref-row.is-sub .ref-submenu{opacity:1;pointer-events:auto;transform:translateY(-50%)}
+  .ref-submenu::before{
+    content:"";position:absolute;left:-6px;top:50%;width:9px;height:9px;margin-top:-4.5px;
+    background:linear-gradient(135deg,#2a2418,#12100a);
+    border-left:1px solid #8a7133;border-bottom:1px solid #8a7133;
+    transform:rotate(45deg);
+  }
+  .ref-submenu__head{
+    display:block;padding:0 2px 6px;
+    font-size:9px;letter-spacing:.14em;color:#9a8f74;
+    border-bottom:1px dashed rgba(201,170,80,.2);
+  }
+  .ref-submenu__opt{
+    display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:8px;
+    width:100%;margin-top:6px;padding:6px 7px;
+    font-family:inherit;text-align:left;cursor:pointer;
+    color:#ded0aa;
+    background:linear-gradient(180deg,#201c13,#0c0a07);
+    border:1px solid rgba(201,170,80,.24);
+    transition:color .16s,border-color .16s,background .16s;
+  }
+  .ref-submenu__opt:hover{
+    color:#fff0c4;border-color:#c9a63f;
+    background:linear-gradient(180deg,#3a2f16,#1a1509);
+  }
+  .ref-submenu__label{font-size:11px;font-weight:700;letter-spacing:.04em}
+  .ref-submenu__chance{
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:10px;color:#8fd8ae;
+  }
+  .ref-submenu__cost{
+    display:inline-flex;align-items:center;gap:3px;
+    font-family:Consolas,"Cascadia Mono","Courier New",monospace;
+    font-size:10px;color:#e8c471;
+  }
+  .ref-submenu__cost .glyph{width:10px;height:10px;color:#e8c471}
+  .ref-submenu__tip{
+    display:block;margin-top:7px;padding:5px 2px 1px;
+    font-size:9px;line-height:1.6;color:#847a64;
+    border-top:1px dashed rgba(201,170,80,.16);
+  }
+  .ref-submenu__tip b{color:#ffd76a}
+
+  .ref-row.is-ok{animation:refOk .6s ease}
+  .ref-row.is-fail{animation:refFail .45s ease}
+  @keyframes refOk{
+    0%{box-shadow:inset 0 0 0 1px #050403}
+    35%{box-shadow:inset 0 0 0 1px #050403,0 0 24px rgba(120,255,180,.55)}
+    100%{box-shadow:inset 0 0 0 1px #050403}
+  }
+  @keyframes refFail{
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-4px)}
+    40%{transform:translateX(4px)}
+    60%{transform:translateX(-3px)}
+    80%{transform:translateX(3px)}
+  }
+
+  .ref-pop__foot{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:8px 14px 11px;
+    border-top:1px dashed rgba(201,170,80,.16);
+    font-size:9.5px;letter-spacing:.03em;color:#7f7460;
+  }
+  .ref-msg{min-height:14px;color:#9a8f74}
+  .ref-msg.is-ok{color:#9fe3b0}
+  .ref-msg.is-bad{color:#e08a74}
+  .ref-pop__foot .ref-hint{flex:none;white-space:nowrap;color:#7d7259}
+
+  @media (max-width:900px){
+    .ref-scene{flex-direction:column;align-items:center;gap:16px}
+    .ref-gear{width:auto;flex-direction:row;flex-wrap:wrap;justify-content:center;padding-top:0}
+    .ref-submenu{
+      left:auto;right:0;top:calc(100% + 8px);
+      transform:translateY(-4px);
+    }
+    .ref-row.is-sub .ref-submenu{transform:none}
+    .ref-submenu::before{display:none}
+  }
+
+  /* ============================================================
      14 选择奥义 · 五择其一(第 4 次进化)
      ============================================================ */
   .stage--ult{
@@ -2270,6 +2571,7 @@
     <a href="#tooltip"><span>12</span>悬浮提示</a>
     <a href="#grid-spec"><span>13</span>网格规范</a>
     <a href="#affix"><span>12</span>词条升级</a>
+    <a href="#reforge"><span>17</span>洗炼重铸</a>
     <a href="#ultimate"><span>14</span>选择奥义</a>
     <a href="#boss"><span>15</span>BOSS血条</a>
     <a href="#guide"><span>16</span>新手指引</a>
@@ -3322,6 +3624,66 @@
     </ul>
   </section>
 
+  <!-- ==================== 17 专属装备 · 洗炼与重铸 ==================== -->
+  <section class="sec" id="reforge">
+    <div class="sec__head">
+      <span class="sec__idx">17</span><h2>专属装备 · 洗炼与重铸</h2>
+      <span class="sec__en">EXCLUSIVE GEAR · REFINE &amp; RECAST</span><span class="sec__rule"></span>
+    </div>
+    <div class="stage stage--bg">
+      <span class="stage__mark">炼</span>
+      <div class="ref-scene">
+        <!-- 装备本体：双击展开 / 收起词条面板 -->
+        <div class="ref-gear">
+          <button class="slot ref-gear__slot" id="refGear" type="button" data-q="q5" aria-label="灰烬使者 · 双击展开词条">
+            <span class="slot__art"><svg class="glyph"><use href="#i-sword"/></svg></span>
+            <span class="slot__corners"></span>
+          </button>
+          <span class="ref-gear__name">灰烬使者</span>
+          <span class="ref-gear__lvl">Lv.<b>100</b> · 满级</span>
+          <span class="ref-gear__hint"><b>双击装备</b><br>展开 / 收起词条</span>
+        </div>
+
+        <!-- 词条调校面板 -->
+        <div class="ref-pop" id="refPop">
+          <div class="ref-pop__head">
+            <span class="ref-pop__tag">词 条 调 校</span>
+            <h3 class="ref-pop__title">灰烬使者 <b>Lv.100</b></h3>
+            <span class="ref-pop__gold"><svg class="glyph"><use href="#i-coin"/></svg><b id="refGold">12,800</b></span>
+          </div>
+          <div class="ref-pop__sub">
+            <span>悬停词条 → <b>换词条 / 换颜色</b></span>
+            <span>唯一被动 → <b>重铸</b></span>
+            <span>失败累计 <b>+15%</b> 成功率</span>
+          </div>
+
+          <div class="ref-passive" id="refPassive">
+            <span class="ref-passive__tag">唯 一 被 动</span>
+            <span class="ref-passive__name" id="refPassiveName">焚天</span>
+            <span class="ref-passive__desc" id="refPassiveDesc">每次攻击附加目标最大生命值 3% 的火焰伤害</span>
+            <button class="ref-btn ref-btn--forge ref-forge-btn" id="refForgeBtn" type="button">重铸<i class="ref-btn__cost">8万</i></button>
+          </div>
+
+          <div class="ref-rows" id="refRows"></div>
+
+          <div class="ref-pop__foot">
+            <span class="ref-msg" id="refMsg">悬停词条开始调校 · 每次尝试均消耗金币</span>
+            <span class="ref-hint">成功率上限 95%</span>
+          </div>
+        </div>
+      </div>
+      <span class="stage__tag">MAX LEVEL · 4 AFFIXES · REFINE / RECAST</span>
+    </div>
+    <ul class="chips">
+      <li>满级后双击装备 · 展开四条已获词条</li>
+      <li>悬停词条 → 换词条 / 换颜色 · 唯一被动 → 重铸</li>
+      <li>换词条：同品质其他词条 · 换颜色：同词条升一档</li>
+      <li>最高品质时换颜色 → 重随数值</li>
+      <li>失败 +15% 下次成功率 · 上限 95%</li>
+      <li>重铸：花费金币更换唯一被动</li>
+    </ul>
+  </section>
+
   <!-- ==================== 14 选择奥义 · 五择其一 ==================== -->
   <section class="sec" id="ultimate">
     <div class="sec__head">
@@ -4013,6 +4375,206 @@
       var pick = CANDIDATES[i];
       alert('确认选择：' + pick.name + '  ' + fmtVal(pick.def, pick.value));
     });
+  });
+
+  /* ---------------- 17 专属装备 · 洗炼与重铸 ---------------- */
+  var REF_COST = { swap:30000, color:50000, forge:80000 };
+  var REF_BASE = { swap:35, color:25 };
+  var REF_FAIL_STEP = 15;
+  var REF_QUALITY_NAME = ['','普通','优秀','稀有','史诗','传说'];
+  var REF_PASSIVES = [
+    { name:'焚天',     desc:'每次攻击附加目标最大生命值 3% 的火焰伤害' },
+    { name:'余烬',     desc:'生命低于 40% 时，攻击力提升 25%' },
+    { name:'灰烬风暴', desc:'击杀敌人后，对周围 300 码造成 攻击力×120% 的伤害' },
+    { name:'不灭之火', desc:'受到致命伤害时免疫该次伤害并回复 30% 生命，冷却 60 秒' },
+    { name:'薪火',     desc:'每 5 秒叠加 2% 攻击力，最多 5 层，脱战重置' }
+  ];
+
+  var refGold = 12800;
+  var refPity = [0,0,0,0];
+  var refPassiveIdx = 0;
+  var REF_ROWS = [
+    { name:'攻击力',    quality:4, value:128 },
+    { name:'生命上限',  quality:4, value:2980 },
+    { name:'全属性%',   quality:2, value:0.054 },
+    { name:'伤害加成%', quality:5, value:0.245 }
+  ];
+
+  var refGoldEl = document.getElementById('refGold');
+  var refRowsEl = document.getElementById('refRows');
+  var refMsgEl = document.getElementById('refMsg');
+  var refPopEl = document.getElementById('refPop');
+  var refGearEl = document.getElementById('refGear');
+  var refPassiveEl = document.getElementById('refPassive');
+
+  function refMoney(n){
+    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+  function refChance(i, kind){
+    return Math.min(95, REF_BASE[kind] + REF_FAIL_STEP * refPity[i]);
+  }
+  function refSetMsg(text, tone){
+    refMsgEl.className = 'ref-msg' + (tone ? ' is-' + tone : '');
+    refMsgEl.textContent = text;
+  }
+  function refPaintGold(){
+    refGoldEl.textContent = refMoney(refGold);
+    refGoldEl.parentElement.classList.toggle('is-low', refGold < REF_COST.color);
+  }
+  function refFlash(el, cls){
+    el.classList.remove('is-ok','is-fail');
+    void el.offsetWidth;
+    el.classList.add(cls);
+    setTimeout(function(){ el.classList.remove(cls); }, 650);
+  }
+
+  function refRowHTML(row, i){
+    var def = AFFIX_DEFS_REAL[row.name];
+    return '<div class="ref-row ' + QCLS[row.quality] + '" data-i="' + i + '">' +
+      '<span class="ref-row__dot"></span>' +
+      '<span class="ref-row__main">' +
+        '<span class="ref-row__name">' + row.name + '</span>' +
+        '<span class="ref-row__tier">' + REF_QUALITY_NAME[row.quality] + '</span>' +
+      '</span>' +
+      '<span class="ref-row__val">' + fmtVal(def, row.value) + '</span>' +
+      '<span class="ref-row__acts">' +
+        '<span class="ref-submenu">' +
+          '<span class="ref-submenu__head">洗 炼 · 有几率成功</span>' +
+          '<button type="button" class="ref-submenu__opt" data-act="swap">' +
+            '<span class="ref-submenu__label">换词条</span>' +
+            '<span class="ref-submenu__chance">' + refChance(i,'swap') + '%</span>' +
+            '<span class="ref-submenu__cost">' + svg('i-coin') + REF_COST.swap + '</span>' +
+          '</button>' +
+          '<button type="button" class="ref-submenu__opt" data-act="color">' +
+            '<span class="ref-submenu__label">换颜色</span>' +
+            '<span class="ref-submenu__chance">' + refChance(i,'color') + '%</span>' +
+            '<span class="ref-submenu__cost">' + svg('i-coin') + REF_COST.color + '</span>' +
+          '</button>' +
+          '<span class="ref-submenu__tip">失败 +' + REF_FAIL_STEP + '% · 连败 <b class="ref-pity">0</b></span>' +
+        '</span>' +
+      '</span>' +
+    '</div>';
+  }
+
+  /* 只更新内容，不重建节点（保留展开态与动画） */
+  function refPaintRow(i){
+    var row = REF_ROWS[i];
+    var el = refRowsEl.querySelector('[data-i="' + i + '"]');
+    for(var q=1;q<=5;q++){ el.classList.remove(QCLS[q]); }
+    el.classList.add(QCLS[row.quality]);
+    el.querySelector('.ref-row__name').textContent = row.name;
+    el.querySelector('.ref-row__tier').textContent = REF_QUALITY_NAME[row.quality];
+    el.querySelector('.ref-row__val').textContent = fmtVal(AFFIX_DEFS_REAL[row.name], row.value);
+    el.querySelector('[data-act="swap"] .ref-submenu__chance').textContent = refChance(i,'swap') + '%';
+    el.querySelector('[data-act="color"] .ref-submenu__chance').textContent = refChance(i,'color') + '%';
+    el.querySelector('.ref-pity').textContent = refPity[i];
+    return el;
+  }
+
+  function refTryRefine(i, rowEl, kind){
+    var cost = REF_COST[kind];
+    var costText = kind === 'swap' ? '换词条' : '换颜色';
+    if(refGold < cost){
+      refSetMsg('金币不足 · ' + costText + '需要 ' + refMoney(cost) + ' 金币', 'bad');
+      refFlash(rowEl, 'is-fail');
+      return;
+    }
+    refGold -= cost;
+    refPaintGold();
+
+    var row = REF_ROWS[i];
+    if(Math.random() * 100 >= refChance(i, kind)){
+      refPity[i]++;
+      refPaintRow(i);
+      refFlash(rowEl, 'is-fail');
+      refSetMsg(costText + '失败 · 连败 ' + refPity[i] + ' · 下次成功率 ' + refChance(i, kind) + '%', 'bad');
+      return;
+    }
+
+    refPity[i] = 0;
+    var text;
+    if(kind === 'swap'){
+      var used = {};
+      REF_ROWS.forEach(function(r, idx){ if(idx !== i){ used[r.name] = true; } });
+      var pool = Object.keys(AFFIX_DEFS_REAL).filter(function(n){
+        return n !== row.name && !used[n];
+      });
+      var name = pool[Math.floor(Math.random() * pool.length)] || row.name;
+      row.name = name;
+      row.value = rollTierValue(AFFIX_DEFS_REAL[name], row.quality);
+      text = '换词条成功 · ' + name + ' ' + fmtVal(AFFIX_DEFS_REAL[name], row.value);
+    } else if(row.quality < 5){
+      var oldName = REF_QUALITY_NAME[row.quality];
+      row.quality++;
+      row.value = rollTierValue(AFFIX_DEFS_REAL[row.name], row.quality);
+      text = '换颜色成功 · ' + row.name + ' ' + oldName + ' → ' + REF_QUALITY_NAME[row.quality] +
+        ' · ' + fmtVal(AFFIX_DEFS_REAL[row.name], row.value);
+    } else {
+      row.value = rollTierValue(AFFIX_DEFS_REAL[row.name], row.quality);
+      text = '数值重随 · ' + row.name + ' ' + fmtVal(AFFIX_DEFS_REAL[row.name], row.value);
+    }
+
+    refPaintRow(i);
+    refFlash(rowEl, 'is-ok');
+    refSetMsg(text, 'ok');
+  }
+
+  function refForge(){
+    if(refGold < REF_COST.forge){
+      refSetMsg('金币不足 · 重铸需要 ' + refMoney(REF_COST.forge) + ' 金币', 'bad');
+      return;
+    }
+    refGold -= REF_COST.forge;
+    refPaintGold();
+
+    var pool = REF_PASSIVES.map(function(p, idx){ return idx; }).filter(function(idx){
+      return idx !== refPassiveIdx;
+    });
+    refPassiveIdx = pool[Math.floor(Math.random() * pool.length)];
+    var passive = REF_PASSIVES[refPassiveIdx];
+    document.getElementById('refPassiveName').textContent = passive.name;
+    document.getElementById('refPassiveDesc').textContent = passive.desc;
+
+    refPassiveEl.classList.remove('is-new');
+    void refPassiveEl.offsetWidth;
+    refPassiveEl.classList.add('is-new');
+    refSetMsg('重铸完成 · 唯一被动 → ' + passive.name, 'ok');
+  }
+
+  refRowsEl.innerHTML = REF_ROWS.map(refRowHTML).join('');
+  refPaintGold();
+
+  /* 悬停词条 → 直接在右侧展开换词条/换颜色 */
+  refRowsEl.addEventListener('mouseover', function(e){
+    var rowEl = e.target.closest('.ref-row');
+    if(!rowEl || !refRowsEl.contains(rowEl)){ return; }
+    refRowsEl.querySelectorAll('.ref-row').forEach(function(el){
+      el.classList.toggle('is-sub', el === rowEl);
+    });
+  });
+  refRowsEl.querySelectorAll('.ref-row').forEach(function(rowEl){
+    rowEl.addEventListener('mouseleave', function(){
+      rowEl.classList.remove('is-sub');
+    });
+  });
+
+  refRowsEl.addEventListener('click', function(e){
+    var rowEl = e.target.closest('.ref-row');
+    if(!rowEl){ return; }
+    var btn = e.target.closest('[data-act]');
+    if(!btn){ return; }
+    refTryRefine(Number(rowEl.dataset.i), rowEl, btn.dataset.act);
+  });
+
+  /* 唯一被动条尾部的重铸按钮 */
+  var refForgeBtn = document.getElementById('refForgeBtn');
+  if(refForgeBtn){
+    refForgeBtn.addEventListener('click', refForge);
+  }
+
+  /* 双击装备：展开 / 收起调校面板 */
+  refGearEl.addEventListener('dblclick', function(){
+    refPopEl.classList.toggle('is-hidden');
   });
 
   /* ---------------- 选择奥义 · 五张竖卡 ---------------- */
