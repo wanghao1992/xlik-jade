@@ -9,6 +9,10 @@ local _index = Vast(UnitClass)
 
 ---@protected
 function _index:destruct()
+    --- 先回滚全部 Buff: 此时对象尚未标记销毁, rollback 能正常执行
+    --- 否则目标单位先死亡时, Buff 到期会因 class.isDestroy(o) 跳过 rollback,
+    --- 导致 rollback 中持有的计时器/特效等外部资源永久泄漏
+    BuffClear(self)
     self:enchantSubtractAll()
     Group(UnitClass):remove(self)
     class.destroy(self._abilitySlot)

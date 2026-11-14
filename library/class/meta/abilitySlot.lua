@@ -151,10 +151,13 @@ end
 function _index:insert(whichAbility, index)
     ---@type Ability
     local ab = nil
+    --- 是否由本次调用新建的 Ability(用于无槽位等失败路径的销毁)
+    local created = false
     if (class.isObject(whichAbility, AbilityClass)) then
         ab = whichAbility
     elseif (class.isObject(whichAbility, AbilityTplClass)) then
         ab = Ability(whichAbility)
+        created = true
     end
     must(class.isObject(ab, AbilityClass), "whichAbility@Ability|AbilityTpl")
     ---@type Ability[]
@@ -173,6 +176,10 @@ function _index:insert(whichAbility, index)
         end
     end
     if (type(index) ~= "number") then
+        --- 没有可用槽位: 本次新建的技能必须销毁, 否则会常驻 class._i2o 造成泄漏
+        if (true == created) then
+            class.destroy(ab)
+        end
         return
     end
     local prev = s[index]
