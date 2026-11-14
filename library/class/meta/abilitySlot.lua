@@ -209,8 +209,8 @@ function _index:insert(whichAbility, index)
                     s[replace] = prev:abilitySlotIndex(replace)
                 end
             else
-                -- 删除技能的情况
-                self:remove(index)
+                -- 槽位已满: 旧技能必须销毁, 仅 remove 只解绑会让 Ability 常驻 class._i2o 造成泄漏
+                class.destroy(prev)
             end
             ab:bindUnit(bu)
             if (false == class.isDestroy(ab)) then
@@ -234,6 +234,8 @@ function _index:insert(whichAbility, index)
 end
 
 --- 移除一个技能
+--- 注意: 只解绑并清空槽位, 不销毁 Ability 对象
+--- 技能替换/删除业务请使用 class.destroy(ability), 否则 Ability 会常驻 class._i2o 造成泄漏
 ---@param index number|nil 技能在技能栏中的索引
 ---@return void
 function _index:remove(index)
