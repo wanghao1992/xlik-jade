@@ -1207,12 +1207,105 @@
   .panel--talent .panel__title{color:#c8ecff;text-shadow:0 1px 0 #000,0 0 16px rgba(110,200,240,.4)}
   .relic-card--talent{--rq:#5fb7d4;--rq-text:#c8ecff;--rq-soft:rgba(110,200,240,.22)}
   .relic-card--talent:hover{border-color:#d8f4ff}
-  .relic-card--talent .relic-card__tag{border-color:rgba(110,200,240,.35)}
   .relic-card--talent .relic-effect i{
     background:linear-gradient(135deg,#d8f4ff,#5fb7d4);
     box-shadow:0 0 6px rgba(110,200,240,.4);
   }
   .relic-card--talent .relic-effect b{color:#8fd8f4}
+
+  /* --- 天赋卡角标体系 ------------------------------------------------
+     左上「类型角标」: 显示天赋类别(分裂/多重箭/致命一击...), 按类别取色;
+     右上「新天赋角标」: 仅未学习的新卡显示, 金辉呼吸 + 扫光;
+     卡片名称只显示「·」后的子名称(如 分裂·裂伤 -> 裂伤)
+     ---------------------------------------------------------------- */
+  .relic-card__cat{
+    --cat:#c8ecff;
+    position:absolute;z-index:6;top:11px;left:13px;
+    display:inline-flex;align-items:center;gap:6px;
+    padding:3px 11px 4px 9px;
+    font-size:10px;font-weight:700;line-height:1;letter-spacing:.16em;
+    color:var(--cat);
+    background:linear-gradient(180deg,rgba(18,30,34,.96),rgba(5,9,11,.96));
+    border:1px solid var(--cat);
+    clip-path:polygon(0 0,100% 0,calc(100% - 7px) 50%,100% 100%,0 100%);
+    box-shadow:0 0 0 1px #050403,inset 0 0 10px rgba(255,255,255,.05);
+    text-shadow:0 1px 0 #000;
+    pointer-events:none;
+  }
+  .relic-card__cat i{
+    width:5px;height:5px;flex:none;transform:rotate(45deg);
+    background:var(--cat);
+    box-shadow:0 0 7px var(--cat);
+  }
+
+  .relic-card__new{
+    position:absolute;z-index:7;top:15px;right:12px;
+    display:inline-flex;align-items:center;gap:4px;
+    padding:4px 9px 4px 7px;
+    font-size:10px;font-weight:700;line-height:1;letter-spacing:.12em;
+    color:#2a1d03;
+    background:linear-gradient(180deg,#fff6c9 0%,#ffd96e 42%,#d8a02c 100%);
+    clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);
+    box-shadow:0 0 0 1px #3a2a08,0 0 14px rgba(255,205,100,.5);
+    text-shadow:0 1px 0 rgba(255,255,255,.4);
+    animation:talentNewPulse 1.9s ease-in-out infinite;
+    pointer-events:none;
+  }
+  .relic-card__new::before{content:"✦";font-size:9px;color:#7a4d00}
+  .relic-card__new::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(105deg,transparent 32%,rgba(255,255,255,.6) 48%,transparent 64%);
+    transform:translateX(-130%);
+    animation:talentNewSweep 3.2s ease-in-out infinite;
+  }
+  @keyframes talentNewPulse{
+    0%,100%{box-shadow:0 0 0 1px #3a2a08,0 0 8px rgba(255,205,100,.34)}
+    50%{box-shadow:0 0 0 1px #3a2a08,0 0 18px rgba(255,226,140,.78)}
+  }
+  @keyframes talentNewSweep{
+    0%,62%{transform:translateX(-130%)}
+    82%,100%{transform:translateX(130%)}
+  }
+
+  /* 十类天赋类别色(类型角标/图例共用) */
+  .cat--split    {--cat:#7fe08f}
+  .cat--multi    {--cat:#66b8ff}
+  .cat--crit     {--cat:#ff7a5c}
+  .cat--chain    {--cat:#b58cff}
+  .cat--orb      {--cat:#45e0c8}
+  .cat--blade    {--cat:#d8e9f5}
+  .cat--thunder  {--cat:#ffd75e}
+  .cat--skyfall  {--cat:#ff7fa8}
+  .cat--formation{--cat:#8f9bff}
+  .cat--flysword {--cat:#5fd0e8}
+
+  /* 角标规范条(设计参考, 非游戏内元素) */
+  .badge-spec{
+    margin-top:14px;padding:12px 14px;
+    display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;
+    background:rgba(0,0,0,.28);
+    border:1px solid rgba(201,170,80,.18);
+    clip-path:var(--cut-sm);
+  }
+  .badge-spec__cap{
+    font-size:10px;font-weight:700;letter-spacing:.24em;color:#8b7f63;
+  }
+  .badge-spec__item{display:flex;align-items:center;gap:9px}
+  .badge-spec__item em{
+    font-style:normal;font-size:10px;letter-spacing:.04em;color:#8f846a;
+  }
+  .badge-spec .relic-card__cat,
+  .badge-spec .relic-card__new,
+  .badge-spec .relic-card__new::after{position:static;animation:none}
+  .badge-spec__cats{display:flex;flex-wrap:wrap;gap:6px 12px;margin-left:auto}
+  .badge-spec__cats span{
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:10px;letter-spacing:.08em;color:#a99d81;white-space:nowrap;
+  }
+  .badge-spec__cats i{
+    width:5px;height:5px;transform:rotate(45deg);
+    background:var(--cat);box-shadow:0 0 6px var(--cat);
+  }
 
   /* ============================================================
      10 已获取 · 收藏账簿
@@ -3111,44 +3204,45 @@
           </div>
           <div class="relic-row">
             <button class="relic-card relic-card--talent" type="button">
+              <span class="relic-card__cat cat--split"><i></i>分裂</span>
+              <span class="relic-card__new">新天赋</span>
               <span class="relic-card__head">
-                <span class="relic-card__seal"><svg class="glyph" aria-hidden="true"><use href="#i-wing"/></svg></span>
-                <span class="relic-card__tag">天 赋</span>
-                <span class="relic-card__name">风暴之心</span>
+                <span class="relic-card__seal"><svg class="glyph" aria-hidden="true"><use href="#i-sword"/></svg></span>
+                <span class="relic-card__name">裂伤</span>
               </span>
               <span class="relic-card__rule"></span>
               <span class="relic-card__effects">
-                <span class="relic-effect"><i></i>攻击速度提高 <b>15%</b></span>
-                <span class="relic-effect"><i></i>移动速度提高 <b>10%</b></span>
-                <span class="relic-effect"><i></i>攻击 <b>20%</b> 概率释放闪电链</span>
+                <span class="relic-effect"><i></i>解锁 <b>分裂</b></span>
+                <span class="relic-effect"><i></i>普攻对范围 <b>300</b> 内敌人造成物理伤害</span>
+                <span class="relic-effect"><i></i>分裂倍率 <b>30%</b></span>
               </span>
               <span class="relic-card__hint">点 击 领 悟</span>
             </button>
             <button class="relic-card relic-card--talent" type="button">
+              <span class="relic-card__cat cat--multi"><i></i>多重箭</span>
               <span class="relic-card__head">
-                <span class="relic-card__seal"><svg class="glyph" aria-hidden="true"><use href="#i-flame"/></svg></span>
-                <span class="relic-card__tag">天 赋</span>
-                <span class="relic-card__name">烈焰之魂</span>
+                <span class="relic-card__seal"><svg class="glyph" aria-hidden="true"><use href="#i-bow"/></svg></span>
+                <span class="relic-card__name">齐射</span>
               </span>
               <span class="relic-card__rule"></span>
               <span class="relic-card__effects">
-                <span class="relic-effect"><i></i>法术强度提高 <b>12%</b></span>
-                <span class="relic-effect"><i></i>技能命中附加 <b>3</b> 秒灼烧</span>
-                <span class="relic-effect"><i></i>灼烧伤害提高 <b>25%</b></span>
+                <span class="relic-effect"><i></i>解锁 <b>多重箭</b></span>
+                <span class="relic-effect"><i></i>远程普攻对最多 <b>3</b> 个敌人射出箭矢</span>
+                <span class="relic-effect"><i></i>箭矢倍率 <b>30%</b></span>
               </span>
               <span class="relic-card__hint">点 击 领 悟</span>
             </button>
             <button class="relic-card relic-card--talent" type="button">
+              <span class="relic-card__cat cat--crit"><i></i>致命一击</span>
               <span class="relic-card__head">
-                <span class="relic-card__seal"><svg class="glyph" aria-hidden="true"><use href="#i-star"/></svg></span>
-                <span class="relic-card__tag">天 赋</span>
-                <span class="relic-card__name">星辰回响</span>
+                <span class="relic-card__seal"><svg class="glyph" aria-hidden="true"><use href="#i-skull"/></svg></span>
+                <span class="relic-card__name">锋芒</span>
               </span>
               <span class="relic-card__rule"></span>
               <span class="relic-card__effects">
-                <span class="relic-effect"><i></i>冷却缩减 <b>10%</b></span>
-                <span class="relic-effect"><i></i>每 <b>12</b> 秒回复 <b>5%</b> 法力</span>
-                <span class="relic-effect"><i></i>技能暴击率提高 <b>8%</b></span>
+                <span class="relic-effect"><i></i>解锁 <b>致命一击</b></span>
+                <span class="relic-effect"><i></i>攻击 <b>5%</b> 几率造成暴击</span>
+                <span class="relic-effect"><i></i>暴击造成 <b>1.5</b> 倍伤害</span>
               </span>
               <span class="relic-card__hint">点 击 领 悟</span>
             </button>
@@ -3160,9 +3254,34 @@
       </div>
       <span class="stage__tag">3 TALENTS · PICK ONE</span>
     </div>
+    <div class="badge-spec">
+      <span class="badge-spec__cap">角 标 规 范</span>
+      <span class="badge-spec__item">
+        <span class="relic-card__new">新天赋</span>
+        <em>右上 · 未学习的新卡 · 金辉呼吸</em>
+      </span>
+      <span class="badge-spec__item">
+        <span class="relic-card__cat cat--split"><i></i>分裂</span>
+        <em>左上 · 按类别取色 · 卡名只显示子名称</em>
+      </span>
+      <span class="badge-spec__cats">
+        <span class="cat--split"><i></i>分裂</span>
+        <span class="cat--multi"><i></i>多重箭</span>
+        <span class="cat--crit"><i></i>致命一击</span>
+        <span class="cat--chain"><i></i>闪电链</span>
+        <span class="cat--orb"><i></i>法球</span>
+        <span class="cat--blade"><i></i>剑气</span>
+        <span class="cat--thunder"><i></i>天雷</span>
+        <span class="cat--skyfall"><i></i>天降斩</span>
+        <span class="cat--formation"><i></i>剑阵</span>
+        <span class="cat--flysword"><i></i>御剑</span>
+      </span>
+    </div>
     <ul class="chips">
       <li>天赋三择其一</li>
       <li>与宝物同构 · 星辉青主色</li>
+      <li>卡名只显示子名称(裂伤 / 齐射 / 锋芒)</li>
+      <li>左上类型角标 · 右上新天赋角标</li>
       <li>效果逐条 · 数值高亮</li>
       <li>悬停上移 · 扫光 · 亮框 · 可刷新</li>
     </ul>
