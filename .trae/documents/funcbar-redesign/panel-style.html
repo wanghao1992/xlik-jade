@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>功能栏图标 · 面板同源八角框</title>
+<style>
+  :root{
+    --gold-0:#fff6cd;
+    --gold-1:#eed894;
+    --gold-2:#cdaa4a;
+    --gold-3:#9a7a28;
+    --gold-4:#5f4a14;
+    --iron:#0a0806;
+    --stone-0:#100f0c;
+    --stone-1:#1c1a14;
+    --stone-2:#2b281f;
+    --stone-3:#4a463a;
+    --ink:#f1e6c8;
+    --ink-dim:#a79c82;
+    --accent:#7fe3b8;
+
+    --metal:linear-gradient(162deg,#5d4a12 0%,#b8942f 11%,#f7e9ac 24%,#c2a03c 38%,#6d5416 55%,#d8bd6b 75%,#fdf1c1 88%,#8a6c20 100%);
+    --plate:linear-gradient(180deg,#3d372b 0%,#28241c 44%,#19170f 74%,#100f0b 100%);
+    --cut-md:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);
+    --cut-sm:polygon(5px 0,calc(100% - 5px) 0,100% 5px,100% calc(100% - 5px),calc(100% - 5px) 100%,5px 100%,0 calc(100% - 5px),0 5px);
+    --noise:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    color:var(--ink);
+    font-family:"Microsoft YaHei","PingFang SC","SimHei",sans-serif;
+    background-color:var(--stone-0);
+    background-image:
+      radial-gradient(120% 80% at 50% -10%,rgba(126,102,50,.20),transparent 55%),
+      radial-gradient(90% 60% at 50% 115%,rgba(36,88,68,.15),transparent 60%),
+      linear-gradient(180deg,#141310 0%,#0c0b09 70%,#090806 100%);
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:var(--noise) repeat 0 0/160px 160px;
+    opacity:.14;mix-blend-mode:overlay;
+  }
+
+  .page{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:40px 28px 80px}
+
+  .doc-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:24px}
+  .eyebrow{margin:0 0 10px;font-size:11px;letter-spacing:.32em;color:var(--gold-3);text-transform:uppercase}
+  .doc-head h1{
+    margin:0;font-family:Georgia,"Times New Roman","Songti SC","SimSun",serif;
+    font-size:clamp(24px,3.2vw,36px);font-weight:600;letter-spacing:.06em;color:var(--gold-1);
+    text-shadow:0 2px 18px rgba(200,150,70,.2);
+  }
+  .doc-head .sub{margin:12px 0 0;max-width:800px;font-size:13.5px;line-height:1.9;color:var(--ink-dim)}
+  .head-meta{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;font-size:11.5px;letter-spacing:.12em;color:var(--gold-3);white-space:nowrap}
+  .head-meta span{padding:5px 12px;border-radius:2px;background:rgba(255,215,150,.03);box-shadow:inset 0 0 0 1px rgba(160,124,64,.28)}
+
+  /* 舞台 */
+  .stage{
+    position:relative;width:100%;aspect-ratio:16/9;container-type:inline-size;
+    border-radius:4px;overflow:hidden;isolation:isolate;
+    background:
+      radial-gradient(120% 95% at 16% 8%,#2b2218 0%,#16110c 36%,#0a0807 66%,#050403 100%),#050403;
+    box-shadow:0 40px 90px -40px #000,inset 0 0 0 1px rgba(190,150,90,.22);
+  }
+  .stage::before{
+    content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background:var(--noise) repeat 0 0/160px 160px;opacity:.35;mix-blend-mode:overlay;
+  }
+  .stage::after{
+    content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
+    background:radial-gradient(110% 100% at 50% 42%,transparent 42%,rgba(0,0,0,.52) 100%);
+  }
+
+  .hud{position:absolute;left:3.2%;top:7.5%;z-index:2;display:flex;align-items:flex-start;gap:2.6cqw}
+  .portrait{width:8.6cqw;min-width:64px;flex-shrink:0}
+  .portrait-ring{
+    position:relative;width:100%;aspect-ratio:1;padding:2.6%;border-radius:50%;
+    background:conic-gradient(from 205deg,#4b3a1c,#c8a45e 12%,#6a5226 28%,#f0d79c 44%,#53401e 60%,#c8a45e 78%,#4b3a1c 100%);
+    box-shadow:0 10px 26px rgba(0,0,0,.85),inset 0 0 0 1px rgba(255,232,178,.45);
+  }
+  .portrait-ring img{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;background:#141009;filter:saturate(.88) contrast(1.06)}
+  .bars{display:grid;gap:clamp(4px,.55cqw,8px);margin-top:clamp(7px,1.1cqw,13px)}
+  .bar{height:clamp(5px,.62cqw,9px);border-radius:1px;overflow:hidden;background:linear-gradient(#090705,#17110b);box-shadow:inset 0 0 0 1px rgba(180,140,80,.42),0 1px 2px rgba(0,0,0,.85)}
+  .bar.mp{height:clamp(4px,.42cqw,6px)}
+  .bar i{display:block;height:100%;width:var(--v);box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+  .bar.hp i{background:linear-gradient(90deg,#2c7431,#69c256 62%,#9be07c)}
+  .bar.mp i{background:linear-gradient(90deg,#1e4b90,#3f8fd8 62%,#7fc3f5)}
+
+  /* 图标行 */
+  .orbs{display:grid;grid-template-columns:repeat(8,max-content);gap:0 .35em;font-size:clamp(9px,1.02cqw,14px)}
+  .slot{position:relative;display:flex;flex-direction:column;align-items:center;gap:.35em;transition:opacity .25s,transform .25s}
+  .slot .name{
+    font-size:max(9px,.86em);line-height:1;letter-spacing:.06em;color:#efe6d6;white-space:nowrap;
+    text-shadow:0 1px 0 #000,0 0 6px rgba(0,0,0,.8);
+  }
+
+  .slot-btn{
+    position:relative;display:block;width:5.4em;height:5.4em;padding:0;border:0;background:none;
+    cursor:pointer;filter:drop-shadow(0 2px 2px rgba(0,0,0,.65));
+    transition:filter .18s ease,transform .12s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .slot-art{
+    position:absolute;inset:0;display:grid;place-items:center;
+    border:3px solid transparent;
+    background:
+      radial-gradient(85% 72% at 50% 22%,var(--tint,rgba(255,210,120,.16)),transparent 68%) padding-box,
+      var(--plate) padding-box,
+      var(--metal) border-box;
+    clip-path:var(--cut-md);
+    box-shadow:inset 0 0 0 1px #000,inset 0 4px 12px rgba(0,0,0,.72);
+    color:#e6cb84;
+  }
+  .slot-art .glyph{width:52%;height:52%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.85))}
+  .slot-corners{
+    position:absolute;inset:5%;z-index:2;opacity:0;pointer-events:none;transition:opacity .15s ease;
+    background:
+      linear-gradient(var(--qc,#ffe9a8),var(--qc,#ffe9a8)) left top/12% 2px no-repeat,
+      linear-gradient(var(--qc,#ffe9a8),var(--qc,#ffe9a8)) left top/2px 12% no-repeat,
+      linear-gradient(var(--qc,#ffe9a8),var(--qc,#ffe9a8)) right top/12% 2px no-repeat,
+      linear-gradient(var(--qc,#ffe9a8),var(--qc,#ffe9a8)) right top/2px 12% no-repeat,
+      linear-gradient(var(--qc,#ffe9a8),var(--qc,#ffe9a8)) left bottom/12% 2px no-repeat,
+      linear-gradient(var(--qc,#ffe9a8),var(--qc,#ffe9a8)) left bottom/2px 12% no-repeat,
+      linear-gradient(var(--qc,#ffe9a8),var(--qc,#ffe9a8)) right bottom/12% 2px no-repeat,
+      linear-gradient(var(--qc,#ffe9a8),var(--qc,#ffe9a8)) right bottom/2px 12% no-repeat;
+    filter:drop-shadow(0 0 5px rgba(255,255,255,.35));
+  }
+
+  .slot:hover .slot-btn,.slot.is-hover .slot-btn{
+    filter:drop-shadow(0 2px 2px rgba(0,0,0,.65)) drop-shadow(0 0 9px var(--qc,#ffcd5a));transform:translateY(-1px);
+  }
+  .slot:hover .slot-art,.slot.is-hover .slot-art{filter:brightness(1.12)}
+  .slot:hover .slot-corners,.slot.is-hover .slot-corners{opacity:.95}
+  .slot:hover .slot-art .glyph,.slot.is-hover .slot-art .glyph{color:#fff0c4}
+  .slot:active .slot-btn,.slot.is-press .slot-btn{transform:translateY(1px) scale(.98)}
+  .slot.is-active .slot-btn{filter:drop-shadow(0 2px 2px rgba(0,0,0,.65)) drop-shadow(0 0 10px var(--qc,#ffcd5a))}
+  .slot.is-active .slot-corners{opacity:.95}
+  .slot.is-active .slot-art{box-shadow:inset 0 0 0 1px #000,inset 0 4px 12px rgba(0,0,0,.78),inset 0 0 20px rgba(255,205,120,.14)}
+  .slot.is-active .name{color:var(--gold-1)}
+
+  /* 品质主色(仅用于顶部罩色 + 悬停角标) */
+  .slot[data-fn="save"]{--tint:rgba(127,227,184,.16);--qc:#9dffd2}
+  .slot[data-fn="spring"]{--tint:rgba(110,190,255,.16);--qc:#bfe3ff}
+  .slot[data-fn="sign"]{--tint:rgba(146,230,110,.16);--qc:#c9f6b8}
+  .slot[data-fn="pass"]{--tint:rgba(255,170,90,.16);--qc:#ffd0a0}
+  .slot[data-fn="wardrobe"]{--tint:rgba(190,120,255,.16);--qc:#e4c6ff}
+  .slot[data-fn="vault"]{--tint:rgba(255,110,220,.16);--qc:#ffc2f0}
+  .slot[data-fn="codex"]{--tint:rgba(255,214,120,.18);--qc:#f3dc9c}
+  .slot[data-fn="hide"]{--tint:rgba(190,200,210,.14);--qc:#dfe8ee}
+
+  .slot.collapsed-out{opacity:0;visibility:hidden;transform:scale(.75);pointer-events:none}
+
+  .hud-log{position:absolute;left:3.2%;bottom:5.5%;z-index:4;display:flex;flex-direction:column-reverse;gap:.4em;font-size:clamp(10px,.8cqw,13px);pointer-events:none}
+  .hud-log .line{padding:.35em .8em;border-left:2px solid var(--gold-2);background:linear-gradient(90deg,rgba(14,11,8,.88),rgba(14,11,8,0));color:#c2ab7e;letter-spacing:.06em;animation:logIn .3s ease-out;transition:opacity .4s,transform .4s}
+  .hud-log .line.on{border-left-color:var(--accent);color:#cfe3b8}
+  .hud-log .line.out{opacity:0;transform:translateX(-10px)}
+  .stage-tip{position:absolute;right:2.4%;bottom:4.5%;z-index:4;font-size:clamp(9px,.72cqw,12px);letter-spacing:.08em;color:#7c6a4c;pointer-events:none}
+
+  @keyframes logIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+
+  /* 区块 */
+  .spec{max-width:1240px;margin-top:44px}
+  .spec h2{display:flex;align-items:center;gap:16px;margin:0 0 18px;font-family:Georgia,"Times New Roman","Songti SC","SimSun",serif;font-size:18px;font-weight:600;letter-spacing:.16em;color:var(--gold-1)}
+  .spec h2::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(160,124,64,.45),transparent)}
+  .spec-sub{margin:-8px 0 18px;font-size:12.5px;line-height:1.8;color:var(--ink-dim)}
+
+  .state-grid{
+    display:flex;flex-wrap:wrap;align-items:flex-start;gap:clamp(28px,5vw,60px);
+    padding:clamp(26px,4vw,42px) clamp(26px,4vw,48px);border-radius:4px;
+    background:radial-gradient(120% 140% at 20% 0%,#1c1a14,#0d0c09 70%);
+    box-shadow:inset 0 0 0 1px rgba(150,116,58,.2);
+  }
+  .state-grid .slot{font-size:18px;pointer-events:none}
+  .state-grid .name{font-size:12px}
+
+  .spec-table{width:100%;border-collapse:collapse;font-size:12.5px;color:#b6a37e;background:rgba(17,13,10,.62);border-radius:2px;overflow:hidden}
+  .spec-table th,.spec-table td{padding:11px 16px;text-align:left;border-bottom:1px solid rgba(150,116,58,.15);vertical-align:top;line-height:1.6}
+  .spec-table th{font-weight:600;font-size:11.5px;letter-spacing:.12em;color:var(--gold-1);background:rgba(255,220,150,.03)}
+  .spec-table tr:last-child td{border-bottom:0}
+  .spec-table td:first-child{font-family:ui-monospace,Consolas,"Courier New",monospace;color:#d6c39a;white-space:nowrap}
+
+  .impact{margin:0;padding:20px 24px;list-style:none;border-radius:2px;background:rgba(17,13,10,.62);box-shadow:inset 0 0 0 1px rgba(150,116,58,.16);font-size:13px;line-height:2;color:#a3916c}
+  .impact li{position:relative;padding-left:20px}
+  .impact li::before{content:"";position:absolute;left:2px;top:.95em;width:6px;height:6px;transform:rotate(45deg);background:var(--gold-3)}
+  .impact b{color:#dcc38c;font-weight:600}
+
+  .sw-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;font-size:12px;color:var(--ink-dim)}
+  .sw{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:2px;background:rgba(255,215,150,.02);box-shadow:inset 0 0 0 1px rgba(150,116,58,.18)}
+  .sw i{width:14px;height:14px;border-radius:1px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.5)}
+
+  .foot{margin-top:48px;padding-top:16px;border-top:1px solid rgba(150,116,58,.14);font-size:11.5px;letter-spacing:.08em;color:#6e5d42;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+  @media (max-width:900px){
+    .page{padding:26px 16px 60px}
+    .doc-head{flex-direction:column;align-items:flex-start;gap:14px}
+    .head-meta{flex-direction:row;flex-wrap:wrap}
+    .orbs{grid-template-columns:repeat(4,max-content);gap:.6em .4em}
+    .spec-table td:first-child{white-space:normal;overflow-wrap:anywhere}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="doc-head">
+    <div>
+      <p class="eyebrow">Xlik · Funcbar Icons</p>
+      <h1>功能栏图标 · 面板同源八角框</h1>
+      <p class="sub">
+        按 <b>wc3-panels.html</b> 的令牌重做：八角切角描金边框、暗石底板、顶部品质罩色、细金线符。
+        悬停时整体提亮、描金角标亮起；图标仍是单排、下方配功能名，尺寸与宝库格子一致。
+      </p>
+    </div>
+    <div class="head-meta">
+      <span>设计令牌同源</span>
+      <span>256 × 256</span>
+      <span>八角 · 描金 · 暗石</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="stage" id="stage">
+      <div class="hud">
+        <div class="portrait">
+          <div class="portrait-ring">
+            <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=dark%20fantasy%20warcraft%20style%20orc%20blademaster%20hero%20portrait%2C%20painted%20game%20icon%2C%20black%20and%20gold%20ornate%20armor%2C%20dramatic%20rim%20light%2C%20square%20composition%2C%20highly%20detailed&image_size=square" alt="英雄头像" loading="lazy">
+          </div>
+          <div class="bars">
+            <div class="bar hp"><i style="--v:76%"></i></div>
+            <div class="bar mp"><i style="--v:58%"></i></div>
+          </div>
+        </div>
+        <div class="orbs" id="orbs"></div>
+      </div>
+      <div class="hud-log" id="log" aria-live="polite"></div>
+      <div class="stage-tip">悬停看动效 · 点击切换开启态 · 快捷键 F2–F6 / P / B / V</div>
+    </div>
+  </section>
+
+  <section class="spec">
+    <h2>状态规格</h2>
+    <div class="state-grid" id="stateGrid"></div>
+    <div class="sw-row">
+      <div class="sw"><i style="background:linear-gradient(162deg,#5d4a12,#f7e9ac 24%,#c2a03c 40%,#6d5416 55%,#fdf1c1 88%,#8a6c20)"></i>描金框 · --metal</div>
+      <div class="sw"><i style="background:linear-gradient(180deg,#3d372b,#28241c 44%,#19170f 74%,#100f0b)"></i>暗石底板 · --plate</div>
+      <div class="sw"><i style="background:#e6cb84"></i>线符金 · #E6CB84</div>
+      <div class="sw"><i style="background:#fff0c4"></i>悬停高亮 · #FFF0C4</div>
+      <div class="sw"><i style="background:#efe6d6"></i>功能名 · #EFE6D6</div>
+    </div>
+  </section>
+
+  <section class="spec">
+    <h2>贴图规格</h2>
+    <table class="spec-table">
+      <thead><tr><th>资源命名</th><th>尺寸</th><th>用途</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>图标_存档 / 泡温泉 / 签到 / 通行证 / 衣柜 / 宝库 / 图鉴 / 隐藏.tga</td>
+          <td>256 × 256</td>
+          <td>八角描金框 + 暗石底板 + 细金线符，框外透明；顶部带该功能的主色罩色</td>
+        </tr>
+        <tr>
+          <td>图标_*_亮.tga</td>
+          <td>256 × 256</td>
+          <td>悬停高亮层：整体提亮、线符变亮、描金角标出现</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="spec">
+    <h2>改造影响 · main.lua</h2>
+    <ul class="impact">
+      <li>图标改为 <b>0.028 × 0.028</b> 正方形八角框（与宝库格子同量级），单排 <b>GAP 0</b>。</li>
+      <li>贴图内含描金边框，按钮本体关闭 border/highlight/mark，框外透明区域仍可点击。</li>
+      <li>悬停切换 <b>_亮</b> 贴图；按下沿用高亮层，无额外遮罩。</li>
+      <li>功能名仍在图标下方，字号 8、暖米色 <b>#C9B58A</b>。</li>
+      <li>「隐藏 / 展开」逻辑不变：折叠后开关停靠头像右侧首格。</li>
+    </ul>
+  </section>
+
+  <footer class="foot">
+    <span>Xlik · 功能栏图标（wc3-panels 同源）</span>
+    <span>确认后按此版重导 256 贴图</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var GLYPHS = {
+    save: '<path d="M15 7h15a3 3 0 0 1 3 3v28a3 3 0 0 1-3 3H15a3 3 0 0 1-3-3V10a3 3 0 0 1 3-3Z"/><path d="M18 14h9M18 20h6"/><circle cx="29" cy="30" r="5"/><path d="M29 27v6M26 30h6"/>',
+    spring: '<path d="M9 32c5 3 25 3 30 0"/><path d="M11 36c4 3 22 3 26 0"/><path d="M17 25c-4-4 4-6 0-11"/><path d="M24 23c-4-4 4-6 0-11"/><path d="M31 25c-4-4 4-6 0-11"/>',
+    sign: '<rect x="11" y="12" width="26" height="27" rx="3"/><path d="M11 20h26M18 8v6M30 8v6"/><path d="M18 28l4 4 8-8"/>',
+    pass: '<path d="M14 7h20v16l-10 7-10-7V7Z"/><path d="M14 7l-3 5v19l5-4M34 7l3 5v19l-5-4"/><path d="M24 11l1.8 3.6 4 .6-2.9 2.8.7 4-3.6-1.9-3.6 1.9.7-4-2.9-2.8 4-.6Z"/>',
+    wardrobe: '<path d="M17 13l7-4 7 4 4 8-4 3v14H17V24l-4-3 4-8Z"/><path d="M24 9v25M19 22h10"/>',
+    vault: '<path d="M10 21h28v15a3 3 0 0 1-3 3H13a3 3 0 0 1-3-3V21Z"/><path d="M10 21l3-8a3 3 0 0 1 2.8-2h16.4A3 3 0 0 1 35 13l3 8"/><path d="M20 21v-3h8v3"/><rect x="21" y="25" width="6" height="8" rx="1"/><path d="M24 25v-2"/>',
+    codex: '<path d="M24 15c-4-2.6-8.5-3-13-2v20c4.5-1 9-.6 13 2 4-2.6 8.5-3 13-2V13c-4.5-1-9-.6-13 2Z"/><path d="M24 15v20"/><path d="M16 20h4M16 25h4M28 20h4M28 25h4"/>',
+    hide: '<path d="M7 24s6.5-10 17-10 17 10 17 10-6.5 10-17 10S7 24 7 24Z"/><circle cx="24" cy="24" r="4.2"/><path d="M10 38L38 10"/>'
+  };
+  var DEFS = [
+    { fn:"save", key:"F2", name:"存档", g:GLYPHS.save },
+    { fn:"spring", key:"F3", name:"泡温泉", g:GLYPHS.spring },
+    { fn:"sign", key:"F4", name:"签到", g:GLYPHS.sign },
+    { fn:"pass", key:"F5", name:"通行证", g:GLYPHS.pass },
+    { fn:"wardrobe", key:"P", name:"衣柜", g:GLYPHS.wardrobe },
+    { fn:"vault", key:"B", name:"宝库", g:GLYPHS.vault },
+    { fn:"codex", key:"F6", name:"图鉴", g:GLYPHS.codex },
+    { fn:"hide", key:"V", name:"隐藏", g:GLYPHS.hide }
+  ];
+
+  function slotMarkup(d, tag, stateClass){
+    var el = tag === "button"
+      ? '<button class="slot-btn" type="button" aria-label="' + d.name + '（' + d.key + '）">'
+      : '<div class="slot-btn" role="img" aria-label="' + d.name + '">';
+    el += '<span class="slot-art"><svg class="glyph" viewBox="0 0 48 48" aria-hidden="true">' + d.g + '</svg></span>' +
+          '<span class="slot-corners"></span>';
+    el += tag === "button" ? '</button>' : '</div>';
+    return '<div class="slot ' + (stateClass || '') + '" data-fn="' + d.fn + '" data-key="' + d.key + '" data-name="' + d.name + '">' +
+      el + '<span class="name">' + d.name + '</span></div>';
+  }
+
+  var orbs = document.getElementById("orbs");
+  var logEl = document.getElementById("log");
+  var stateGrid = document.getElementById("stateGrid");
+
+  orbs.innerHTML = DEFS.map(function(d){ return slotMarkup(d, "button", ""); }).join("");
+
+  var base = DEFS[6];
+  stateGrid.innerHTML = [
+    ["", "默认"], ["is-hover", "悬停"], ["is-press", "按下"], ["is-active", "已开启"]
+  ].map(function(s){
+    var d = Object.assign({}, base, { name: s[1] });
+    return slotMarkup(d, "div", s[0]);
+  }).join("");
+
+  var slots = Array.prototype.slice.call(orbs.querySelectorAll(".slot"));
+  var byKey = new Map(slots.map(function(s){ return [s.dataset.key, s]; }));
+
+  function log(text, tone){
+    var line = document.createElement("div");
+    line.className = "line" + (tone ? " " + tone : "");
+    line.textContent = text;
+    logEl.appendChild(line);
+    while (logEl.children.length > 3) { logEl.removeChild(logEl.firstChild); }
+    setTimeout(function(){
+      line.classList.add("out");
+      setTimeout(function(){ if (line.parentNode) line.parentNode.removeChild(line); }, 420);
+    }, 2000);
+  }
+
+  function toggle(slot){
+    var name = slot.dataset.name;
+    var key = slot.dataset.key;
+    if (key === "V") {
+      document.querySelectorAll("#orbs .slot").forEach(function(s){
+        if (s !== slot) { s.classList.toggle("collapsed-out"); }
+      });
+      var closed = slot.classList.toggle("is-active");
+      slot.querySelector(".name").textContent = closed ? "展开" : "隐藏";
+      log(closed ? "功能栏已折叠 · 仅保留「展开」" : "功能栏已展开", "on");
+      return;
+    }
+    var on = slot.classList.toggle("is-active");
+    log((on ? "已开启 · " : "已关闭 · ") + name, on ? "on" : "");
+  }
+
+  slots.forEach(function(slot){
+    slot.querySelector(".slot-btn").addEventListener("click", function(){ toggle(slot); });
+  });
+
+  window.addEventListener("keydown", function(e){
+    var k = String(e.key || "").toUpperCase();
+    var slot = byKey.get(k);
+    if (!slot) return;
+    e.preventDefault();
+    slot.classList.add("is-press");
+    setTimeout(function(){
+      slot.classList.remove("is-press");
+      toggle(slot);
+    }, 120);
+  });
+})();
+</script>
+</body>
+</html>
