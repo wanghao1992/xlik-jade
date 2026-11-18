@@ -186,6 +186,15 @@ game.onPhase("process", function()
                 event.syncTrigger(obj, eventKind.classAfterChange .. "invulnerable", { triggerObject = obj, old = true, new = false, name = "invulnerable" })
             end
         end)
+    --- 仅伤害层无敌(不挂原生 Avul): 单位仍可被选中/攻击/锁定, 伤害在伤害流程里归零
+    ---   原生无敌(Avul)会让单位不可被选为攻击目标, 正在攻击它的敌方会丢失目标并返回原处
+    superposition.config(UnitClass, "damageImmune",
+        function(obj)
+            event.syncTrigger(obj, eventKind.classAfterChange .. "damageImmune", { triggerObject = obj, old = false, new = true, name = "damageImmune" })
+        end,
+        function(obj)
+            event.syncTrigger(obj, eventKind.classAfterChange .. "damageImmune", { triggerObject = obj, old = true, new = false, name = "damageImmune" })
+        end)
     superposition.config(UnitClass, "invisible",
         function(obj)
             if (J.GetUnitAbilityLevel(obj._handle, LK_SLK_ID_ABILITY_INVISIBLE) < 1) then

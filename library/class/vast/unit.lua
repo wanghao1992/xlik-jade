@@ -304,9 +304,10 @@ function _index:isLocust()
 end
 
 --- 判断单位是否无敌
+---   包含两种实现: "invulnerable"(原生 Avul, 不可被选中) 与 "damageImmune"(仅伤害归零, 仍可被攻击)
 ---@return boolean
 function _index:isInvulnerable()
-    return superposition.is(self, "invulnerable")
+    return superposition.is(self, "invulnerable") or superposition.is(self, "damageImmune")
 end
 
 --- 判断单位是否隐身
