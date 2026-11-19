@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>xlik_funcbar · 图标重绘 · 五套风格</title>
+<style>
+  :root{
+    --bg:#08090a; --panel:#0e1013; --line:rgba(185,167,127,.16);
+    --gold:#b9a77f; --gold-b:#e2c98d; --cream:#efe6d6; --dim:#7d776c;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(900px 420px at 10% -8%, rgba(120,102,58,.13), transparent 70%),
+      radial-gradient(760px 420px at 94% 2%, rgba(52,86,74,.10), transparent 70%),
+      var(--bg);
+    color:var(--cream);
+    font:14px/1.65 "Microsoft YaHei","PingFang SC","Hiragino Sans GB",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:0 0 80px;
+  }
+  .wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+
+  header.top{padding:52px 0 18px}
+  .kicker{
+    display:inline-flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--gold);border:1px solid var(--line);
+    border-radius:99px;padding:5px 12px;background:rgba(185,167,127,.05);
+  }
+  .kicker i{width:5px;height:5px;border-radius:50%;background:var(--gold-b);box-shadow:0 0 8px var(--gold-b)}
+  h1{
+    font-size:33px;line-height:1.25;margin:18px 0 10px;font-weight:600;
+    background:linear-gradient(92deg,#fff9ec 8%,var(--gold-b) 52%,#9c8b66 96%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .lede{color:#a9a196;max-width:66ch;margin:0}
+  .lede b{color:var(--cream);font-weight:600}
+  .hint{margin-top:16px;display:flex;flex-wrap:wrap;gap:8px 22px;font-size:12px;color:var(--dim)}
+  .hint span{display:inline-flex;align-items:center;gap:7px}
+  .hint span::before{content:"";width:14px;height:1px;background:var(--line)}
+
+  nav.jump{position:sticky;top:0;z-index:20;display:flex;gap:8px;flex-wrap:wrap;padding:12px 0;margin:24px 0 6px;
+    background:linear-gradient(180deg,rgba(8,9,10,.96) 60%,rgba(8,9,10,0));backdrop-filter:blur(6px)}
+  nav.jump a{font-size:12px;color:#9d958a;text-decoration:none;border:1px solid var(--line);
+    border-radius:99px;padding:5px 11px;transition:.18s}
+  nav.jump a:hover{color:var(--gold-b);border-color:rgba(226,201,141,.5);background:rgba(185,167,127,.08)}
+
+  section.variant{margin:22px 0 0;padding:20px 22px 18px;border-radius:14px;
+    background:linear-gradient(180deg,var(--panel) 0%,#0b0d0f 100%);
+    border:1px solid rgba(255,255,255,.055);box-shadow:0 24px 60px -42px #000}
+  section.variant.base{background:linear-gradient(180deg,#0c0e11,#090a0c)}
+  .v-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
+  .v-no{font:600 12px/1 ui-monospace,Consolas,monospace;color:var(--gold);padding:7px 8px;
+    border:1px solid var(--line);border-radius:6px;background:rgba(185,167,127,.06);letter-spacing:.06em;flex:none;margin-top:2px}
+  .v-head h2{font-size:17px;margin:0 0 2px;font-weight:600}
+  .v-head p{margin:0;color:#948c81;font-size:13px;max-width:68ch}
+  .sw{display:flex;gap:4px;margin-left:auto;flex:none;padding-top:6px}
+  .sw i{width:14px;height:14px;border-radius:3px;border:1px solid rgba(0,0,0,.5);display:block}
+  .tag{margin-left:10px;flex:none;font-size:11px;color:var(--gold);border:1px solid var(--line);
+    border-radius:99px;padding:4px 10px;background:rgba(185,167,127,.05);white-space:nowrap;align-self:flex-start;margin-top:2px}
+
+  .stage{position:relative;border-radius:10px;padding:16px 18px;overflow:hidden;
+    border:1px solid rgba(255,255,255,.06);
+    background:radial-gradient(120% 120% at 16% 0%, #2b3823 0%, #1a231a 34%, #111614 66%, #0a0d0c 100%)}
+  .stage::before{content:"";position:absolute;inset:0;
+    background:repeating-linear-gradient(118deg, rgba(255,255,255,.025) 0 1px, transparent 1px 7px);opacity:.5}
+  .stage > *{position:relative}
+
+  .bigrow{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}
+  .bigrow figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .bigrow img{width:76px;height:76px;display:block;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
+  .bigrow figcaption{font-size:10px;color:#8e8779;letter-spacing:.04em}
+
+  .divider{display:flex;align-items:center;gap:10px;margin:14px 0 12px}
+  .divider::before,.divider::after{content:"";height:1px;background:rgba(255,255,255,.07);flex:1}
+  .divider span{font-size:10px;letter-spacing:.16em;color:#7a7469;text-transform:uppercase}
+
+  /* 1:1 模拟功能栏 */
+  .bar{display:flex;align-items:flex-start;gap:7px}
+  .hero{position:relative;width:40px;flex:none}
+  .portrait{width:40px;height:40px;border-radius:3px;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(70% 70% at 50% 32%, #4a4230, #241f17 55%, #131110);
+    border:1px solid rgba(185,167,127,.35);box-shadow:inset 0 0 12px rgba(0,0,0,.85);
+    font:600 15px/1 "Times New Roman",serif;color:rgba(226,201,141,.5)}
+  .hero .hk{position:absolute;left:0;right:0;top:31px;text-align:center;font:600 7px/1 ui-monospace,monospace;
+    color:rgba(185,167,127,.85);text-shadow:0 1px 2px #000}
+  .bars{margin-top:2px;display:flex;flex-direction:column;gap:1px}
+  .bars i{display:block;height:3px;border-radius:1px}
+  .bars .hp{background:linear-gradient(180deg,#5ad06a,#2c8a3c)}
+  .bars .mp{height:2px;background:linear-gradient(180deg,#5fa8ff,#2c5ca8)}
+  .btns{display:flex;align-items:flex-start;gap:3px}
+  .btn{display:flex;flex-direction:column;align-items:center;background:none;border:0;padding:0}
+  .btn img{width:34px;height:34px;display:block;transition:transform .18s,filter .18s}
+  .btn:hover img{transform:translateY(-2px) scale(1.06);filter:brightness(1.15)}
+  .btn .lbl{margin-top:4px;font-size:8px;line-height:1;color:rgba(239,230,214,.72);white-space:nowrap}
+  .btn .lbl em{font-style:normal;color:var(--gold);font-family:ui-monospace,monospace;font-size:7px;margin-left:2px}
+
+  [data-old] img{width:60px;height:76px}
+  [data-old-bar] .btn img{width:27px;height:34px}
+  .final .bigrow img{width:60px;height:76px}
+  .final .btn img{width:27px;height:34px}
+
+  /* 挑战按钮 */
+  .challenge-row{display:flex;align-items:flex-end;gap:24px;margin-bottom:14px}
+  .ch-label{width:74px;flex:none;font-size:12px;letter-spacing:.08em;color:#b9a77f;padding-bottom:26px}
+  .challenge-row figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:7px}
+  .challenge-row img{width:96px;height:96px;display:block;filter:drop-shadow(0 8px 14px rgba(0,0,0,.5))}
+  .challenge-row figcaption{font-size:10px;color:#8e8779;letter-spacing:.04em}
+  .challenge-72{display:flex;align-items:flex-start}
+  .challenge-72 img{width:72px;height:72px;display:block;margin-right:-8px}
+
+  .note{margin:12px 0 0;font-size:12px;color:#8b8478;display:flex;gap:16px;flex-wrap:wrap}
+  .note b{color:var(--gold-b);font-weight:600}
+
+  footer.foot{margin-top:32px;padding-top:18px;border-top:1px solid rgba(255,255,255,.06);color:#8d857a;font-size:12.5px}
+  footer.foot strong{color:var(--gold-b)}
+
+  @media (max-width:720px){
+    h1{font-size:25px}
+    .bigrow{gap:10px}
+    .bigrow img{width:58px;height:58px}
+    .btns{gap:1px}
+    .btn img{width:28px;height:28px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <span class="kicker"><i></i>Warcraft III · Icon Set</span>
+    <h1>功能栏图标 · 五套画风</h1>
+    <p class="lede">
+      图形语义与原来一一对应（卷轴 / 汤池 / 签到页 / 旗帜 / 衣袍 / 宝箱 / 书册 / 眼睛），
+      只换<b>材质与画法</b>。每套下面都按 76px 大图看细节、再按 <b>34px 实际尺寸</b>放进功能栏看观感。
+    </p>
+    <div class="hint">
+      <span>矢量绘制，任意尺寸不糊</span>
+      <span>成品 128×163，与旧资源同比例</span>
+      <span>悬停可放大查看</span>
+    </div>
+  </header>
+
+  <nav class="jump">
+    <a href="#base">现状</a>
+    <a href="#s1">A 剪纸暗金</a>
+    <a href="#s2">B 鎏金浮雕</a>
+    <a href="#s3">C 青玉鎏金</a>
+    <a href="#s5">D 朱漆描金</a>
+    <a href="#s4">E 极简金线</a>
+    <a href="#challenge">挑战按钮</a>
+  </nav>
+
+  <!-- 现状 -->
+  <section class="variant base" id="base">
+    <div class="v-head">
+      <span class="v-no">00</span>
+      <div>
+        <h2>现状（参照）</h2>
+        <p>深褐剪影 + 金色细线，竖长比例（352×448），画风最「纸片」。下面的 A~E 都以它为语义基准重绘。</p>
+      </div>
+      <span class="tag">对照用</span>
+    </div>
+    <div class="stage">
+      <div class="bigrow" data-old></div>
+      <div class="divider"><span>1 : 1 功能栏</span></div>
+      <div class="bar" data-old-bar></div>
+    </div>
+  </section>
+
+  <!-- 各风格由脚本填入 -->
+  <div id="styles"></div>
+
+  <!-- 挑战按钮 -->
+  <section class="variant" id="challenge">
+    <div class="v-head">
+      <span class="v-no">F</span>
+      <div>
+        <h2>挑战按钮 · 天赋 / 宝物</h2>
+        <p>
+          沿用原构图（上方徽记 + 下方名称条，名称烘焙在图内），只换成鎏金浮雕材质：
+          金色凸起主体 + 暗刻细节 + 无描边名称条。尺寸仍为 <b>256×256</b>，替换套件内同名 TGA。
+        </p>
+      </div>
+      <span class="sw">
+        <i style="background:#4c3f2f"></i><i style="background:#16120e"></i>
+        <i style="background:#f6d896"></i><i style="background:#b0843e"></i>
+      </span>
+      <span class="tag">已采用</span>
+    </div>
+    <div class="stage">
+      <div class="challenge-row">
+        <span class="ch-label">天赋挑战</span>
+        <figure><img src="challenge/old_talent.png" alt="旧·天赋"><figcaption>旧版</figcaption></figure>
+        <figure><img src="challenge/talent.png" alt="新·天赋"><figcaption>新版</figcaption></figure>
+        <figure><img src="challenge/talent_lit.png" alt="新·天赋·悬停"><figcaption>悬停</figcaption></figure>
+      </div>
+      <div class="challenge-row">
+        <span class="ch-label">宝物挑战</span>
+        <figure><img src="challenge/old_treasure.png" alt="旧·宝物"><figcaption>旧版</figcaption></figure>
+        <figure><img src="challenge/treasure.png" alt="新·宝物"><figcaption>新版</figcaption></figure>
+        <figure><img src="challenge/treasure_lit.png" alt="新·宝物·悬停"><figcaption>悬停</figcaption></figure>
+      </div>
+      <div class="divider"><span>1 : 1 按钮（72px）</span></div>
+      <div class="challenge-72">
+        <img src="challenge/talent.png" alt="天赋挑战">
+        <img src="challenge/treasure.png" alt="宝物挑战">
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <strong>B 鎏金浮雕已落地</strong>：功能栏 8 张常态 + 8 张高亮 TGA（128×163，与旧资源同比例 352:448）覆盖
+    <code>vendor/assets/war3mapUI/xlik_funcbar/assets/</code>，<strong>main.lua 无需改动</strong>
+    （图标尺寸 0.022×0.028 原样沿用）。<br>
+    挑战按钮：天赋 / 宝物 各 2 张（常态 + 悬停，256×256）覆盖
+    <code>vendor/assets/war3mapUI/slkc_challenge/assets/</code>，名称仍烘焙在图内，按钮逻辑不变。<br>
+    旧图备份在 <code>.tmp/_funcbar_tga_backup/</code> 与 <code>.tmp/_challenge_tga_backup/</code>，
+    构建缓存里同名的旧图已清掉，重新打包即可看到新图标。其余四套风格仍保留在本页，随时可换。
+  </footer>
+</div>
+
+<script>
+  const BTNS = [
+    {n:'存档',  k:'F2', i:'save'},
+    {n:'泡温泉',k:'F3', i:'hotspring'},
+    {n:'签到',  k:'F4', i:'checkin'},
+    {n:'通行证',k:'F5', i:'pass'},
+    {n:'衣柜',  k:'P',  i:'wardrobe'},
+    {n:'宝库',  k:'B',  i:'vault'},
+    {n:'图鉴',  k:'F6', i:'codex'},
+    {n:'隐藏',  k:'V',  i:'hide'},
+  ];
+
+  const STYLES = [
+    { id:'s1', no:'A', name:'剪纸暗金', tag:'改动最小',
+      desc:'透明底、深褐剪影配金线描边，就是现在这套的精致版：去掉脏边、统一线宽、加一点点顶部受光。',
+      sw:['#544638','#262019','#efe6d6','#b9a77f'] },
+    { id:'s2', no:'B', name:'鎏金浮雕', tag:'已采用',
+      dir:'final',
+      desc:'暗青铜圆角牌上凸起一层金面，上缘提亮、下缘压暗，像魔兽原生的技能按钮。已按旧资源同比例（128×163）出成品并覆盖原 TGA。',
+      sw:['#4c3f2f','#16120e','#f6d896','#b0843e'] },
+    { id:'s3', no:'C', name:'青玉鎏金', tag:'东方调',
+      desc:'墨青玉牌 + 青玉主体 + 金色阴刻线，安静、有玉器感，和泡温泉/签到这类休闲功能很搭。',
+      sw:['#2c5046','#0a1c19','#b6ead4','#3e8474'] },
+    { id:'s5', no:'D', name:'朱漆描金', tag:'最醒目',
+      desc:'朱红漆底 + 米金主体，红金对比最强，远远一眼就能定位功能栏，但存在感也最强。',
+      sw:['#7c2620','#280c0a','#f6e8ca','#ba925c'] },
+    { id:'s4', no:'E', name:'极简金线', tag:'最轻',
+      desc:'完全透明，只留粗细均匀的金色线稿，不带任何底板。放在战场上最不打扰视野，也最耐缩放。',
+      sw:['#1a1a1a','#e8d098','#fff0c4','#8c7f60'] },
+  ];
+
+  const bigRow = (srcOf, cls = '') => BTNS.map(b =>
+    `<figure><img src="${srcOf(b)}" alt="${b.n}"><figcaption>${b.n}</figcaption></figure>`).join('');
+
+  const bar = (srcOf) => `
+    <div class="hero">
+      <div class="portrait">?</div><span class="hk">F1</span>
+      <div class="bars"><i class="hp"></i><i class="mp"></i></div>
+    </div>
+    <div class="btns">${BTNS.map(b =>
+      `<button class="btn" title="${b.n} ${b.k}"><img src="${srcOf(b)}" alt="${b.n}">
+        <span class="lbl">${b.n}<em>${b.k}</em></span></button>`).join('')}</div>`;
+
+  // 现状
+  document.querySelector('[data-old]').innerHTML = bigRow(b => `icons/${b.i}.png`);
+  document.querySelector('[data-old-bar]').innerHTML = bar(b => `icons/${b.i}.png`);
+
+  document.getElementById('styles').innerHTML = STYLES.map(s => `
+    <section class="variant${s.dir ? ' final' : ''}" id="${s.id}">
+      <div class="v-head">
+        <span class="v-no">${s.no}</span>
+        <div><h2>${s.name}</h2><p>${s.desc}</p></div>
+        <span class="sw">${s.sw.map(c => `<i style="background:${c}"></i>`).join('')}</span>
+        <span class="tag">${s.tag}</span>
+      </div>
+      <div class="stage">
+        <div class="bigrow">${bigRow(b => s.dir ? `${s.dir}/${b.i}_128.png` : `styles/${s.id}/${b.i}_128.png`)}</div>
+        <div class="divider"><span>1 : 1 功能栏</span></div>
+        <div class="bar">${bar(b => s.dir ? `${s.dir}/${b.i}_128.png` : `styles/${s.id}/${b.i}_128.png`)}</div>
+      </div>
+    </section>`).join('');
+</script>
+</body>
+</html>
