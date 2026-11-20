@@ -234,7 +234,8 @@ local modifier = {
                     local e = effector.agile(obj:model(), x, y, obj._z)
                     obj._handle = e
                     effector.rotateZ(e, 270)
-                    effector.alpha(e, 125)
+                    --- 地面物品不透明显示(原 125 半透明会看不清/不好点选)
+                    effector.alpha(e, 255)
                     effector.size(e, obj:modelScale())
                     effector.speed(e, obj:animateScale())
                     Grid(ItemClass):insert(obj)
