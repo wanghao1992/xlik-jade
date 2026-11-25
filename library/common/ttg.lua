@@ -5,6 +5,35 @@ ttg = ttg or {}
 
 ttg._limit = 200
 ttg._count = ttg._count or 0
+--- 待回收漂浮字: { tag=number, expire=number(游戏秒), destroy=boolean }
+--- 原实现每条飘字一个 setTimeout, 高频 AoE 下会堆积大量计时器;
+--- 改为单个轮询统一回收(0.1 秒粒度对飘字生命周期无可见影响)
+---@type table[]
+ttg._pending = ttg._pending or {}
+ttg._pollTimer = ttg._pollTimer
+ttg._pollInterval = 0.1
+
+--- 启动(或复用)回收轮询
+---@return void
+local function ensurePoll()
+    if (class.isObject(ttg._pollTimer, TimerClass)) then
+        return
+    end
+    ttg._pollTimer = time.setInterval(ttg._pollInterval, function()
+        local now = time.elapsed() or 0
+        local list = ttg._pending
+        for i = #list, 1, -1 do
+            local item = list[i]
+            if (now >= item.expire) then
+                if (true == item.destroy) then
+                    pcall(J.DestroyTextTag, item.tag)
+                end
+                ttg._count = math.max(0, ttg._count - 1)
+                table.remove(list, i)
+            end
+        end
+    end)
+end
 
 --- 销毁漂浮字
 ---@param whichTag number
@@ -107,17 +136,19 @@ function ttg.display(x, y, content, during, options)
     if (nil == tt or 0 == tt) then
         return
     end
+    local now = time.elapsed() or 0
+    local expire, destroy
     if (fade > 0 and type(J.SetTextTagLifespan) == "function" and type(J.SetTextTagFadepoint) == "function") then
         --- 交给引擎在 during 之后淡出, 到 during+fade 自动销毁; 这里只回收计数
         J.SetTextTagPermanent(tt, false)
         J.SetTextTagLifespan(tt, during + fade)
         J.SetTextTagFadepoint(tt, during)
-        time.setTimeout(during + fade, function()
-            ttg._count = math.max(0, ttg._count - 1)
-        end)
+        expire = now + during + fade
+        destroy = false
     else
-        time.setTimeout(during, function()
-            ttg.destroy(tt)
-        end)
+        expire = now + during
+        destroy = true
     end
+    ensurePoll()
+    ttg._pending[#ttg._pending + 1] = { tag = tt, expire = expire, destroy = destroy }
 end
